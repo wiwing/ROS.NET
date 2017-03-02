@@ -36,7 +36,7 @@ namespace FauxMessages
         public static Dictionary<string, string> KnownTypes = new Dictionary<string, string>
         {
             { "float64", "double" },
-            { "float32", "single" },
+            { "float32", "Single" },
             { "uint64", "ulong" },
             { "uint32", "uint" },
             { "uint16", "ushort" },
@@ -48,9 +48,9 @@ namespace FauxMessages
             { "byte", "byte" },
             { "bool", "bool" },
             { "char", "char" },
-            { "time", "time" },
+            { "time", "Time" },
             { "string", "string" },
-            { "duration", "duration" }
+            { "duration", "Duration"}
         };
 
         public static string GetConstTypesAffix(string type)

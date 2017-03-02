@@ -70,6 +70,7 @@ namespace FauxMessages
                 throw new Exception("" + filename + " IS NOT A VALID MSG FILE!");
             classname = filename.basename;
             Package = filename.package;
+
             //Parse for the Namespace
             Namespace += "." + filename.package;
             Name = filename.package + "." + classname;

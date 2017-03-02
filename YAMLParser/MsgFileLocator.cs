@@ -56,8 +56,8 @@ namespace YAMLParser
             searchroot = root;
             packagedir = getPackagePath(root, path);
             package = getPackageName(path);
-            extension = path.Split('.').Last();
-            basename = path.Replace(extension, "").Split('\\').Last().Trim('.');
+            basename = System.IO.Path.GetFileNameWithoutExtension(path);
+            extension = System.IO.Path.GetExtension(path).TrimStart('.');
         }
 
         public override bool Equals(object obj)
