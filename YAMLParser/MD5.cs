@@ -95,7 +95,7 @@ namespace YAMLParser
                     KnownStuff.WhatItIs(irm, irm.Stuff[i]);
                     if (irm.Stuff[i].Type.Contains("/"))
                     {
-                        irm.resolve(irm, irm.Stuff[i]);
+                        irm.resolve(irm.Stuff[i]);
                     }
                     ms = irm.Stuff[i].Definer;
                 }

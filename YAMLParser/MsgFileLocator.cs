@@ -9,13 +9,34 @@ namespace YAMLParser
 {
     public class MsgFileLocation
     {
-        private static string[] msg_gen_folder_names =
+        private static string[] MSG_GEN_FOLDER_NAMES =
         {
             "msg",
             "srv",
             "msgs",
             "srvs"
         };
+
+        /// <summary>
+        /// Mangles a file's name to find the package name based on the name of the directory containing the file
+        /// </summary>
+        /// <param name="path">A file</param>
+        /// <param name="targetmsgpath">The "package name"/"msg name" for the file at path</param>
+        /// <returns>"package name"</returns>
+        private static string getPackageName(string path)
+        {
+            string[] chunks = path.Split('\\');
+            string foldername = chunks[chunks.Length - 2];
+            if (MSG_GEN_FOLDER_NAMES.Contains(foldername))
+                foldername = chunks[chunks.Length - 3];
+            return foldername;
+        }
+
+        private static string getPackagePath(string basedir, string msgpath)
+        {
+            string p = getPackageName(msgpath);
+            return System.IO.Path.Combine(basedir, p);
+        }
 
         public string path { get; private set; }
         public string basename { get; private set; }
@@ -39,36 +60,15 @@ namespace YAMLParser
             basename = path.Replace(extension, "").Split('\\').Last().Trim('.');
         }
 
-        /// <summary>
-        /// Mangles a file's name to find the package name based on the name of the directory containing the file
-        /// </summary>
-        /// <param name="path">A file</param>
-        /// <param name="targetmsgpath">The "package name"/"msg name" for the file at path</param>
-        /// <returns>"package name"</returns>
-        private static string getPackageName(string path)
-        {
-            string[] chunks = path.Split('\\');
-            string foldername = chunks[chunks.Length - 2];
-            if (msg_gen_folder_names.Contains(foldername))
-                foldername = chunks[chunks.Length - 3];
-            return foldername;
-        }
-
-        private static string getPackagePath(string basedir, string msgpath)
-        {
-            string p = getPackageName(msgpath);
-            return basedir + "\\" + p;
-        }
-
         public override bool Equals(object obj)
         {
             MsgFileLocation other = obj as MsgFileLocation;
-            return (other != null && string.Equals(other.package, package) && string.Equals(other.basename, basename));
+            return other != null && string.Equals(other.package, package) && string.Equals(other.basename, basename);
         }
 
         public override int GetHashCode()
         {
-            return (package+"/"+basename).GetHashCode();
+            return (package + "/" + basename).GetHashCode();
         }
 
         public override string  ToString()
@@ -87,18 +87,20 @@ namespace YAMLParser
         /// <param name="path"></param>
         private static void explode(List<MsgFileLocation> m, List<MsgFileLocation> s, string path)
         {
-            string[] msgfiles = Directory.GetFiles(path, "*.msg", SearchOption.AllDirectories).ToArray();
-            string[] srvfiles = Directory.GetFiles(path, "*.srv", SearchOption.AllDirectories).ToArray();
-            Func<string, MsgFileLocation> conv = p => new MsgFileLocation(p,path);
+            var msgfiles = Directory.GetFiles(path, "*.msg", SearchOption.AllDirectories).Select(p => new MsgFileLocation(p, path)).ToArray();
+            var srvfiles = Directory.GetFiles(path, "*.srv", SearchOption.AllDirectories).Select(p => new MsgFileLocation(p, path)).ToArray();
+            
             int mb4 = m.Count, sb4=s.Count;
-            MsgFileLocation[] newmsgs = Array.ConvertAll(msgfiles, (p) => conv(p));
-            MsgFileLocation[] newsrvs = Array.ConvertAll(srvfiles, (p) => conv(p));
-            foreach(var nm in newmsgs)
-                if (! m.Contains(nm))
+            foreach (var nm in msgfiles)
+            {
+                if (!m.Contains(nm))
                     m.Add(nm);
-            foreach(var ns in newsrvs)
+            }
+            foreach (var ns in srvfiles)
+            {
                 if (!s.Contains(ns))
                     s.Add(ns);
+            }
             Console.WriteLine("Skipped " + (msgfiles.Length - (m.Count - mb4)) + " duplicate msgs and " + (srvfiles.Length - (s.Count - sb4)) + " duplicate srvs");
         }
 

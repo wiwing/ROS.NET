@@ -63,24 +63,26 @@ namespace YAMLParser
             yamlparser_parent = di.FullName;
             if (args.Length - firstarg >= 1)
             {
-                solutiondir = new DirectoryInfo(args[firstarg]).FullName;
+                solutiondir = new DirectoryInfo(Path.GetFullPath(args[firstarg])).FullName;
             }
             else
             {
                 solutiondir = yamlparser_parent;
             }
 
-            outputdir = solutiondir + outputdir;
-            outputdir_secondpass = solutiondir + outputdir_secondpass;
-            List<MsgFileLocation> paths = new List<MsgFileLocation>();
-            List<MsgFileLocation> pathssrv = new List<MsgFileLocation>();
+            outputdir = Path.Combine(solutiondir, outputdir);
+            outputdir_secondpass = Path.Combine(solutiondir, outputdir_secondpass);
+            var paths = new List<MsgFileLocation>();
+            var pathssrv = new List<MsgFileLocation>();
             Console.WriteLine("Generatinc C# classes for ROS Messages...\n");
             for (int i = firstarg; i < args.Length; i++)
             {
-                string d = new DirectoryInfo(args[i]).FullName;
+                string d = new DirectoryInfo(Path.GetFullPath(args[i])).FullName;
                 Console.WriteLine("Spelunking in " + d);
                 MsgFileLocator.findMessages(paths, pathssrv, d);
             }
+
+            // first pass: create all msg files (and register them in static resolver dictionary)
             foreach (MsgFileLocation path in paths)
             {
                 msgsFiles.Add(new MsgsFile(path));
@@ -89,6 +91,17 @@ namespace YAMLParser
             {
                 srvFiles.Add(new SrvsFile(path));
             }
+
+            // secend pass: parse and resolve types
+            foreach (var msg in msgsFiles)
+            {
+                msg.ParseAndResolveTypes();
+            }
+            foreach (var srv in srvFiles)
+            {
+                srv.ParseAndResolveTypes();
+            }
+
             if (paths.Count + pathssrv.Count > 0)
             {
                 MakeTempDir();
@@ -195,8 +208,8 @@ namespace YAMLParser
                 {
                     string md5 = null;
                     string typename = null;
-                    s.Request.Stuff.ForEach(a => s.Request.resolve(s.Request, a));
-                    s.Response.Stuff.ForEach(a => s.Request.resolve(s.Response, a));
+                    s.Request.Stuff.ForEach(a => s.Request.resolve(a));
+                    s.Response.Stuff.ForEach(a => s.Request.resolve(a));
                     md5 = MD5.Sum(s);
                     typename = s.Name;
                     if (md5 != null && !md5.StartsWith("$") && !md5.EndsWith("MYMD5SUM"))
