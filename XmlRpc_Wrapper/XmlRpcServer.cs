@@ -154,7 +154,8 @@ namespace XmlRpc_Wrapper
             {
                 try
                 {
-                    _disp.AddSource(createConnection(listener.AcceptSocket()), XmlRpcDispatch.EventType.ReadableEvent);
+
+                    _disp.AddSource(createConnection(listener.AcceptSocketAsync().Result), XmlRpcDispatch.EventType.ReadableEvent);
                     XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.WARNING, "XmlRpcServer::acceptConnection: creating a connection");
                 }
                 catch (SocketException ex)

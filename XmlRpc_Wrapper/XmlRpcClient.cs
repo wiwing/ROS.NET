@@ -19,6 +19,7 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Xml;
+using System.Xml.XPath;
 
 #endregion
 
@@ -337,7 +338,7 @@ namespace XmlRpc_Wrapper
             //XmlRpcSource::close();
             if (socket != null)
             {
-                socket.Close();
+                socket.Dispose();
                 //reader = null;
                 //writer = null;
             }
@@ -422,7 +423,8 @@ namespace XmlRpc_Wrapper
             {
                 try
                 {
-                    socket = new TcpClient(_host, _port);
+                    socket = new TcpClient();
+                    socket.ConnectAsync(_host, _port).Wait();
                 }
                 catch (SocketException ex)
                 {
@@ -524,8 +526,9 @@ namespace XmlRpc_Wrapper
                 var stream = socket.GetStream();
                 try
                 {
-                    var buffer = memstream.GetBuffer();
-                    stream.Write(buffer, 0, buffer.Length);
+                    var buffer = new ArraySegment<byte>();
+                    memstream.TryGetBuffer(out buffer);
+                    stream.Write(buffer.Array, buffer.Offset, buffer.Count);
                     stream.Flush();
                 }
                 catch (Exception ex)

@@ -98,7 +98,8 @@ namespace XmlRpc_Wrapper
             XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.INFO, "XmlRpcServerConnection is closing");
             if (socket != null)
             {
-                socket.Close(100);
+                //socket.Close(100);    // ## AKo: Will be part of .net core 1.2, see https://github.com/dotnet/corefx/issues/12060
+                socket.Dispose();
                 socket = null;
             }
             server.removeConnection(this);
@@ -157,8 +158,9 @@ namespace XmlRpc_Wrapper
                 }
                 try
                 {
-                    var buffer = memstream.GetBuffer();
-                    stream.Write(buffer, 0, buffer.Length);
+                    var buffer = new ArraySegment<byte>();
+                    memstream.TryGetBuffer(out buffer);
+                    stream.Write(buffer.Array, buffer.Offset, buffer.Count);
                 }
                 catch (Exception ex)
                 {

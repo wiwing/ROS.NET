@@ -27,7 +27,7 @@ namespace XmlRpc_Wrapper
     [DebuggerStepThrough]
 #endif
     //TODO: OPERATOR GARBAGE?
-    [Serializable]
+    //[Serializable]
     public class XmlRpcValue // : IDisposable
     {
         public enum ValueType
@@ -481,12 +481,12 @@ namespace XmlRpc_Wrapper
             settings.ConformanceLevel = ConformanceLevel.Fragment;
             settings.CloseOutput = false;
             StringWriter strm = new StringWriter();
-            XmlWriter writer = XmlWriter.Create(strm, settings);
-
-            XmlDocument doc = new XmlDocument();
-            toXml(doc, doc);
-            doc.WriteContentTo(writer);
-            writer.Close();
+            using (XmlWriter writer = XmlWriter.Create(strm, settings))
+            {
+                XmlDocument doc = new XmlDocument();
+                toXml(doc, doc);
+                doc.WriteContentTo(writer);
+            }
             string result = strm.ToString();
             return result;
         }
