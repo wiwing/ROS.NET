@@ -10,18 +10,15 @@
 // Created: 09/01/2015
 // Updated: 02/10/2016
 
-#region USINGZ
-
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Linq;
 using Messages;
 using XmlRpc_Wrapper;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
-
-#endregion
 
 namespace Ros_CSharp
 {
@@ -264,7 +261,7 @@ namespace Ros_CSharp
 
             if (HasHeader)
             {
-                object h = holder.msg.GetType().GetField("header").GetValue(holder.msg);
+                object h = holder.msg.GetType().GetTypeInfo().GetField("header").GetValue(holder.msg);
                 m.Header header;
                 if (h == null)
                     header = new m.Header();
@@ -279,7 +276,7 @@ namespace Ros_CSharp
                 {
                     header.frame_id = "";
                 }
-                holder.msg.GetType().GetField("header").SetValue(holder.msg, header);
+                holder.msg.GetType().GetTypeInfo().GetField("header").SetValue(holder.msg, header);
             }
             holder.msg.connection_header = connection_header.Values;
 

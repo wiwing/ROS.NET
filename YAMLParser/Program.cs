@@ -29,7 +29,6 @@ namespace YAMLParser
         public static string fronthalf;
         public static string name = "Messages";
         public static string outputdir = "Messages";
-        public static string outputdir_secondpass = "TempSecondPass";
         private static string configuration = "Debug"; //Debug, Release, etc.
 
         private static void Main(string[] args)
@@ -44,8 +43,11 @@ namespace YAMLParser
                     interactive = true;
                     firstarg++;
                 }
-                configuration = args[firstarg++];
-                if (args[firstarg].Trim().Equals("-i"))
+                if (firstarg < args.Length - 1)
+                {
+                    configuration = args[firstarg++];
+                }
+                if (firstarg < args.Length-1 && args[firstarg].Trim().Equals("-i"))
                 {
                     interactive = true;
                     firstarg++;
@@ -70,7 +72,6 @@ namespace YAMLParser
             }
 
             outputdir = Path.Combine(solutiondir, outputdir);
-            outputdir_secondpass = Path.Combine(solutiondir, outputdir_secondpass);
             var paths = new List<MsgFileLocation>();
             var pathssrv = new List<MsgFileLocation>();
             Console.WriteLine("Generatinc C# classes for ROS Messages...\n");
@@ -251,25 +252,14 @@ namespace YAMLParser
 
         public static void GenerateProject(List<MsgsFile> files, List<SrvsFile> srvfiles)
         {
-            if (!Directory.Exists(outputdir + "\\Properties"))
-                Directory.CreateDirectory(outputdir + "\\Properties");
-            File.WriteAllText(outputdir + "\\SerializationHelper.cs", Templates.SerializationHelper);
-            File.WriteAllText(outputdir + "\\Interfaces.cs", Templates.Interfaces);
-            File.WriteAllText(outputdir + "\\Properties\\AssemblyInfo.cs", Templates.AssemblyInfo);
+            File.WriteAllText(Path.Combine(outputdir, "SerializationHelper.cs"), Templates.SerializationHelper);
+            File.WriteAllText(Path.Combine(outputdir, "Interfaces.cs"), Templates.Interfaces);
             string[] lines = Templates.MessagesProj.Split('\n');
             string output = "";
             for (int i = 0; i < lines.Length; i++)
             {
-#if FOR_UNITY
-                if (lines[i].Contains("TargetFrameworkProfile"))
-                    output += "<TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>\n";
-                else
-#endif
-                {
-                    output += "" + lines[i] + "\n";
-                }
-
-                if (lines[i].Contains("<Compile Include="))
+                output += "" + lines[i] + "\n";
+                /*if (lines[i].Contains("<Compile Include="))
                 {
                     foreach (MsgsFile m in files)
                     {
@@ -282,10 +272,10 @@ namespace YAMLParser
                     output += "\t<Compile Include=\"SerializationHelper.cs\" />\n";
                     output += "\t<Compile Include=\"Interfaces.cs\" />\n";
                     output += "\t<Compile Include=\"MessageTypes.cs\" />\n";
-                }
+                }*/
             }
-            File.WriteAllText(outputdir + "\\" + name + ".csproj", output);
-            File.WriteAllText(outputdir + "\\.gitignore", "*");
+            File.WriteAllText(Path.Combine(outputdir, name + ".csproj"), output);
+            File.WriteAllText(Path.Combine(outputdir, ".gitignore"), "*");
         }
 
         public static void BuildProject()
@@ -293,12 +283,10 @@ namespace YAMLParser
             BuildProject("BUILDING GENERATED PROJECT WITH MSBUILD!");
         }
 
-        public static void BuildProject(string spam)
+        static Process RunDotNet(string args)
         {
-            Console.WriteLine("\n\n" + spam);
             string fn = "dotnet";
-            string args = "build \"" + outputdir + "\\" + name + ".csproj\" -c " + configuration;
-            Process proc = new Process();
+            var proc = new Process();
             proc.StartInfo.RedirectStandardOutput = true;
             proc.StartInfo.RedirectStandardError = true;
             proc.StartInfo.UseShellExecute = false;
@@ -306,9 +294,32 @@ namespace YAMLParser
             proc.StartInfo.FileName = fn;
             proc.StartInfo.Arguments = args;
             proc.Start();
-            string output = proc.StandardOutput.ReadToEnd();
-            string error = proc.StandardError.ReadToEnd();
-            if (File.Exists(Path.Combine(outputdir, "\\bin\\", configuration, "\\",  name + ".dll")))
+            return proc;
+        }
+
+        public static void BuildProject(string spam)
+        {
+            Console.WriteLine("\n\n" + spam);
+
+            string output, error;
+
+            Console.WriteLine("Running .NET dependency restorer...");
+            string restoreArgs = "restore \"" + outputdir + "\\" + name + ".csproj\"";
+            var proc = RunDotNet(restoreArgs);
+            output = proc.StandardOutput.ReadToEnd();
+            error = proc.StandardError.ReadToEnd();
+            if (output.Length > 0)
+                Console.WriteLine(output);
+            if (error.Length > 0)
+                Console.WriteLine(error);
+
+            Console.WriteLine("Running .NET Builder...");
+            string buildArgs = "build \"" + outputdir + "\\" + name + ".csproj\" -c " + configuration;
+            proc = RunDotNet(buildArgs);
+
+            output = proc.StandardOutput.ReadToEnd();
+            error = proc.StandardError.ReadToEnd();
+            if (File.Exists(Path.Combine(outputdir, "bin", configuration, name + ".dll")))
             {
                 Console.WriteLine("\n\nGenerated DLL has been copied to:\n\t" + outputdir + "\\" + name + ".dll\n\n");
                 File.Copy(outputdir + "\\bin\\" + configuration + "\\" + name + ".dll", outputdir + "\\" + name + ".dll", true);

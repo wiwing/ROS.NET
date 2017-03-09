@@ -144,7 +144,7 @@ namespace YAMLParser
             {
                 for (int i = 0; i < data.Length; i++)
                 {
-                    md5.AppendData(data[1]);
+                    md5.AppendData(data[i]);
                 }
             }
 

@@ -251,7 +251,7 @@ namespace Ros_CSharp
 
             if (!IPAddress.TryParse(host, out IPA))
             {
-                foreach (IPAddress ipa in Dns.GetHostAddresses(host).Where(ipa => !ipa.ToString().Contains(":")))
+                foreach (IPAddress ipa in Dns.GetHostAddressesAsync(host).Result.Where(ipa => !ipa.ToString().Contains(":")))
                 {
                     IPA = ipa;
                     break;
@@ -289,13 +289,13 @@ namespace Ros_CSharp
             while (ROS.ok && !ROS.shutting_down)
             {
 #pragma warning disable 665
-                if ((completed = asyncres.AsyncWaitHandle.WaitOne(10,false)))
+                if ((completed = asyncres.AsyncWaitHandle.WaitOne(10)))
 #pragma warning restore 665
                     break;
                 if (DateTime.Now.Subtract(connectionAttempted).TotalSeconds >= 3)
                 {
                     EDB.WriteLine("TRYING TO CONNECT FOR " + DateTime.Now.Subtract(connectionAttempted).TotalSeconds + "s\t: " + this);
-                    if (!asyncres.AsyncWaitHandle.WaitOne(100,true))
+                    if (!asyncres.AsyncWaitHandle.WaitOne(100))
                     {
                         sock.Close();
                         sock = null;

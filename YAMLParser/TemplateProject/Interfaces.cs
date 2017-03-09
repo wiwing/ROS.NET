@@ -28,9 +28,9 @@ namespace Messages
                 if (constructors.ContainsKey(t))
                     return constructors[t].Invoke(t);
                 Type thistype = typeof (IRosMessage);
-                foreach (Type othertype in thistype.Assembly.GetTypes())
+                foreach (Type othertype in thistype.GetTypeInfo().Assembly.GetTypes())
                 {
-                    if (thistype == othertype || !othertype.IsSubclassOf(thistype))
+                    if (thistype == othertype || !othertype.GetTypeInfo().IsSubclassOf(thistype))
                     {
                         continue;
                     }
@@ -202,9 +202,9 @@ namespace Messages
                 if (constructors.ContainsKey(t))
                     return constructors[t].Invoke(t);
                 Type thistype = typeof (IRosService);
-                foreach (Type othertype in thistype.Assembly.GetTypes())
+                foreach (Type othertype in thistype.GetTypeInfo().Assembly.GetTypes())
                 {
-                    if (thistype == othertype || !othertype.IsSubclassOf(thistype))
+                    if (thistype == othertype || !othertype.GetTypeInfo().IsSubclassOf(thistype))
                     {
                         continue;
                     }

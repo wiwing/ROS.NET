@@ -57,8 +57,8 @@ namespace Ros_CSharp
                 IDictionary _vars;
 
                 //check user env first, then machine if user doesn't have uri defined.
-                if ((_vars = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User)).Contains("ROS_MASTER_URI")
-                    || (_vars = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine)).Contains("ROS_MASTER_URI"))
+                if ((_vars = Environment.GetEnvironmentVariables()).Contains("ROS_MASTER_URI")
+                    || (_vars = Environment.GetEnvironmentVariables()).Contains("ROS_MASTER_URI"))
                     ROS.ROS_MASTER_URI = (string) _vars["ROS_MASTER_URI"];
             }
 
@@ -68,8 +68,8 @@ namespace Ros_CSharp
                 IDictionary _vars;
 
                 //check user env first, then machine if user doesn't have uri defined.
-                if ((_vars = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User)).Contains("ROS_HOSTNAME")
-                    || (_vars = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine)).Contains("ROS_HOSTNAME"))
+                if ((_vars = Environment.GetEnvironmentVariables()).Contains("ROS_HOSTNAME")
+                    || (_vars = Environment.GetEnvironmentVariables()).Contains("ROS_HOSTNAME"))
                     ROS.ROS_HOSTNAME = (string) _vars["ROS_HOSTNAME"];
             }
 

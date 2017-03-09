@@ -198,14 +198,7 @@ namespace Ros_CSharp
         {
             while (tcpserver_transport != null && tcpserver_transport.Pending())
             {
-                tcpRosAcceptConnection(new TcpTransport(
-                    tcpserver_transport.
-#if TCPSERVER
-                        AcceptSocket()
-#else
-                    accept()
-#endif
-                    , PollManager.Instance.poll_set));
+                tcpRosAcceptConnection(new TcpTransport(tcpserver_transport.AcceptSocketAsync().Result, PollManager.Instance.poll_set));
             }
         }
 

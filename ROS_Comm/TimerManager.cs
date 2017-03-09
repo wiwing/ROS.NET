@@ -207,9 +207,10 @@ namespace Ros_CSharp
         /// </summary>
         public void Dispose()
         {
-            if (timer == null) return;
-            WaitHandle wh = new AutoResetEvent(false);
-            timer.Dispose(wh);
+            if (timer == null)
+                return;
+
+            timer.Dispose();
             timer = null;
         }
 

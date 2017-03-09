@@ -10,19 +10,16 @@
 // Created: 09/01/2015
 // Updated: 02/10/2016
 
-#region USINGZ
-
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Diagnostics;
 using System.Threading;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
-using System.Reflection;
 using System.Linq;
 
-#endregion
 
 namespace Ros_CSharp
 {
@@ -76,8 +73,9 @@ namespace Ros_CSharp
                     SignalEvent -= signal;
                 }
                 catch { }
-                Method = value.Method;
-                Target = value.Target;
+               
+               Method = value.GetMethodInfo();
+               Target = value.Target;
                 _op = value;
             }
         }
@@ -101,7 +99,7 @@ namespace Ros_CSharp
 
         private void threadFunc()
         {
-            while(ROS.ok && !disposed)
+            while (ROS.ok && !disposed)
             {
                 _go.WaitOne();
                 if (ROS.ok && !disposed)
@@ -128,8 +126,7 @@ namespace Ros_CSharp
 
     public class PollManager
     {
-        private static PollManager _instance;
-        private static object singleton_mutex = new object();
+        private static Lazy<PollManager> _instance = new Lazy<PollManager>(LazyThreadSafetyMode.ExecutionAndPublication);
         public PollSet poll_set;
         public bool shutting_down;
         public object signal_mutex = new object();
@@ -147,20 +144,16 @@ namespace Ros_CSharp
 #if !TRACE
             [DebuggerStepThrough]
 #endif
-                get
+            get
             {
-                if (_instance == null)
-                    lock (singleton_mutex)
-                        if (_instance == null)
-                            _instance = new PollManager();
-                return _instance;
+                return _instance.Value;
             }
         }
 
         public void addPollThreadListener(Action poll)
         {
 #if DEBUG
-            EDB.WriteLine("Adding pollthreadlistener " + poll.Target+":"+poll.Method);
+            EDB.WriteLine("Adding pollthreadlistener " + poll.Target + ":" + poll.GetMethodInfo().Name);
 #endif
             lock (signal_mutex)
             {
@@ -218,13 +211,14 @@ namespace Ros_CSharp
                 if (!thread.Join(2000))
                 {
                     EDB.WriteLine("PollManager had 2 seconds to drink the coolaid, and didn't. Trying the \"funnel method\".");
-                    try
-                    {
-                        thread.Abort();
-                    }
-                    catch (Exception ex)
-                    {
-                    }
+                    // AKo: ## fixme .NET Core has no Abort() on Thread obj
+                    //try
+                    //{
+                    //    thread.Abort();
+                    //}
+                    //catch (Exception ex)
+                    //{
+                    //}
                 }
                 thread = null;
             }

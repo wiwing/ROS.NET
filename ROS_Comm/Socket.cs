@@ -10,8 +10,6 @@
 // Created: 09/01/2015
 // Updated: 02/10/2016
 
-#region USINGZ
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,7 +18,6 @@ using System.Linq;
 using n = System.Net;
 using ns = System.Net.Sockets;
 
-#endregion
 
 namespace Ros_CSharp.CustomSocket
 {
@@ -144,12 +141,22 @@ namespace Ros_CSharp.CustomSocket
 
         public void Close()
         {
-            if (realsocket != null) realsocket.Close();
+            if (realsocket != null)
+                realsocket.Dispose();
         }
 
         public void Close(int timeout)
         {
-            if (realsocket != null) realsocket.Close(timeout);
+            if (realsocket != null)
+            {
+                //realsocket.Close(timeout);        // AKo: will be added in .net CoreFx 1.2, see 
+
+                realsocket.Shutdown(ns.SocketShutdown.Send);
+                realsocket.SetSocketOption(ns.SocketOptionLevel.Socket, ns.SocketOptionName.ReceiveTimeout, timeout);
+                ns.SocketError unused;
+                realsocket.Receive(null, 0, 0, ns.SocketFlags.None, out unused);
+                realsocket.Dispose();
+            }
         }
 
         public bool Connected
@@ -354,7 +361,7 @@ namespace Ros_CSharp.CustomSocket
                     disposed = true;
                     _freelist.Add(_fakefd);
                     _fakefd = 0;
-                    realsocket.Close();
+                    realsocket.Dispose();
                     realsocket = null;
                 }
             }

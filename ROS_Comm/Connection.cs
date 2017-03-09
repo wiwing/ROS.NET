@@ -12,13 +12,11 @@
 
 #define BEGIN_INVOKE
 
-#region USINGZ
-
 using System;
 using System.Collections;
 using System.Threading;
+using System.Reflection;
 
-#endregion
 
 namespace Ros_CSharp
 {
@@ -383,7 +381,7 @@ namespace Ros_CSharp
             lock (read_callback_mutex)
             {
                 if (!((ReadFinishedFunc)iar.AsyncState).EndInvoke(iar))
-                    Console.WriteLine(((ReadFinishedFunc)iar.AsyncState).Method.Name + " FAILED");
+                    Console.WriteLine(((ReadFinishedFunc)iar.AsyncState).GetMethodInfo().Name + " FAILED");
                 if (read_callback == null)
                     transport.disableRead();
             }
@@ -418,7 +416,9 @@ namespace Ros_CSharp
                             write_sent = 0;
                             write_size = 0;
                             if (!callback(this))
-                                Console.WriteLine("Failed to invoke " + callback.Method.Name);
+                            {
+                                Console.WriteLine("Failed to invoke " + callback.GetMethodInfo().Name);
+                            }
                         }
                     }
                 }

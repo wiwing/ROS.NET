@@ -38,28 +38,29 @@ namespace Ros_CSharp
         internal static void Ping()
         {
             return; //NO-OP
-            StackFrame sf = new StackTrace(new StackFrame(1, true)).GetFrame(0);
-            string file = sf.GetFileName();
-            int line = sf.GetFileLineNumber();
-            Dictionary<int, ScopedTimerRecord> filedict;
-            ScopedTimerRecord linerecord;
-            lock (records)
-            {
-                if (!records.ContainsKey(file))
-                {
-                    records.Add(file, new Dictionary<int, ScopedTimerRecord>());
-                }
-                filedict = records[file];
-            }
-            lock(filedict)
-            { 
-                if (!filedict.ContainsKey(line))
-                {
-                    filedict.Add(line, new ScopedTimerRecord(file, line));
-                }
-                linerecord = filedict[line];
-            }
-            linerecord.update();
+
+            //StackFrame sf = new StackTrace(new StackFrame(1, true)).GetFrame(0);
+            //string file = sf.GetFileName();
+            //int line = sf.GetFileLineNumber();
+            //Dictionary<int, ScopedTimerRecord> filedict;
+            //ScopedTimerRecord linerecord;
+            //lock (records)
+            //{
+            //    if (!records.ContainsKey(file))
+            //    {
+            //        records.Add(file, new Dictionary<int, ScopedTimerRecord>());
+            //    }
+            //    filedict = records[file];
+            //}
+            //lock(filedict)
+            //{ 
+            //    if (!filedict.ContainsKey(line))
+            //    {
+            //        filedict.Add(line, new ScopedTimerRecord(file, line));
+            //    }
+            //    linerecord = filedict[line];
+            //}
+            //linerecord.update();
         }
     }
 }

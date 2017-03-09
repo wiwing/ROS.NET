@@ -7,6 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XmlRpc_Wrapper.dotnetcore",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAMLParser", "YAMLParser\YAMLParser.csproj", "{C9AA7929-CEB0-44FC-BD0A-1148BE32CF8D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ROS_Comm", "ROS_Comm\ROS_Comm.csproj", "{765D1079-C12B-4F10-9B52-C580B6DD597C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Messages", "Messages\Messages.csproj", "{5581B3D9-A601-4778-9D95-6725C7671BD9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{C9AA7929-CEB0-44FC-BD0A-1148BE32CF8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9AA7929-CEB0-44FC-BD0A-1148BE32CF8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9AA7929-CEB0-44FC-BD0A-1148BE32CF8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{765D1079-C12B-4F10-9B52-C580B6DD597C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{765D1079-C12B-4F10-9B52-C580B6DD597C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{765D1079-C12B-4F10-9B52-C580B6DD597C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{765D1079-C12B-4F10-9B52-C580B6DD597C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5581B3D9-A601-4778-9D95-6725C7671BD9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5581B3D9-A601-4778-9D95-6725C7671BD9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5581B3D9-A601-4778-9D95-6725C7671BD9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5581B3D9-A601-4778-9D95-6725C7671BD9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
