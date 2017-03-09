@@ -125,7 +125,7 @@ namespace FauxMessages
                 {
                     string[] chunks = otherstuff.Split('=');
                     ConstValue = chunks[chunks.Length - 1].Trim();
-                    if (type.Equals("string", StringComparison.InvariantCultureIgnoreCase))
+                    if (type.Equals("string", StringComparison.OrdinalIgnoreCase))
                     {
                         otherstuff = chunks[0] + " = \"" + chunks[1].Trim() + "\"";
                     }
@@ -133,7 +133,7 @@ namespace FauxMessages
                 string prefix = "", suffix = "";
                 if (isconst)
                 {
-                    if (!type.Equals("string", StringComparison.InvariantCultureIgnoreCase))
+                    if (!type.Equals("string", StringComparison.OrdinalIgnoreCase))
                     {
                         prefix = "const ";
                     }
@@ -227,7 +227,7 @@ namespace FauxMessages
                 {
                     string[] chunks = otherstuff.Split('=');
                     ConstValue = chunks[chunks.Length - 1].Trim();
-                    if (Type.Equals("string", StringComparison.InvariantCultureIgnoreCase))
+                    if (Type.Equals("string", StringComparison.OrdinalIgnoreCase))
                     {
                         otherstuff = chunks[0] + " = \"" + chunks[1].Trim().Replace("\"", "") + "\"";
                     }
@@ -239,7 +239,7 @@ namespace FauxMessages
                 string prefix = "", suffix = "";
                 if (isconst)
                 {
-                    if (!Type.Equals("string", StringComparison.InvariantCultureIgnoreCase))
+                    if (!Type.Equals("string", StringComparison.OrdinalIgnoreCase))
                     {
                         prefix = "const ";
                     }

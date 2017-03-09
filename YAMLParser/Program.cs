@@ -10,8 +10,6 @@
 // Created: 04/28/2015
 // Updated: 10/07/2015
 
-#region USINGZ
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,7 +18,6 @@ using System.Linq;
 using System.Threading;
 using FauxMessages;
 
-#endregion
 
 namespace YAMLParser
 {
@@ -34,6 +31,7 @@ namespace YAMLParser
         public static string outputdir = "Messages";
         public static string outputdir_secondpass = "TempSecondPass";
         private static string configuration = "Debug"; //Debug, Release, etc.
+
         private static void Main(string[] args)
         {
             string solutiondir;
@@ -53,8 +51,9 @@ namespace YAMLParser
                     firstarg++;
                 }
             }
+
             string yamlparser_parent = "";
-            DirectoryInfo di = new DirectoryInfo(Environment.CurrentDirectory);
+            DirectoryInfo di = new DirectoryInfo(Directory.GetCurrentDirectory());
             while (di.Name != "YAMLParser")
             {
                 di = Directory.GetParent(di.FullName);
@@ -130,6 +129,7 @@ namespace YAMLParser
             else
             {
                 foreach (string s in Directory.GetFiles(outputdir, "*.cs"))
+                {
                     try
                     {
                         File.Delete(s);
@@ -138,8 +138,11 @@ namespace YAMLParser
                     {
                         Console.WriteLine(e);
                     }
+                }
                 foreach (string s in Directory.GetDirectories(outputdir))
+                {
                     if (s != "Properties")
+                    {
                         try
                         {
                             Directory.Delete(s, true);
@@ -148,11 +151,15 @@ namespace YAMLParser
                         {
                             Console.WriteLine(e);
                         }
+                    }
+                }
             }
-            if (!Directory.Exists(outputdir)) Directory.CreateDirectory(outputdir);
+            if (!Directory.Exists(outputdir))
+                Directory.CreateDirectory(outputdir);
             else
             {
                 foreach (string s in Directory.GetFiles(outputdir, "*.cs"))
+                {
                     try
                     {
                         File.Delete(s);
@@ -161,8 +168,11 @@ namespace YAMLParser
                     {
                         Console.WriteLine(e);
                     }
+                }
                 foreach (string s in Directory.GetDirectories(outputdir))
+                {
                     if (s != "Properties")
+                    {
                         try
                         {
                             Directory.Delete(s, true);
@@ -171,6 +181,8 @@ namespace YAMLParser
                         {
                             Console.WriteLine(e);
                         }
+                    }
+                }
             }
         }
 
@@ -276,34 +288,6 @@ namespace YAMLParser
             File.WriteAllText(outputdir + "\\.gitignore", "*");
         }
 
-        private static string __where_be_at_my_vc____is;
-
-        public static string VCDir
-        {
-            get
-            {
-                if (__where_be_at_my_vc____is != null) return __where_be_at_my_vc____is;
-                foreach (string possibledir in new[] {"\\Microsoft.NET\\Framework64\\", "\\Microsoft.NET\\Framework"})
-                {
-                    foreach (string possibleversion in new[] {"v3.5", "v4.0"})
-                    {
-                        if (!Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.System) + "\\.." + possibledir)) continue;
-                        foreach (string dir in Directory.GetDirectories(Environment.GetFolderPath(Environment.SpecialFolder.System) + "\\.." + possibledir))
-                        {
-                            if (!Directory.Exists(dir)) continue;
-                            string[] tmp = dir.Split('\\');
-                            if (tmp[tmp.Length - 1].Contains(possibleversion))
-                            {
-                                __where_be_at_my_vc____is = dir;
-                                return __where_be_at_my_vc____is;
-                            }
-                        }
-                    }
-                }
-                return __where_be_at_my_vc____is;
-            }
-        }
-
         public static void BuildProject()
         {
             BuildProject("BUILDING GENERATED PROJECT WITH MSBUILD!");
@@ -311,25 +295,20 @@ namespace YAMLParser
 
         public static void BuildProject(string spam)
         {
-            string F = VCDir + "\\msbuild.exe";
-            if (!File.Exists(F))
-            {
-                Exception up = new Exception("ALL OVER YOUR FACE\n" + F);
-                throw up;
-            }
             Console.WriteLine("\n\n" + spam);
-            string args = "/nologo \"" + outputdir + "\\" + name + ".csproj\" /property:Configuration="+configuration;
+            string fn = "dotnet";
+            string args = "build \"" + outputdir + "\\" + name + ".csproj\" -c " + configuration;
             Process proc = new Process();
             proc.StartInfo.RedirectStandardOutput = true;
             proc.StartInfo.RedirectStandardError = true;
             proc.StartInfo.UseShellExecute = false;
             proc.StartInfo.CreateNoWindow = true;
-            proc.StartInfo.FileName = F;
+            proc.StartInfo.FileName = fn;
             proc.StartInfo.Arguments = args;
             proc.Start();
             string output = proc.StandardOutput.ReadToEnd();
             string error = proc.StandardError.ReadToEnd();
-            if (File.Exists(outputdir + "\\bin\\"+configuration+"\\" + name + ".dll"))
+            if (File.Exists(Path.Combine(outputdir, "\\bin\\", configuration, "\\",  name + ".dll")))
             {
                 Console.WriteLine("\n\nGenerated DLL has been copied to:\n\t" + outputdir + "\\" + name + ".dll\n\n");
                 File.Copy(outputdir + "\\bin\\" + configuration + "\\" + name + ".dll", outputdir + "\\" + name + ".dll", true);
@@ -390,36 +369,35 @@ namespace YAMLParser
             return uberpwnage;
         }
 
-        public static void GenDict(string dictname, string keytype, string valuetype, ref string appendto, int start, int end,
-            Func<int, string> genKey)
-        {
-            GenDict(dictname, keytype, valuetype, ref appendto, start, end, genKey, null, null);
-        }
+        //public static void GenDict(string dictname, string keytype, string valuetype, ref string appendto, int start, int end,
+        //    Func<int, string> genKey)
+        //{
+        //    GenDict(dictname, keytype, valuetype, ref appendto, start, end, genKey, null, null);
+        //}
 
-        public static void GenDict(string dictname, string keytype, string valuetype, ref string appendto, int start, int end,
-            Func<int, string> genKey, Func<int, string> genVal)
-        {
-            GenDict(dictname, keytype, valuetype, ref appendto, start, end, genKey, genVal, null);
-        }
+        //public static void GenDict(string dictname, string keytype, string valuetype, ref string appendto, int start, int end,
+        //    Func<int, string> genKey, Func<int, string> genVal)
+        //{
+        //    GenDict(dictname, keytype, valuetype, ref appendto, start, end, genKey, genVal, null);
+        //}
 
-
-        public static void GenDict
-            (string dictname, string keytype, string valuetype, ref string appendto, int start, int end,
-                Func<int, string> genKey, Func<int, string> genVal, string DEFAULT)
-        {
-            appendto +=
-                string.Format("\n\t\tpublic static Dictionary<{1}, {2}> {0} = new Dictionary<{1}, {2}>()\n\t\t{{",
-                    dictname, keytype, valuetype);
-            if (DEFAULT != null)
-                appendto += "\n\t\t\t{" + DEFAULT + ",\n";
-            for (int i = start; i < end; i++)
-            {
-                if (genVal != null)
-                    appendto += string.Format("\t\t\t{{{0}, {1}}}{2}", genKey(i), genVal(i), (i < end - 1 ? ",\n" : ""));
-                else
-                    appendto += string.Format("\t\t\t{{{0}}}{1}", genKey(i), (i < end - 1 ? ",\n" : ""));
-            }
-            appendto += "\n\t\t};";
-        }
+        //public static void GenDict
+        //    (string dictname, string keytype, string valuetype, ref string appendto, int start, int end,
+        //        Func<int, string> genKey, Func<int, string> genVal, string DEFAULT)
+        //{
+        //    appendto +=
+        //        string.Format("\n\t\tpublic static Dictionary<{1}, {2}> {0} = new Dictionary<{1}, {2}>()\n\t\t{{",
+        //            dictname, keytype, valuetype);
+        //    if (DEFAULT != null)
+        //        appendto += "\n\t\t\t{" + DEFAULT + ",\n";
+        //    for (int i = start; i < end; i++)
+        //    {
+        //        if (genVal != null)
+        //            appendto += string.Format("\t\t\t{{{0}, {1}}}{2}", genKey(i), genVal(i), (i < end - 1 ? ",\n" : ""));
+        //        else
+        //            appendto += string.Format("\t\t\t{{{0}}}{1}", genKey(i), (i < end - 1 ? ",\n" : ""));
+        //    }
+        //    appendto += "\n\t\t};";
+        //}
     }
 }

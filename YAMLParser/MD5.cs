@@ -24,15 +24,19 @@ namespace YAMLParser
                 string hashableres = PrepareToHash(m.Response);
                 if (hashablereq == null || hashableres == null)
                     return null;
+
                 byte[] req = Encoding.ASCII.GetBytes(hashablereq);
                 byte[] res = Encoding.ASCII.GetBytes(hashableres);
+                
+                var md5 = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.MD5);
+                md5.AppendData(req);
+                md5.AppendData(res);
+                var hash = md5.GetHashAndReset();
+
                 StringBuilder sb = new StringBuilder();
-                var md5 = System.Security.Cryptography.MD5.Create();
-                md5.TransformBlock(req, 0, req.Length, req, 0);
-                md5.TransformFinalBlock(res, 0, res.Length);
-                for (int i = 0; i < md5.Hash.Length; i++)
+                for (int i = 0; i < hash.Length; i++)
                 {
-                    sb.AppendFormat("{0:x2}", md5.Hash[i]);
+                    sb.AppendFormat("{0:x2}", hash[i]);
                 }
                 srvmd5memo.Add(m.Name, sb.ToString());
             }
@@ -135,19 +139,20 @@ namespace YAMLParser
 
         public static string Sum(params byte[][] data)
         {
-            StringBuilder sb = new StringBuilder();
-            System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create();
+            var md5 = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.MD5);
             if (data.Length > 0)
             {
-                for (int i = 0; i < data.Length - 1; i++)
+                for (int i = 0; i < data.Length; i++)
                 {
-                    md5.TransformBlock(data[i], 0, data[i].Length, data[0], 0);
+                    md5.AppendData(data[1]);
                 }
-                md5.TransformFinalBlock(data[data.Length - 1], 0, data[data.Length - 1].Length);
             }
-            for (int i = 0; i < md5.Hash.Length; i++)
+
+            var hash = md5.GetHashAndReset();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < hash.Length; i++)
             {
-                sb.AppendFormat("{0:x2}", md5.Hash[i]);
+                sb.AppendFormat("{0:x2}", hash[i]);
             }
             return sb.ToString();
         }
