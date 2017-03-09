@@ -9,16 +9,10 @@
 // 
 // Created: 03/16/2016
 // Updated: 03/17/2016
-
-#region USINGZ
-
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
-
-#endregion
 
 namespace XmlRpc_Wrapper
 {

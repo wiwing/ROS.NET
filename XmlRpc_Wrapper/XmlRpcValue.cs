@@ -10,25 +10,18 @@
 // Created: 03/16/2016
 // Updated: 03/17/2016
 
-#region USINGZ
-
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Xml;
 
-#endregion
 
 namespace XmlRpc_Wrapper
 {
 #if !TRACE
     [DebuggerStepThrough]
 #endif
-    //TODO: OPERATOR GARBAGE?
-    //[Serializable]
-    public class XmlRpcValue // : IDisposable
+    public class XmlRpcValue
     {
         public enum ValueType
         {
@@ -242,8 +235,8 @@ namespace XmlRpc_Wrapper
                 Set(i, bres);
             else
             {
-                throw new Exception("Why is this thing a " + o + "??");
-                Set(i, o.ToString());
+                throw new Exception("Why is this thing a " + o + "??");         // ## AKo: review
+                // Set(i, o.ToString());
             }
         }
 
@@ -467,7 +460,7 @@ namespace XmlRpc_Wrapper
                     asString = tex;
                 }
             }
-            catch (Exception ex)
+            catch
             {
                 return false;
             }

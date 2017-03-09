@@ -10,14 +10,11 @@
 // Created: 03/16/2016
 // Updated: 03/17/2016
 
-#region USINGZ
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-#endregion
 
 namespace XmlRpc_Wrapper
 {

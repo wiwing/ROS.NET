@@ -9,19 +9,11 @@
 // 
 // Created: 03/16/2016
 // Updated: 03/17/2016
-
-#region USINGZ
-
-//#define REFDEBUG
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Xml;
-using System.Xml.XPath;
-
-#endregion
 
 namespace XmlRpc_Wrapper
 {
@@ -426,7 +418,7 @@ namespace XmlRpc_Wrapper
                     socket = new TcpClient();
                     socket.ConnectAsync(_host, _port).Wait();
                 }
-                catch (SocketException ex)
+                catch (SocketException)
                 {
                     return false;
                 }
@@ -619,7 +611,6 @@ namespace XmlRpc_Wrapper
                 //result = new XmlRpcValue();
                 if (pars != null)
                 {
-                    bool isArray = false;
                     var selection = pars.SelectNodes("param");
                     if (selection.Count > 1)
                     {

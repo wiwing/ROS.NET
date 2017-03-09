@@ -10,19 +10,14 @@
 // Created: 03/16/2016
 // Updated: 03/17/2016
 
-#region USINGZ
-
-//#define REFDEBUG
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Xml;
 
-#endregion
 
 namespace XmlRpc_Wrapper
 {
@@ -296,7 +291,6 @@ namespace XmlRpc_Wrapper
         // Parse the method name and the argument values from the request.
         private string parseRequest(XmlRpcValue parms, string _request)
         {
-            bool success = true;
             string methodName = "unknown";
             //XmlRpcValue result = null;
             using (XmlReader reader = XmlReader.Create(new StringReader(_request)))

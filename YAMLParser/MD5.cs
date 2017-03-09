@@ -1,16 +1,11 @@
-﻿#region USINGZ
-
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.Serialization;
 using System.Text;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using FauxMessages;
 
-#endregion
 
 namespace YAMLParser
 {
@@ -32,7 +27,7 @@ namespace YAMLParser
                 byte[] req = Encoding.ASCII.GetBytes(hashablereq);
                 byte[] res = Encoding.ASCII.GetBytes(hashableres);
                 StringBuilder sb = new StringBuilder();
-                System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create();
+                var md5 = System.Security.Cryptography.MD5.Create();
                 md5.TransformBlock(req, 0, req.Length, req, 0);
                 md5.TransformFinalBlock(res, 0, res.Length);
                 for (int i = 0; i < md5.Hash.Length; i++)
@@ -55,8 +50,6 @@ namespace YAMLParser
             }
             return md5memo[m.Name];
         }
-
-        #region BEWARE ALL YE WHOSE EYES GAZE UPON THESE LINES
 
         private static string PrepareToHash(MsgsFile irm)
         {
@@ -134,8 +127,6 @@ namespace YAMLParser
             }
             return hashme;
         }
-
-        #endregion
 
         public static string Sum(params string[] str)
         {

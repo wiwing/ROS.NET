@@ -10,22 +10,13 @@
 // Created: 03/16/2016
 // Updated: 03/17/2016
 
-#region USINGZ
-
-//#define REFDEBUGWrapper
-
-
-#endregion
-
-using System.Diagnostics;
-
 namespace XmlRpc_Wrapper
 {
 #if !TRACE
     [DebuggerStepThrough]
 #endif
 
-    public class XmlRpcServerMethod //: IDisposable
+    public class XmlRpcServerMethod
     {
         private XMLRPCFunc _FUNC;
 
@@ -48,10 +39,6 @@ namespace XmlRpc_Wrapper
             get { return _FUNC; }
             set { SetFunc((_FUNC = value)); }
         }
-
-        #region IDisposable Members
-
-        #endregion
 
         public void SetFunc(XMLRPCFunc func)
         {
