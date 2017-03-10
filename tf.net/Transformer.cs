@@ -82,7 +82,7 @@ namespace tf.net
         {
             foreach (gm.TransformStamped tf in msg.transforms)
                 if (!setTransform(new emTransform(tf)))
-                    ROS.Warn("Failed to setTransform in transformer update function");
+                    ROS.Warn()("Failed to setTransform in transformer update function");
         }
 
         public static string resolve(string prefix, string frame_name)
@@ -141,7 +141,7 @@ namespace tf.net
             string error_string = null;
             bool result = lookupTransform(target_frame, source_frame, time, out transform, ref error_string);
             if (!result && error_string != null)
-                ROS.Error(error_string);
+                ROS.Error()(error_string);
             return result;
         }
 

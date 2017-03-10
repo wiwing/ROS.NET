@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ROS_Comm", "ROS_Comm\ROS_Co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Messages", "Messages\Messages.csproj", "{5581B3D9-A601-4778-9D95-6725C7671BD9}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tf.net", "tf.net\tf.net.csproj", "{DD9EFA90-09A4-45C9-BBF0-CB146507EAE8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{5581B3D9-A601-4778-9D95-6725C7671BD9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5581B3D9-A601-4778-9D95-6725C7671BD9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5581B3D9-A601-4778-9D95-6725C7671BD9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD9EFA90-09A4-45C9-BBF0-CB146507EAE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD9EFA90-09A4-45C9-BBF0-CB146507EAE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD9EFA90-09A4-45C9-BBF0-CB146507EAE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD9EFA90-09A4-45C9-BBF0-CB146507EAE8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using XmlRpc_Wrapper;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
+
 
 namespace rosmaster
 {
@@ -274,11 +273,8 @@ namespace rosmaster
                 }
 
             }
-
-
         }
 
-        [Serializable]
         public class Param : Dictionary<string, Param>
         {
 
@@ -352,12 +348,6 @@ namespace rosmaster
             {
                 this[key] = val;
             }
-
-            public Param(SerializationInfo info, StreamingContext context)
-
-      : base(info, context) {
-
-    }
 
             /*public Object Clone()
             {
