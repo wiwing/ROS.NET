@@ -10,11 +10,10 @@
 // Created: 09/01/2015
 // Updated: 02/10/2016
 
-#region USINGZ
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using System.Diagnostics;
 using System.Linq;
 using Messages;
@@ -23,7 +22,6 @@ using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 
-#endregion
 
 namespace Ros_CSharp
 {
@@ -35,8 +33,8 @@ namespace Ros_CSharp
 
         #endregion
 
-        private static TopicManager _instance;
-        private static object singleton_mutex = new object();
+        private static Lazy<TopicManager> _instance = new Lazy<TopicManager>(LazyThreadSafetyMode.ExecutionAndPublication);
+
         private List<Publication> advertised_topics = new List<Publication>();
         private object advertised_topics_mutex = new object();
         private bool shutting_down;
@@ -49,18 +47,7 @@ namespace Ros_CSharp
 #if !TRACE
             [DebuggerStepThrough]
 #endif
-                get
-            {
-                if (_instance == null)
-                {
-                    lock (singleton_mutex)
-                    {
-                        if (_instance == null)
-                            _instance = new TopicManager();
-                    }
-                }
-                return _instance;
-            }
+            get { return _instance.Value; }
         }
 
         /// <summary>
@@ -88,11 +75,14 @@ namespace Ros_CSharp
         {
             lock (shutting_down_mutex)
             {
-                if (shutting_down) return;
+                if (shutting_down)
+                    return;
+
                 lock (subs_mutex)
                 {
                     shutting_down = true;
                 }
+
                 XmlRpcManager.Instance.unbind("publisherUpdate");
                 XmlRpcManager.Instance.unbind("requestTopic");
                 XmlRpcManager.Instance.unbind("getBusStats");

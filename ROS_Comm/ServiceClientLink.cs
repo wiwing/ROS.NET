@@ -40,7 +40,7 @@ namespace Ros_CSharp
             if (!header.Values.Contains("md5sum") || !header.Values.Contains("service") || !header.Values.Contains("callerid"))
             {
                 string bbq = "Bogus tcpros header. did not have required elements: md5sum, service, callerid";
-                ROS.Error(bbq);
+                ROS.Error()(bbq);
                 connection.sendHeaderError(ref bbq);
                 return false;
             }
@@ -51,12 +51,12 @@ namespace Ros_CSharp
             if (header.Values.Contains("persistent") && ((string) header.Values["persistent"] == "1" || (string) header.Values["persistent"] == "true"))
                 persistent = true;
 
-            ROS.Debug("Service client [{0}] wants service [{1}] with md5sum [{2}]", client_callerid, service, md5sum);
+            ROS.Debug()("Service client [{0}] wants service [{1}] with md5sum [{2}]", client_callerid, service, md5sum);
             IServicePublication isp = ServiceManager.Instance.lookupServicePublication(service);
             if (isp == null)
             {
                 string bbq = string.Format("received a tcpros connection for a nonexistent service [{0}]", service);
-                ROS.Error(bbq);
+                ROS.Error()(bbq);
                 connection.sendHeaderError(ref bbq);
                 return false;
             }
@@ -64,7 +64,7 @@ namespace Ros_CSharp
             if (isp.md5sum != md5sum && md5sum != "*" && isp.md5sum != "*")
             {
                 string bbq = "client wants service " + service + " to have md5sum " + md5sum + " but it has " + isp.md5sum + ". Dropping connection";
-                ROS.Error(bbq);
+                ROS.Error()(bbq);
                 connection.sendHeaderError(ref bbq);
                 return false;
             }
@@ -72,7 +72,7 @@ namespace Ros_CSharp
             if (isp.isDropped)
             {
                 string bbq = "received a tcpros connection for a nonexistent service [" + service + "]";
-                ROS.Error(bbq);
+                ROS.Error()(bbq);
                 connection.sendHeaderError(ref bbq);
                 return false;
             }
@@ -138,7 +138,7 @@ namespace Ros_CSharp
             int len = BitConverter.ToInt32(buffer, 0);
             if (len > 1000000000)
             {
-                ROS.Error("A message over a gigabyte was predicted... stop... being... bad.");
+                ROS.Error()("A message over a gigabyte was predicted... stop... being... bad.");
                 connection.drop(Connection.DropReason.Destructing);
                 return false;
             }

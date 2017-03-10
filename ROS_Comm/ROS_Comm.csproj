@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Net.Sockets" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Messages\Messages.csproj" />
     <ProjectReference Include="..\XmlRpc_Wrapper\XmlRpc_Wrapper.dotnetcore.csproj" />
   </ItemGroup>

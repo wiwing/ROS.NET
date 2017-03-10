@@ -57,12 +57,12 @@ namespace Ros_CSharp
                 }
                 if (print_failure_reason)
                 {
-                    ROS.Info("waitForService: Service[{0}] could not connect to host [{1}:{2}], waiting...", mapped_name, host, port);
+                    ROS.Info()("waitForService: Service[{0}] could not connect to host [{1}:{2}], waiting...", mapped_name, host, port);
                 }
             }
             else if (print_failure_reason)
             {
-                ROS.Info("waitForService: Service[{0}] has not been advertised, waiting...", mapped_name);
+                ROS.Info()("waitForService: Service[{0}] has not been advertised, waiting...", mapped_name);
             }
             return false;
         }
@@ -89,7 +89,7 @@ namespace Ros_CSharp
 
             if (printed && ROS.ok)
             {
-                ROS.Info("waitForService: Service[{0}] is now available.", mapped_name);
+                ROS.Info()("waitForService: Service[{0}] is now available.", mapped_name);
             }
             return true;
         }

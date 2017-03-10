@@ -114,7 +114,7 @@ namespace Ros_CSharp
                 catch (Exception e)
                 {
                     string woops = "Exception thrown while processing service call: " + e;
-                    ROS.Error(woops);
+                    ROS.Error()(woops);
                     link.processResponse(woops, false);
                     return CallResult.Invalid;
                 }

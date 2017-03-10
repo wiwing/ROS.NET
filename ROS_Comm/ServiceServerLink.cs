@@ -124,7 +124,7 @@ namespace Ros_CSharp
                 md5sum = (string) header.Values["md5sum"];
             else
             {
-                ROS.Error("TCPROS header from service server did not have required element: md5sum");
+                ROS.Error()("TCPROS header from service server did not have required element: md5sum");
                 return false;
             }
             //TODO check md5sum
@@ -252,7 +252,7 @@ namespace Ros_CSharp
             int len = BitConverter.ToInt32(buf, 1);
             if (len > 1000000000)
             {
-                ROS.Error("GIGABYTE IS TOO BIIIIG");
+                ROS.Error()("GIGABYTE IS TOO BIIIIG");
                 connection.drop(Connection.DropReason.Destructing);
                 return false;
             }
@@ -275,9 +275,12 @@ namespace Ros_CSharp
 
         private bool onResponse(Connection conn, byte[] buf, int size, bool success)
         {
-            if (conn != connection) throw new Exception("WRONG CONNECTION");
+            if (conn != connection)
+                throw new Exception("WRONG CONNECTION");
 
-            if (!success) return false;
+            if (!success)
+                return false;
+
             lock (call_queue_mutex)
             {
                 if (current_call.success)
@@ -309,6 +312,7 @@ namespace Ros_CSharp
                 //instantiate null response IN CASE this call succeeds
                 resp = IRosMessage.generate((MsgTypes) Enum.Parse(typeof (MsgTypes), req.msgtype().ToString().Replace("Request", "Response")));
             }
+
             CallInfo info = new CallInfo {req = req, resp = resp, success = false, finished = false};
 
             bool immediate = false;
@@ -339,7 +343,7 @@ namespace Ros_CSharp
 
             if (!string.IsNullOrEmpty(info.exception))
             {
-                ROS.Error("Service call failed: service [{0}] responded with an error: {1}", name, info.exception);
+                ROS.Error()("Service call failed: service [{0}] responded with an error: {1}", name, info.exception);
             }
             return info.success;
         }

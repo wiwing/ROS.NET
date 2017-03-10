@@ -17,14 +17,13 @@
 #define FOR_UNITY
 #endif
 
-#region USINGZ
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Messages;
 using XmlRpc_Wrapper;
@@ -32,7 +31,6 @@ using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 
-#endregion
 
 namespace Ros_CSharp
 {
@@ -161,7 +159,6 @@ namespace Ros_CSharp
 
         public static NodeHandle GlobalNodeHandle;
         private static object shutting_down_mutex = new object();
-        private static bool dictinit;
 
         //last sim time time
         private static TimeSpan lastSimTime;
@@ -174,13 +171,14 @@ namespace Ros_CSharp
         private static readonly string ROSOUT_WARN_PREFIX = "[Warn ]";
         private static readonly string ROSOUT_ERROR_PREFIX = "[Error]";
         private static readonly string ROSOUT_FATAL_PREFIX = "[FATAL]";
+   
         private static Dictionary<RosOutAppender.ROSOUT_LEVEL, string> ROSOUT_PREFIX =
-            new Dictionary<RosOutAppender.ROSOUT_LEVEL, string>{
-                {RosOutAppender.ROSOUT_LEVEL.DEBUG, ROSOUT_DEBUG_PREFIX},
-                {RosOutAppender.ROSOUT_LEVEL.INFO, ROSOUT_INFO_PREFIX},
-                {RosOutAppender.ROSOUT_LEVEL.WARN, ROSOUT_WARN_PREFIX},
-                {RosOutAppender.ROSOUT_LEVEL.ERROR, ROSOUT_ERROR_PREFIX},
-                {RosOutAppender.ROSOUT_LEVEL.FATAL, ROSOUT_FATAL_PREFIX}
+            new Dictionary<RosOutAppender.ROSOUT_LEVEL, string> {
+                { RosOutAppender.ROSOUT_LEVEL.DEBUG, ROSOUT_DEBUG_PREFIX },
+                { RosOutAppender.ROSOUT_LEVEL.INFO, ROSOUT_INFO_PREFIX },
+                { RosOutAppender.ROSOUT_LEVEL.WARN, ROSOUT_WARN_PREFIX },
+                { RosOutAppender.ROSOUT_LEVEL.ERROR, ROSOUT_ERROR_PREFIX },
+                { RosOutAppender.ROSOUT_LEVEL.FATAL, ROSOUT_FATAL_PREFIX }
             };
 
 
@@ -391,105 +389,63 @@ namespace Ros_CSharp
             if (ROS.ProcessName != "devenv")
                 throw new Exception("ROS IS FREAKING OUT!");
         }
+        
+        public class ONLY_AUTO_PARAMS
+        {
+            private ONLY_AUTO_PARAMS() {}
+        }
+
+        public delegate void WriteDelegate(object format, params object[] args);
 
         /// <summary>
         ///     ROS_INFO(...)
         /// </summary>
-        /// <param name="o"> ... </param>
 #if !TRACE
         [DebuggerStepThrough]
 #endif
-        public static void Info(object o)
+        public static WriteDelegate Info(ONLY_AUTO_PARAMS CAPTURE_CALL_SITE = null, [CallerMemberName] string memberName = null, [CallerFilePath] string filePath = null, [CallerLineNumber] int lineNumber = 0)
         {
-            _rosout(o, RosOutAppender.ROSOUT_LEVEL.INFO);
-        }
-
-        /// <summary>
-        ///     ROS_INFO(...) (formatted)
-        /// </summary>
-        /// <param name="format"> format string </param>
-        /// <param name="args"> ... </param>
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
-        public static void Info(string format, params object[] args)
-        {
-            _rosout(string.Format(format, args), RosOutAppender.ROSOUT_LEVEL.INFO);
-        }
-
-        /// <summary>
-        ///     ROS_DEBUG(...)
-        /// </summary>
-        /// <param name="o"> ... </param>
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
-        public static void Debug(object o)
-        {
-            _rosout(o, RosOutAppender.ROSOUT_LEVEL.DEBUG);
+            return (format, args) => _rosout(format, args, RosOutAppender.ROSOUT_LEVEL.INFO, new CallerInfo { MemberName = memberName, FilePath = filePath, LineNumber = lineNumber });
         }
 
         /// <summary>
         ///     ROS_DEBUG(...) (formatted)
         /// </summary>
-        /// <param name="format"> format string </param>
-        /// <param name="args"> ... </param>
 #if !TRACE
         [DebuggerStepThrough]
 #endif
-        public static void Debug(string format, params object[] args)
+        public static WriteDelegate Debug(ONLY_AUTO_PARAMS CAPTURE_CALL_SITE = null, [CallerMemberName] string memberName = null, [CallerFilePath] string filePath = null, [CallerLineNumber] int lineNumber = 0)
         {
-            _rosout(string.Format(format, args), RosOutAppender.ROSOUT_LEVEL.DEBUG);
-        }
-
-        /// <summary>
-        ///     ROS_ERROR(...)
-        /// </summary>
-        /// <param name="o"> ... </param>
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
-        public static void Error(object o)
-        {
-            _rosout(o, RosOutAppender.ROSOUT_LEVEL.ERROR);
+            return (format, args) => _rosout(format, args, RosOutAppender.ROSOUT_LEVEL.DEBUG, new CallerInfo { MemberName = memberName, FilePath = filePath, LineNumber = lineNumber });
         }
 
         /// <summary>
         ///     ROS_INFO(...) (formatted)
         /// </summary>
-        /// <param name="format"> format string </param>
-        /// <param name="args"> ... </param>
 #if !TRACE
         [DebuggerStepThrough]
 #endif
-        public static void Error(string format, params object[] args)
+        public static WriteDelegate Error(ONLY_AUTO_PARAMS CAPTURE_CALL_SITE = null, [CallerMemberName] string memberName = null, [CallerFilePath] string filePath = null, [CallerLineNumber] int lineNumber = 0)
         {
-            _rosout(string.Format(format, args), RosOutAppender.ROSOUT_LEVEL.ERROR);
-        }
-
-        /// <summary>
-        ///     ROS_WARN(...)
-        /// </summary>
-        /// <param name="o"> ... </param>
-        [DebuggerStepThrough]
-        public static void Warn(object o)
-        {
-            _rosout(o, RosOutAppender.ROSOUT_LEVEL.WARN);
+            return (format, args) => _rosout(format, args, RosOutAppender.ROSOUT_LEVEL.ERROR, new CallerInfo { MemberName = memberName, FilePath = filePath, LineNumber = lineNumber });
         }
 
         /// <summary>
         ///     ROS_WARN(...) (formatted)
         /// </summary>
-        /// <param name="format"> format string </param>
-        /// <param name="args"> ... </param>
         [DebuggerStepThrough]
-        public static void Warn(string format, params object[] args)
+        public static WriteDelegate Warn(ONLY_AUTO_PARAMS CAPTURE_CALL_SITE = null, [CallerMemberName] string memberName = null, [CallerFilePath] string filePath = null, [CallerLineNumber] int lineNumber = 0)
         {
-            _rosout(string.Format(format, args), RosOutAppender.ROSOUT_LEVEL.WARN);
+            return (format, args) => _rosout(format, args, RosOutAppender.ROSOUT_LEVEL.WARN, new CallerInfo { MemberName = memberName, FilePath = filePath, LineNumber = lineNumber });
         }
 
-        private static void _rosout(object o, RosOutAppender.ROSOUT_LEVEL level)
+        private static void _rosout(object format, object[] args, RosOutAppender.ROSOUT_LEVEL level, CallerInfo callerInfo)
         {
+            if (format == null)
+                throw new ArgumentNullException(nameof(format));
+
+            string text = (args == null || args.Length == 0) ? format.ToString() : string.Format((string)format, args);
+            
             bool printit = true;
             if (level == RosOutAppender.ROSOUT_LEVEL.DEBUG)
             {
@@ -498,8 +454,8 @@ namespace Ros_CSharp
 #endif
             }
             if (printit)
-                EDB.WriteLine(ROSOUT_FMAT, ROSOUT_PREFIX[level], o);
-            RosOutAppender.Instance.Append(o.ToString(), level);
+                EDB.WriteLine(ROSOUT_FMAT, ROSOUT_PREFIX[level], text);
+            RosOutAppender.Instance.Append(text, level, callerInfo);
         }
 
         /// <summary>
@@ -736,32 +692,6 @@ namespace Ros_CSharp
                 XmlRpcManager.Instance.shutdown();
                 ConnectionManager.Instance.shutdown();
             }
-        }
-
-        /// <summary>
-        ///     Turns a string into a type, with magic, introspection, and a dictionary
-        /// </summary>
-        /// <param name="name"> the name of the type to return </param>
-        /// <returns> the type named by name </returns>
-        internal static Type GetDataType(string name)
-        {
-            if (!dictinit)
-            {
-                dictinit = true;
-                foreach (
-                    Assembly a in AppDomain.CurrentDomain.GetAssemblies().Union(new[] { Assembly.GetExecutingAssembly() })
-                    )
-                {
-                    foreach (Type t in a.GetTypes())
-                    {
-                        if (!typedict.ContainsKey(t.ToString()))
-                        {
-                            typedict.Add(t.ToString(), t);
-                        }
-                    }
-                }
-            }
-            return typedict[name];
         }
     }
 

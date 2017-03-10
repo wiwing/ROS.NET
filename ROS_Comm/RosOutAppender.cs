@@ -10,8 +10,6 @@
 // Created: 04/28/2015
 // Updated: 02/10/2016
 
-#region USINGZ
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,31 +21,26 @@ using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 
-#endregion
 
 namespace Ros_CSharp
 {
+    internal class CallerInfo
+    {
+        public string MemberName { get; set; }
+        public string FilePath { get; set; }
+        public int LineNumber { get; set; }
+    }
+
     public class RosOutAppender
     {
-        private static object singleton_init_mutex = new object();
-        private static RosOutAppender _instance;
+        private static Lazy<RosOutAppender> _instance = new Lazy<RosOutAppender>(LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static RosOutAppender Instance
         {
-            get
-            {
-                if (_instance == null)
-                    lock (singleton_init_mutex)
-                    {
-                        if (_instance == null)
-                            _instance = new RosOutAppender();
-                    }
-                return _instance;
-            }
+            get { return _instance.Value; }
         }
 
-        internal enum
-            ROSOUT_LEVEL
+        internal enum ROSOUT_LEVEL
         {
             DEBUG = 1,
             INFO = 2,
@@ -92,22 +85,21 @@ namespace Ros_CSharp
             }
         }
 
-        internal void Append(string m, ROSOUT_LEVEL lvl)
+        internal void Append(string message, ROSOUT_LEVEL level, CallerInfo callerInfo)
         {
-            Append(m, lvl, 4);
-        }
-
-        private void Append(string m, ROSOUT_LEVEL lvl, int level)
-        {
-            StackFrame sf = new StackTrace(new StackFrame(level, true)).GetFrame(0);
-            Log logmsg = new Log
+            Log logMessage = new Log
             {
-                msg = m, name = this_node.Name, file = sf.GetFileName(), function = sf.GetMethod().Name, line = (uint) sf.GetFileLineNumber(), level = ((byte) ((int) lvl)),
+                msg = message,
+                name = this_node.Name,
+                file = callerInfo.FilePath,
+                function = callerInfo.MemberName,
+                line = (uint)callerInfo.LineNumber,
+                level = ((byte) ((int)level)),
                 header = new m.Header() { stamp = ROS.GetTime() }
             };
-            TopicManager.Instance.getAdvertisedTopics(out logmsg.topics);
+            TopicManager.Instance.getAdvertisedTopics(out logMessage.topics);
             lock (log_queue)
-                log_queue.Enqueue(logmsg);
+                log_queue.Enqueue(logMessage);
         }
 
         private void logThread()

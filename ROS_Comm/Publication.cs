@@ -386,7 +386,7 @@ namespace Ros_CSharp
 
         public virtual CallResult call()
         {
-            ROS.Debug("CALLED PEERCONNDISCONNCALLBACK");
+            ROS.Debug()("CALLED PEERCONNDISCONNCALLBACK");
             SingleSubscriberPublisher pub = new SingleSubscriberPublisher(sub_link);
             callback(pub);
             return CallResult.Success;

@@ -17,6 +17,7 @@ using System.Threading;
 using System.Linq;
 using n = System.Net;
 using ns = System.Net.Sockets;
+using ROS_Comm.APMWorkaround;
 
 
 namespace Ros_CSharp.CustomSocket
@@ -72,31 +73,31 @@ namespace Ros_CSharp.CustomSocket
             }
         }
 
-        public IAsyncResult BeginConnect(n.EndPoint endpoint, AsyncCallback ac, object st)
+        public IAsyncResult BeginConnect(n.EndPoint endpoint, AsyncCallback callback, object state)
         {
             n.IPEndPoint ipep = endpoint as n.IPEndPoint;
             if (endpoint == null)
                 throw new Exception("Sorry, guy... but this isn't in the scope of this class's purpose.");
             attemptedConnectionEndpoint = ipep.Address.ToString();
-            return realsocket.BeginConnect(endpoint, ac, st);
+            return realsocket.BeginConnect(endpoint, callback, state);
         }
 
-        public IAsyncResult BeginConnect(n.IPAddress address, int port, AsyncCallback ac, object st)
+        public IAsyncResult BeginConnect(n.IPAddress address, int port, AsyncCallback callback, object state)
         {
             attemptedConnectionEndpoint = address.ToString();
-            return realsocket.BeginConnect(address, port, ac, st);
+            return realsocket.BeginConnect(address, port, callback, state);
         }
 
-        public IAsyncResult BeginConnect(n.IPAddress[] addresses, int port, AsyncCallback ac, object st)
+        public IAsyncResult BeginConnect(n.IPAddress[] addresses, int port, AsyncCallback callback, object state)
         {
             attemptedConnectionEndpoint = addresses[0].ToString();
-            return realsocket.BeginConnect(addresses, port, ac, st);
+            return realsocket.BeginConnect(addresses, port, callback, state);
         }
 
-        public IAsyncResult BeginConnect(string host, int port, AsyncCallback ac, object st)
+        public IAsyncResult BeginConnect(string host, int port, AsyncCallback callback, object state)
         {
             attemptedConnectionEndpoint = host;
-            return realsocket.BeginConnect(host, port, ac, st);
+            return realsocket.BeginConnect(host, port, callback, state);
         }
 
         public void Connect(n.IPAddress[] address, int port)
