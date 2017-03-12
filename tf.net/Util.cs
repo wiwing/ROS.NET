@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Messages.std_msgs;
-using Ros_CSharp;
+using Uml.Robotics.Ros;
+using std_msgs = Messages.std_msgs;
 
 namespace Uml.Robotics.Ros.Transforms
 {
@@ -27,13 +27,13 @@ namespace Uml.Robotics.Ros.Transforms
     {
         public T data;
         public string frame_id;
-        public Time stamp;
+        public std_msgs.Time stamp;
 
         public Stamped()
         {
         }
 
-        public Stamped(Time t, string f, T d)
+        public Stamped(std_msgs.Time t, string f, T d)
         {
             stamp = t;
             frame_id = f;

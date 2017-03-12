@@ -5,8 +5,7 @@ using System.IO;
 using System.Threading;
 using Messages;
 using Messages.custom_msgs;
-using Ros_CSharp;
-using XmlRpc_Wrapper;
+using Uml.Robotics.Ros;
 using Int32 = Messages.std_msgs.Int32;
 using String = Messages.std_msgs.String;
 using m = Messages.std_msgs;
@@ -23,7 +22,7 @@ namespace Listener
     {
         private static void chatterCallback(m.String s)
         {
-            ROS.Info("RECEIVED: " + s.data);
+            ROS.Info()("RECEIVED: " + s.data);
         }
         private static void Main(string[] args)
         {
