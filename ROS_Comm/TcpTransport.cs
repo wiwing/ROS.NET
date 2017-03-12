@@ -1,28 +1,11 @@
-// File: TcpTransport.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 09/01/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using Socket = Ros_CSharp.CustomSocket.Socket;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class TcpTransport
     {
@@ -112,10 +95,7 @@ namespace Ros_CSharp
 
         public string ClientURI
         {
-#if !TRACE
-            [DebuggerStepThrough]
-#endif
-                get
+            get
             {
                 if (connected_host == null || connected_port == 0)
                     return "[NOT CONNECTED]";
@@ -573,10 +553,6 @@ namespace Ros_CSharp
             return transport;
         }
 
-
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
         public override string ToString()
         {
             return "TCPROS connection to [" + sock + "]";

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Ros_CSharp;
 
-namespace tf.net
+namespace Uml.Robotics.Ros.Transforms
 {
     public abstract class ATransformAccum
     {
@@ -32,12 +32,12 @@ namespace tf.net
 
     public class TransformAccum : ATransformAccum
     {
-        public emQuaternion result_quat;
-        public emVector3 result_vec;
-        public emQuaternion source_to_top_quat = new emQuaternion();
-        public emVector3 source_to_top_vec = new emVector3();
-        public emQuaternion target_to_top_quat = new emQuaternion();
-        public emVector3 target_to_top_vec = new emVector3();
+        public Quaternion result_quat;
+        public Vector3 result_vec;
+        public Quaternion source_to_top_quat = new Quaternion();
+        public Vector3 source_to_top_vec = new Vector3();
+        public Quaternion target_to_top_quat = new Quaternion();
+        public Vector3 target_to_top_vec = new Vector3();
         public ulong time;
 
         public override uint gather(TimeCache cache, ulong time_, ref string error_str)
@@ -59,16 +59,16 @@ namespace tf.net
                     break;
                 case WalkEnding.SourceParentOfTarget:
                     {
-                        emQuaternion inv_target_quat = target_to_top_quat.inverse();
-                        emVector3 inv_target_vec = quatRotate(inv_target_quat, -1 * target_to_top_vec);
+                        Quaternion inv_target_quat = target_to_top_quat.inverse();
+                        Vector3 inv_target_vec = quatRotate(inv_target_quat, -1 * target_to_top_vec);
                         result_quat = inv_target_quat;
                         result_vec = inv_target_vec;
                     }
                     break;
                 case WalkEnding.FullPath:
                     {
-                        emQuaternion inv_target_quat = target_to_top_quat.inverse();
-                        emVector3 inv_target_vec = quatRotate(inv_target_quat, -1 * target_to_top_vec);
+                        Quaternion inv_target_quat = target_to_top_quat.inverse();
+                        Vector3 inv_target_vec = quatRotate(inv_target_quat, -1 * target_to_top_vec);
                         result_vec = quatRotate(inv_target_quat, source_to_top_vec) + inv_target_vec;
                         result_quat = inv_target_quat * source_to_top_quat;
                     }
@@ -91,11 +91,11 @@ namespace tf.net
             }
         }
 
-        public emVector3 quatRotate(emQuaternion rotation, emVector3 v)
+        public Vector3 quatRotate(Quaternion rotation, Vector3 v)
         {
-            emQuaternion q = rotation * v;
+            Quaternion q = rotation * v;
             q *= rotation.inverse();
-            return new emVector3(q.x, q.y, q.z);
+            return new Vector3(q.x, q.y, q.z);
         }
     }
 }

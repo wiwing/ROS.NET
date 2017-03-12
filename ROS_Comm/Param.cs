@@ -1,40 +1,17 @@
-// File: Param.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using XmlRpc_Wrapper;
+using Uml.Robotics.XmlRpc;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public delegate void ParamDelegate(string key, XmlRpcValue value);
-
     public delegate void ParamStringDelegate(string key, string value);
-
     public delegate void ParamDoubleDelegate(string key, double value);
-
     public delegate void ParamIntDelegate(string key, int value);
-
     public delegate void ParamBoolDelegate(string key, bool value);
 
-#if !TRACE
-    [DebuggerStepThrough]
-#endif
     public static class Param
     {
         public static Dictionary<string, XmlRpcValue> parms = new Dictionary<string, XmlRpcValue>();

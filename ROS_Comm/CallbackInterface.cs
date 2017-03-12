@@ -1,18 +1,4 @@
-﻿// File: CallbackInterface.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Messages;
@@ -20,16 +6,19 @@ using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
-#if !TRACE
-    [DebuggerStepThrough]
-#endif
-    internal class Callback<T> : CallbackInterface where T : IRosMessage, new()
+    internal class Callback<T>
+        : CallbackInterface where T : IRosMessage, new()
     {
-        public Callback(CallbackDelegate<T> f, string topic, uint queue_size, bool allow_concurrent_callbacks) : this(f)
+        private volatile bool callback_state;
+
+        public readonly bool allow_concurrent_callbacks;
+        public volatile Queue<Item> queue = new Queue<Item>();
+        public uint size;
+
+        public Callback(CallbackDelegate<T> f, string topic, uint queue_size, bool allow_concurrent_callbacks)
+            : this(f)
         {
             this.allow_concurrent_callbacks = allow_concurrent_callbacks;
             size = queue_size;
@@ -38,19 +27,12 @@ namespace Ros_CSharp
         public Callback(CallbackDelegate<T> f)
         {
             base.Event += b =>
-                              {
-                                  T t = b as T;
-                                  b = null;
-                                  f.DynamicInvoke(t);
-                              };
+                {
+                    T t = b as T;
+                    b = null;
+                    f.DynamicInvoke(t);
+                };
         }
-
-        public readonly bool allow_concurrent_callbacks;
-
-        public volatile Queue<Item> queue = new Queue<Item>();
-        private volatile bool callback_state;
-
-        public uint size;
 
         public override void pushitgood(ISubscriptionCallbackHelper helper, IRosMessage message, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time)
         {
@@ -91,7 +73,7 @@ namespace Ros_CSharp
 
         public bool full()
         {
-            lock(queue)
+            lock (queue)
                 return fullNoLock();
         }
 
@@ -124,9 +106,6 @@ namespace Ros_CSharp
         }
     }
 
-#if !TRACE
-    [DebuggerStepThrough]
-#endif
     public class CallbackInterface
     {
         private static object uidlock = new object();
@@ -185,7 +164,6 @@ namespace Ros_CSharp
         {
             throw new NotImplementedException();
         }
-
 
         public virtual void clear()
         {

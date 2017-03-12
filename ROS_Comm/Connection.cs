@@ -1,37 +1,20 @@
-﻿// File: Connection.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#define BEGIN_INVOKE
+﻿#define BEGIN_INVOKE
 
 using System;
 using System.Collections;
 using System.Threading;
 using System.Reflection;
 
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class Connection
     {
-        #region DropReason enum
-
         public enum DropReason
         {
             TransportDisconnect,
             HeaderError,
             Destructing
         }
-
-        #endregion
 
         public string RemoteString;
         public object drop_mutex = new object();
@@ -64,7 +47,7 @@ namespace Ros_CSharp
             {
                 if (header != null && header.Values.Contains("callerid"))
                     return (string) header.Values["callerid"];
-                return "";
+                return string.Empty;
             }
         }
 
@@ -140,6 +123,7 @@ namespace Ros_CSharp
                     writeTransport();
                 if (write_callback != null)
                     throw new Exception("Not finished writing previous data on this connection");
+
                 write_callback = finished_func;
                 write_buffer = data;
                 write_size = size;
@@ -237,10 +221,10 @@ namespace Ros_CSharp
 
         private bool onHeaderWritten(Connection conn)
         {
-            if (conn != this) throw new Exception("THAT EVENT IS NOT FOR MEEE!");
+            if (conn != this)
+                throw new Exception("THAT EVENT IS NOT FOR MEEE!");
             if (header_written_callback == null)
-                throw new Exception(
-                    "NOBODY CARES ABOUT YOU, YOUR CHILDREN (neither present nor future), NOR YOUR GRANDCHILDREN (neither present nor future)");
+                throw new Exception("NOBODY CARES ABOUT YOU, YOUR CHILDREN (neither present nor future), NOR YOUR GRANDCHILDREN (neither present nor future)");
             header_written_callback(conn);
             header_written_callback = null;
             return true;

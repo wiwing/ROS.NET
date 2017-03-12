@@ -1,16 +1,4 @@
-﻿// File: XmlRpcServer.cs
-// Project: XmlRpc_Wrapper
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 03/16/2016
-// Updated: 03/17/2016
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -18,20 +6,10 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Xml;
 
-
-namespace XmlRpc_Wrapper
+namespace Uml.Robotics.XmlRpc
 {
-#if !TRACE
-    [DebuggerStepThrough]
-#endif
-
     public class XmlRpcServer : XmlRpcSource
     {
-        public void Shutdown()
-        {
-            _disp.Clear();
-        }
-
         private static string SYSTEM_MULTICALL = "system.multicall";
         private static string METHODNAME = "methodName";
         private static string PARAMS = "params";
@@ -50,6 +28,11 @@ namespace XmlRpc_Wrapper
         private int _port;
         private TcpListener listener;
         private AutoResetEvent accept_token = new AutoResetEvent(true);
+
+        public void Shutdown()
+        {
+            _disp.Clear();
+        }
 
         public int Port
         {

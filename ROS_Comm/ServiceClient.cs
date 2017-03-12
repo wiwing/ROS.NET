@@ -1,26 +1,10 @@
-﻿// File: ServiceClient.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Diagnostics;
 using System.Threading;
 using Messages;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class ServiceClient<MReq, MRes> : IServiceClient where MReq : IRosMessage, new() where MRes : IRosMessage, new()
     {

@@ -1,16 +1,4 @@
-﻿// File: PollManager.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 09/01/2015
-// Updated: 02/10/2016
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Diagnostics;
@@ -20,8 +8,7 @@ using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 using System.Linq;
 
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class Poll_Signal : IDisposable
     {
@@ -127,6 +114,12 @@ namespace Ros_CSharp
     public class PollManager
     {
         private static Lazy<PollManager> _instance = new Lazy<PollManager>(LazyThreadSafetyMode.ExecutionAndPublication);
+
+        public static PollManager Instance
+        {
+            get { return _instance.Value; }
+        }
+
         public PollSet poll_set;
         public bool shutting_down;
         public object signal_mutex = new object();
@@ -137,17 +130,6 @@ namespace Ros_CSharp
         public PollManager()
         {
             poll_set = new PollSet();
-        }
-
-        public static PollManager Instance
-        {
-#if !TRACE
-            [DebuggerStepThrough]
-#endif
-            get
-            {
-                return _instance.Value;
-            }
         }
 
         public void addPollThreadListener(Action poll)

@@ -1,18 +1,4 @@
-﻿// File: NodeHandle.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,13 +7,8 @@ using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
-#if !TRACE
-    [DebuggerStepThrough]
-#endif
     public class NodeHandle : IDisposable
     {
         private string Namespace = "", UnresolvedNamespace = "";
@@ -496,9 +477,6 @@ namespace Ros_CSharp
                 ROS.shutdown();
         }
 
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
         private void initRemappings(IDictionary rms)
         {
             if (rms == null) return;
@@ -516,9 +494,6 @@ namespace Ros_CSharp
             }
         }
 
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
         private string remapName(string name)
         {
             string resolved = resolveName(name, false);
@@ -529,17 +504,11 @@ namespace Ros_CSharp
             return names.remap(resolved);
         }
 
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
         private string resolveName(string name)
         {
             return resolveName(name, true);
         }
 
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
         private string resolveName(string name, bool remap)
         {
             string error = "";
@@ -548,9 +517,6 @@ namespace Ros_CSharp
             return resolveName(name, remap, no_validate);
         }
 
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
         private string resolveName(string name, bool remap, bool novalidate)
         {
             //EDB.WriteLine("resolveName(" + name + ")");
@@ -572,9 +538,6 @@ namespace Ros_CSharp
 
         #region Nested type: NodeHandleBackingCollection
 
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
         public class NodeHandleBackingCollection : IDisposable
         {
             public readonly object mutex = new object();

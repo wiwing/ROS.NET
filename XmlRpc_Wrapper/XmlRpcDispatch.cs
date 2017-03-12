@@ -1,31 +1,12 @@
-﻿// File: XmlRpcDispatch.cs
-// Project: XmlRpc_Wrapper
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 03/16/2016
-// Updated: 03/17/2016
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net.Sockets;
 
-
-namespace XmlRpc_Wrapper
+namespace Uml.Robotics.XmlRpc
 {
-#if !TRACE
-    [DebuggerStepThrough]
-#endif
-
-    public class XmlRpcDispatch //: IDisposable
+    public class XmlRpcDispatch
     {
-        #region EventType enum
-
         [Flags]
         public enum EventType
         {
@@ -35,17 +16,10 @@ namespace XmlRpc_Wrapper
             Exception = 4
         }
 
-        #endregion
-
         private bool _doClear;
         private double _endTime;
         private bool _inWork;
         private List<DispatchRecord> sources = new List<DispatchRecord>();
-
-        public void SegFault()
-        {
-            // 
-        }
 
         public void AddSource(XmlRpcSource source, EventType eventMask)
         {

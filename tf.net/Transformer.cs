@@ -1,11 +1,4 @@
-﻿#if UNITY
-#define FOR_UNITY
-#endif
-#if ENABLE_MONO
-#define FOR_UNITY
-#endif
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,7 +8,7 @@ using Messages.tf;
 using Ros_CSharp;
 using gm=Messages.geometry_msgs;
 
-namespace tf.net
+namespace Uml.Robotics.Ros.Transforms
 {
     public class Transformer
     {
@@ -31,20 +24,8 @@ namespace tf.net
 
         private bool interpolating;
         private NodeHandle nh;
-#if FOR_UNITY
-        private static List<Transformer> instances = new List<Transformer>();
-        public static void LateInit()
-        {
-            lock(instances)
-            {
-                foreach(Transformer t in instances)
-                    t.InitNH();
-                instances.Clear();
-            }
-        }
-#endif
 
-        private void InitNH()
+        private void InitNodeHandle()
         {
             nh = new NodeHandle();
             nh.subscribe<tfMessage>("/tf", 0, Update);
@@ -54,26 +35,7 @@ namespace tf.net
         {
             frameIDs["NO_PARENT"] = 0;
             frameids_reverse[0] = "NO_PARENT";
-#if FOR_UNITY
-#if UNITY_EDITOR
-            if (UnityEditor.EditorApplication.isPlaying)
-            {
-#endif
-                if (!ROS.isStarted())
-                {
-                    lock(instances)
-                        instances.Add(this);
-                }
-                else
-                {
-#endif
-                    InitNH();
-#if FOR_UNITY
-                }
-#if UNITY_EDITOR
-            }
-#endif
-#endif
+            InitNodeHandle();
             this.interpolating = interpolating;
             cache_time = ct;
         }
@@ -81,7 +43,7 @@ namespace tf.net
         private void Update(tfMessage msg)
         {
             foreach (gm.TransformStamped tf in msg.transforms)
-                if (!setTransform(new emTransform(tf)))
+                if (!setTransform(new Transform(tf)))
                     ROS.Warn()("Failed to setTransform in transformer update function");
         }
 
@@ -136,7 +98,7 @@ namespace tf.net
             return getFrameIDInternal(frame) != 0;
         }
 
-        public bool lookupTransform(string target_frame, string source_frame, Time time, out emTransform transform)
+        public bool lookupTransform(string target_frame, string source_frame, Time time, out Transform transform)
         {
             string error_string = null;
             bool result = lookupTransform(target_frame, source_frame, time, out transform, ref error_string);
@@ -145,7 +107,7 @@ namespace tf.net
             return result;
         }
 
-        public bool lookupTransform(string target_frame, string source_frame, Time time, out emTransform transform, ref string error_string)
+        public bool lookupTransform(string target_frame, string source_frame, Time time, out Transform transform, ref string error_string)
         {
             transform = null;
 
@@ -154,9 +116,9 @@ namespace tf.net
 
             if (mapped_tgt == mapped_src)
             {
-                transform = new emTransform();
-                transform.origin = new emVector3();
-                transform.basis = new emQuaternion();
+                transform = new Transform();
+                transform.origin = new Vector3();
+                transform.basis = new Quaternion();
                 transform.child_frame_id = mapped_src;
                 transform.frame_id = mapped_tgt;
                 transform.stamp = ROS.GetTime(DateTime.Now);
@@ -194,7 +156,7 @@ namespace tf.net
             }
             if (accum.result_vec != null && accum.result_quat != null)
             {
-                transform = new emTransform();
+                transform = new Transform();
                 transform.origin = accum.result_vec;
                 transform.basis = accum.result_quat;
                 transform.child_frame_id = mapped_src;
@@ -204,12 +166,12 @@ namespace tf.net
             return retval == TF_STATUS.NO_ERROR;
         }
 
-        public void transformQuaternion(string target_frame, Stamped<emQuaternion> stamped_in, ref Stamped<emQuaternion> stamped_out)
+        public void transformQuaternion(string target_frame, Stamped<Quaternion> stamped_in, ref Stamped<Quaternion> stamped_out)
         {
-            emTransform trans = new emTransform();
+            Transform trans = new Transform();
             lookupTransform(target_frame, stamped_in.frame_id, stamped_in.stamp, out trans);
             if (stamped_out == null)
-                stamped_out = new Stamped<emQuaternion>();
+                stamped_out = new Stamped<Quaternion>();
             stamped_out.data = trans * stamped_in.data;
             stamped_out.stamp = trans.stamp;
             stamped_out.frame_id = target_frame;
@@ -217,8 +179,8 @@ namespace tf.net
 
         public void transformQuaternion(string target_frame, Stamped<gm.Quaternion> stamped_in, ref Stamped<gm.Quaternion> stamped_out)
         {
-            Stamped<emQuaternion> quatin = new Stamped<emQuaternion>(stamped_in.stamp, stamped_in.frame_id, new emQuaternion(stamped_in.data));
-            Stamped<emQuaternion> quatout = new Stamped<emQuaternion>(stamped_out.stamp, stamped_out.frame_id, new emQuaternion(stamped_out.data));
+            Stamped<Quaternion> quatin = new Stamped<Quaternion>(stamped_in.stamp, stamped_in.frame_id, new Quaternion(stamped_in.data));
+            Stamped<Quaternion> quatout = new Stamped<Quaternion>(stamped_out.stamp, stamped_out.frame_id, new Quaternion(stamped_out.data));
             transformQuaternion(target_frame, quatin, ref quatout);
             if (stamped_out == null)
                 stamped_out = new Stamped<gm.Quaternion>();
@@ -227,15 +189,15 @@ namespace tf.net
             stamped_out.frame_id = quatout.frame_id;
         }
 
-        public void transformVector(string target_frame, Stamped<emVector3> stamped_in, ref Stamped<emVector3> stamped_out)
+        public void transformVector(string target_frame, Stamped<Vector3> stamped_in, ref Stamped<Vector3> stamped_out)
         {
-            emTransform trans = new emTransform();
+            Transform trans = new Transform();
             lookupTransform(target_frame, stamped_in.frame_id, stamped_in.stamp, out trans);
-            emVector3 end = stamped_in.data;
-            emVector3 origin = new emVector3(0, 0, 0);
-            emVector3 output = (trans * end) - (trans * origin);
+            Vector3 end = stamped_in.data;
+            Vector3 origin = new Vector3(0, 0, 0);
+            Vector3 output = (trans * end) - (trans * origin);
             if (stamped_out == null)
-                stamped_out = new Stamped<emVector3>();
+                stamped_out = new Stamped<Vector3>();
             stamped_out.data = output;
             stamped_out.stamp = trans.stamp;
             stamped_out.frame_id = target_frame;
@@ -243,8 +205,8 @@ namespace tf.net
 
         public void transformVector(string target_frame, Stamped<gm.Vector3> stamped_in, ref Stamped<gm.Vector3> stamped_out)
         {
-            Stamped<emVector3> vecin = new Stamped<emVector3>(stamped_in.stamp, stamped_in.frame_id, new emVector3(stamped_in.data));
-            Stamped<emVector3> vecout = new Stamped<emVector3>(stamped_out.stamp, stamped_out.frame_id, new emVector3(stamped_out.data));
+            Stamped<Vector3> vecin = new Stamped<Vector3>(stamped_in.stamp, stamped_in.frame_id, new Vector3(stamped_in.data));
+            Stamped<Vector3> vecout = new Stamped<Vector3>(stamped_out.stamp, stamped_out.frame_id, new Vector3(stamped_out.data));
             transformVector(target_frame, vecin, ref vecout);
             if (stamped_out == null)
                 stamped_out = new Stamped<gm.Vector3>();
@@ -343,7 +305,6 @@ namespace tf.net
                     return TF_STATUS.LOOKUP_ERROR;
                 }
             }
-
 
             if (frame != top_parent)
             {
@@ -472,9 +433,9 @@ namespace tf.net
             return frameIDs[frame];
         }
 
-        public bool setTransform(emTransform transform)
+        public bool setTransform(Transform transform)
         {
-            emTransform mapped_transform = new emTransform(transform.basis, transform.origin, transform.stamp, transform.frame_id, transform.child_frame_id);
+            Transform mapped_transform = new Transform(transform.basis, transform.origin, transform.stamp, transform.frame_id, transform.child_frame_id);
             mapped_transform.child_frame_id = resolve(tf_prefix, transform.child_frame_id);
             mapped_transform.frame_id = resolve(tf_prefix, transform.frame_id);
 
@@ -575,8 +536,12 @@ namespace tf.net
         {
             string mapped_target = resolve(tf_prefix, target_frame);
             string mapped_source = resolve(tf_prefix, source_frame);
-            if (mapped_target == mapped_source) return true;
-            if (!frameExistsInternal(mapped_target) || !frameExistsInternal(mapped_source)) return false;
+            if (mapped_target == mapped_source)
+                return true;
+
+            if (!frameExistsInternal(mapped_target) || !frameExistsInternal(mapped_source))
+                return false;
+
             uint target_id = getFrameIDInternal(mapped_target);
             uint source_id = getFrameIDInternal(mapped_source);
             return canTransformNoLock(target_id, source_id, time, ref error_msg);
@@ -584,7 +549,9 @@ namespace tf.net
 
         private bool canTransformNoLock(uint target_id, uint source_id, Time time, ref string error_msg)
         {
-            if (target_id == 0 || source_id == 0) return false;
+            if (target_id == 0 || source_id == 0)
+                return false;
+
             CanTransformAccum accum = new CanTransformAccum();
             if (walkToTopParent(accum, TimeCache.toLong(time.data), target_id, source_id, ref error_msg) == TF_STATUS.NO_ERROR)
             {

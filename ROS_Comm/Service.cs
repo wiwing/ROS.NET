@@ -1,24 +1,8 @@
-﻿// File: Service.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Threading;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public static class Service
     {
@@ -35,10 +19,10 @@ namespace Ros_CSharp
 
                 IDictionary m = new Hashtable
                 {
-                    {"probe", "1"},
-                    {"md5sum", "*"},
-                    {"callerid", this_node.Name},
-                    {"service", mapped_name}
+                    { "probe", "1" },
+                    { "md5sum", "*" },
+                    { "callerid", this_node.Name },
+                    { "service", mapped_name }
                 };
 
                 byte[] headerbuf = null;

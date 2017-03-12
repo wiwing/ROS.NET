@@ -1,26 +1,9 @@
-﻿// File: XmlRpcSource.cs
-// Project: XmlRpc_Wrapper
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 03/16/2016
-// Updated: 03/17/2016
-
-using System;
+﻿using System;
 using System.Net.Sockets;
 using System.Text;
 
-
-namespace XmlRpc_Wrapper
+namespace Uml.Robotics.XmlRpc
 {
-#if !TRACE
-    [DebuggerStepThrough]
-#endif
-
     public abstract class XmlRpcSource : IDisposable
     {
         private const int READ_BUFFER_LENGTH = 4096;

@@ -1,32 +1,20 @@
-﻿// File: Time.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 10/14/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
-using System;
+﻿using System;
 using System.Threading;
 using Messages.rosgraph_msgs;
 using m = Messages.std_msgs;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class SimTime
     {
         public delegate void SimTimeDelegate(TimeSpan ts);
 
-        private static object _instanceLock = new object();
-        private static SimTime _instance;
+        private static Lazy<SimTime> _instance = new Lazy<SimTime>(LazyThreadSafetyMode.ExecutionAndPublication);
+
+        public static SimTime instance
+        {
+            get { return _instance.Value; }
+        }
 
         private bool checkedSimTime;
         private NodeHandle nh;
@@ -36,37 +24,22 @@ namespace Ros_CSharp
         public SimTime()
         {
             new Thread(() =>
-                           {
-                               while (!ROS.isStarted() && !ROS.shutting_down)
-                               {
-                                   Thread.Sleep(100);
-                               }
-                               nh = new NodeHandle();
-                               if (!ROS.shutting_down)
-                               {
-                                   simTimeSubscriber = nh.subscribe<Clock>("/clock", 1, SimTimeCallback);
-                               }
-                           }).Start();
+            {
+                while (!ROS.isStarted() && !ROS.shutting_down)
+                {
+                    Thread.Sleep(100);
+                }
+                nh = new NodeHandle();
+                if (!ROS.shutting_down)
+                {
+                    simTimeSubscriber = nh.subscribe<Clock>("/clock", 1, SimTimeCallback);
+                }
+            }).Start();
         }
 
         public bool IsTimeSimulated
         {
             get { return simTime; }
-        }
-
-        public static SimTime instance
-        {
-            get
-            {
-                lock (_instanceLock)
-                {
-                    if (_instance == null)
-                    {
-                        _instance = new SimTime();
-                    }
-                    return _instance;
-                }
-            }
         }
 
         public event SimTimeDelegate SimTimeEvent;

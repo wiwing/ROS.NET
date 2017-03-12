@@ -1,22 +1,3 @@
-// File: _Init.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 09/01/2015
-// Updated: 02/10/2016
-
-#if UNITY
-#define FOR_UNITY
-#endif
-#if ENABLE_MONO
-#define FOR_UNITY
-#endif
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,18 +7,16 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Messages;
-using XmlRpc_Wrapper;
+using Uml.Robotics.XmlRpc;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     /// <summary>
     ///     Helper class for display and/or other output of debugging/peripheral information
     /// </summary>
-    //[DebuggerStepThrough]
     public static class EDB
     {
         #region Delegates
@@ -60,8 +39,7 @@ namespace Ros_CSharp
         {
             if (OtherOutput != null)
                 OtherOutput(o);
-#if !ENABLE_MONO
-#if !FOR_UNITY
+
             if (!toDebugInitialized)
             {
                 try
@@ -77,7 +55,7 @@ namespace Ros_CSharp
                 }
                 toDebugInitialized = true;
             }
-#endif //!FOR_UNITY
+
 #if DEBUG
             if (toDebugInstead)
             {
@@ -86,9 +64,6 @@ namespace Ros_CSharp
             else
 #endif
                 Console.WriteLine(o);
-#else
-            UnityEngine.Debug.Log(o);
-#endif //!UNITY
         }
 
         /// Writes a string or something to System.Console, and fires an optional OtherOutput event for use in the node
@@ -119,9 +94,6 @@ namespace Ros_CSharp
     /// <summary>
     ///     Everything happens here.
     /// </summary>
-#if !TRACE
-    [DebuggerStepThrough]
-#endif
     public static class ROS
     {
         public static TimerManager timer_manager = new TimerManager();
@@ -167,8 +139,8 @@ namespace Ros_CSharp
 
         private static readonly string ROSOUT_FMAT = "{0} {1}";
         private static readonly string ROSOUT_DEBUG_PREFIX = "[Debug]";
-        private static readonly string ROSOUT_INFO_PREFIX = "[Info ]";
-        private static readonly string ROSOUT_WARN_PREFIX = "[Warn ]";
+        private static readonly string ROSOUT_INFO_PREFIX  = "[Info ]";
+        private static readonly string ROSOUT_WARN_PREFIX  = "[Warn ]";
         private static readonly string ROSOUT_ERROR_PREFIX = "[Error]";
         private static readonly string ROSOUT_FATAL_PREFIX = "[FATAL]";
    
@@ -181,93 +153,17 @@ namespace Ros_CSharp
                 { RosOutAppender.ROSOUT_LEVEL.FATAL, ROSOUT_FATAL_PREFIX }
             };
 
-
-        /// <summary>
-#if !FOR_UNITY
-        /// UNUSED: Used to block the UnityEditor when it is paused
-#else
-        /// After Freeze() is called, blocks calling thread indefinitely until Unfreeze is called. Threads set the event immediately after they unblock.
-#endif
-        /// </summary>
-        internal static void CheckIfFrozen()
-        {
-#if !FOR_UNITY
-        }
-#else
-            bool f;
-            lock (timeStopper)
-                f = frozen;
-            do
-            {
-
-                timeStopper.WaitOne();
-                lock (timeStopper)
-                {
-                    if (!(f = frozen))
-                        timeStopper.Set();
-                }
-            }
-            while (f);
-        }
-
-        private static AutoResetEvent timeStopper = new AutoResetEvent(true);
-        private static bool frozen = false;
-
-        /// <summary>
-        /// Blocks any threads looping conditionally based on ROS.ok and/or ROS.shutting_down until ROS.Unfreeze() is called
-        /// </summary>
-        public static void Freeze()
-        {
-            EDB.WriteLine("Calling Freeze");
-            lock(timeStopper)
-            {
-                if (!frozen)
-                {
-                    if (timeStopper.WaitOne())
-                        frozen = true;
-                    else
-                        throw new Exception("Failed to freeze all ROS threads");
-                    EDB.WriteLine("Frozen!");
-                }
-            }
-        }
-
-        public static void Unfreeze()
-        {
-            EDB.WriteLine("Calling Unfreeze");
-            lock (timeStopper)
-            {
-                if (frozen)
-                {
-                    frozen = false;
-                    timeStopper.Set();
-                    EDB.WriteLine("Unfrozen");
-                }
-            }
-        }
-#endif
-
         public static bool shutting_down
         {
-            get
-            {
-                CheckIfFrozen();
-                return _shutting_down;
-            }
+            get { return _shutting_down; }
         }
-
-        private static Dictionary<string, Type> typedict = new Dictionary<string, Type>();
 
         /// <summary>
         ///     True if ROS is ok, false if not
         /// </summary>
         public static bool ok
         {
-            get
-            {
-                CheckIfFrozen();
-                return _ok;
-            }
+            get { return _ok; }
         }
 
         private static string _processname = null;
@@ -400,9 +296,6 @@ namespace Ros_CSharp
         /// <summary>
         ///     ROS_INFO(...)
         /// </summary>
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
         public static WriteDelegate Info(ONLY_AUTO_PARAMS CAPTURE_CALL_SITE = null, [CallerMemberName] string memberName = null, [CallerFilePath] string filePath = null, [CallerLineNumber] int lineNumber = 0)
         {
             return (format, args) => _rosout(format, args, RosOutAppender.ROSOUT_LEVEL.INFO, new CallerInfo { MemberName = memberName, FilePath = filePath, LineNumber = lineNumber });
@@ -411,9 +304,6 @@ namespace Ros_CSharp
         /// <summary>
         ///     ROS_DEBUG(...) (formatted)
         /// </summary>
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
         public static WriteDelegate Debug(ONLY_AUTO_PARAMS CAPTURE_CALL_SITE = null, [CallerMemberName] string memberName = null, [CallerFilePath] string filePath = null, [CallerLineNumber] int lineNumber = 0)
         {
             return (format, args) => _rosout(format, args, RosOutAppender.ROSOUT_LEVEL.DEBUG, new CallerInfo { MemberName = memberName, FilePath = filePath, LineNumber = lineNumber });
@@ -422,9 +312,6 @@ namespace Ros_CSharp
         /// <summary>
         ///     ROS_INFO(...) (formatted)
         /// </summary>
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
         public static WriteDelegate Error(ONLY_AUTO_PARAMS CAPTURE_CALL_SITE = null, [CallerMemberName] string memberName = null, [CallerFilePath] string filePath = null, [CallerLineNumber] int lineNumber = 0)
         {
             return (format, args) => _rosout(format, args, RosOutAppender.ROSOUT_LEVEL.ERROR, new CallerInfo { MemberName = memberName, FilePath = filePath, LineNumber = lineNumber });
@@ -433,7 +320,6 @@ namespace Ros_CSharp
         /// <summary>
         ///     ROS_WARN(...) (formatted)
         /// </summary>
-        [DebuggerStepThrough]
         public static WriteDelegate Warn(ONLY_AUTO_PARAMS CAPTURE_CALL_SITE = null, [CallerMemberName] string memberName = null, [CallerFilePath] string filePath = null, [CallerLineNumber] int lineNumber = 0)
         {
             return (format, args) => _rosout(format, args, RosOutAppender.ROSOUT_LEVEL.WARN, new CallerInfo { MemberName = memberName, FilePath = filePath, LineNumber = lineNumber });
@@ -528,14 +414,12 @@ namespace Ros_CSharp
                     _shutdown();
                     waitForShutdown();
                 };
-#if !FOR_UNITY
                 Console.CancelKeyPress += (o, args) =>
                 {
                     _shutdown();
                     waitForShutdown();
                     args.Cancel = true;
                 };
-#endif
             }
 
             // this needs to exist for connections and stuff to happen
@@ -597,7 +481,6 @@ namespace Ros_CSharp
         /// <summary>
         ///     Hang the current thread until ROS shuts down
         /// </summary>
-        [DebuggerStepThrough]
         public static void waitForShutdown()
         {
             while (_ok)
@@ -673,13 +556,6 @@ namespace Ros_CSharp
 
             if (started)
             {
-#if FOR_UNITY
-                lock (timeStopper)
-                {
-                    if (frozen)
-                        timeStopper.Set();
-                }
-#endif
                 started = false;
                 _ok = false;
                 RosOutAppender.Instance.shutdown();

@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Messages\Messages.csproj" />
-    <ProjectReference Include="..\XmlRpc_Wrapper\XmlRpc_Wrapper.dotnetcore.csproj" />
+    <ProjectReference Include="..\XmlRpc_Wrapper\Uml.Robotics.XmlRpc.csproj" />
   </ItemGroup>
 
 </Project>

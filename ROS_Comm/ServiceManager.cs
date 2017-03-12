@@ -1,35 +1,26 @@
-﻿// File: ServiceManager.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using Messages;
-using XmlRpc_Wrapper;
+using Uml.Robotics.XmlRpc;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class ServiceManager
     {
-        private static ServiceManager _instance;
-        private static object singleton_instance = new object();
+        private static Lazy<ServiceManager> _instance = new Lazy<ServiceManager>(LazyThreadSafetyMode.ExecutionAndPublication);
+
+        public static ServiceManager Instance
+        {
+            get { return _instance.Value; }
+        }
+
         private ConnectionManager connection_manager;
         private PollManager poll_manager;
         private List<IServicePublication> service_publications = new List<IServicePublication>();
@@ -39,21 +30,6 @@ namespace Ros_CSharp
         private bool shutting_down;
         private object shutting_down_mutex = new object();
         private XmlRpcManager xmlrpc_manager;
-
-        public static ServiceManager Instance
-        {
-#if !TRACE
-            [DebuggerStepThrough]
-#endif
-                get
-            {
-                if (_instance == null)
-                    lock (singleton_instance)
-                        if (_instance == null)
-                            _instance = new ServiceManager();
-                return _instance;
-            }
-        }
 
         ~ServiceManager()
         {
@@ -86,6 +62,7 @@ namespace Ros_CSharp
             string serv_host = "";
             if (!lookupService(service, ref serv_host, ref serv_port))
                 return null;
+
             TcpTransport transport = new TcpTransport(poll_manager.poll_set);
             if (transport.connect(serv_host, serv_port))
             {

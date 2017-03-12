@@ -1,29 +1,16 @@
-﻿// File: TopicManager.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 09/01/2015
-// Updated: 02/10/2016
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics;
 using System.Linq;
 using Messages;
-using XmlRpc_Wrapper;
+using Uml.Robotics.XmlRpc;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class TopicManager
     {
@@ -35,20 +22,17 @@ namespace Ros_CSharp
 
         private static Lazy<TopicManager> _instance = new Lazy<TopicManager>(LazyThreadSafetyMode.ExecutionAndPublication);
 
+        public static TopicManager Instance
+        {
+            get { return _instance.Value; }
+        }
+
         private List<Publication> advertised_topics = new List<Publication>();
         private object advertised_topics_mutex = new object();
         private bool shutting_down;
         private object shutting_down_mutex = new object();
         private object subs_mutex = new object();
         private List<Subscription> subscriptions = new List<Subscription>();
-
-        public static TopicManager Instance
-        {
-#if !TRACE
-            [DebuggerStepThrough]
-#endif
-            get { return _instance.Value; }
-        }
 
         /// <summary>
         ///     Binds the XmlRpc requests to callback functions, signal to start
@@ -719,6 +703,7 @@ namespace Ros_CSharp
             }
             if (pub == null)
                 return false;
+
             pub.removeCallbacks(callbacks);
             lock (advertised_topics_mutex)
             {

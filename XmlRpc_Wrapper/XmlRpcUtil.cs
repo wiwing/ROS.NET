@@ -1,27 +1,10 @@
-// File: XmlRpcUtil.cs
-// Project: XmlRpc_Wrapper
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 03/16/2016
-// Updated: 03/17/2016
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-
-namespace XmlRpc_Wrapper
+namespace Uml.Robotics.XmlRpc
 {
-#if !TRACE
-    [DebuggerStepThrough]
-#endif
-
     public class XmlRpcException : Exception
     {
         private int errorCode = -1;
@@ -99,9 +82,6 @@ namespace XmlRpc_Wrapper
     ///     Does HTTP header parsing
     ///     Taken from ... somewhere.
     /// </summary>
-#if !TRACE
-    [DebuggerStepThrough]
-#endif
     internal class HTTPHeader
     {
         [Flags]
@@ -287,10 +267,6 @@ namespace XmlRpc_Wrapper
 
         #endregion
     }
-
-#if !TRACE
-    [DebuggerStepThrough]
-#endif
 
     public static class XmlRpcUtil
     {

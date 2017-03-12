@@ -1,22 +1,6 @@
-﻿// File: ServiceClientOptions.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
+﻿using System.Collections;
 
-#region USINGZ
-
-using System.Collections;
-
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class ServiceClientOptions
     {
@@ -28,16 +12,14 @@ namespace Ros_CSharp
         public ServiceClientOptions(string service, bool persistent, IDictionary header_values)
             : this(service, persistent, header_values, "")
         {
-            //throw new NotImplementedException();
         }
 
         public ServiceClientOptions(string service, bool persistent, IDictionary header_values, string md5sum)
         {
-            // TODO: Complete member initialization
-            this.service = service;
-            this.persistent = persistent;
             this.header_values = header_values;
             this.md5sum = md5sum;
+            this.persistent = persistent;
+            this.service = service;
         }
     }
 }

@@ -1,23 +1,7 @@
-﻿// File: ServiceCallbackHelper.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
-using System.Collections;
+﻿using System.Collections;
 using Messages;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public delegate bool ServiceFunction<in MReq, MRes>(MReq req, ref MRes res)
         where MReq : IRosMessage, new()

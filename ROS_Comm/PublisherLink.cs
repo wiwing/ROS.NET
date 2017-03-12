@@ -1,22 +1,6 @@
-﻿// File: PublisherLink.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
+﻿using System;
 
-#region USINGZ
-
-using System;
-
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class PublisherLink
     {
@@ -37,7 +21,7 @@ namespace Ros_CSharp
 
         public string TransportType
         {
-            get { return "TCPROS"; /*lol... pwned*/ }
+            get { return "TCPROS"; }
         }
 
         public Header getHeader()

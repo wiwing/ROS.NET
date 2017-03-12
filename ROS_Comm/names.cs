@@ -1,24 +1,8 @@
-﻿// File: names.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Diagnostics;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class InvalidNameException : Exception
     {
@@ -28,7 +12,6 @@ namespace Ros_CSharp
         }
     }
 
-    [DebuggerStepThrough]
     public static class names
     {
         public static IDictionary resolved_remappings = new Hashtable();

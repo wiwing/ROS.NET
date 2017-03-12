@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     internal static class ScopedTimer
     {

@@ -5,7 +5,7 @@ using System.Text;
 using Messages.std_msgs;
 using Ros_CSharp;
 
-namespace tf.net
+namespace Uml.Robotics.Ros.Transforms
 {
     public enum TF_STATUS
     {
@@ -14,7 +14,6 @@ namespace tf.net
         CONNECTIVITY_ERROR,
         EXTRAPOLATION_ERROR
     }
-
 
     public enum WalkEnding
     {
@@ -58,24 +57,23 @@ namespace tf.net
     {
         public uint child_frame_id;
         public uint frame_id;
-        public emQuaternion rotation;
+        public Quaternion rotation;
         public ulong stamp;
-        public emVector3 translation;
+        public Vector3 translation;
 
         public TransformStorage()
         {
-            rotation = new emQuaternion();
-
-            translation = new emVector3();
+            this.rotation = new Quaternion();
+            this.translation = new Vector3();
         }
 
-        public TransformStorage(emTransform data, uint frame_id, uint child_frame_id)
+        public TransformStorage(Transform data, uint frameId, uint childFrameId)
         {
-            rotation = data.basis;
-            translation = data.origin;
-            stamp = TimeCache.toLong(data.stamp.data);
-            this.frame_id = frame_id;
-            this.child_frame_id = child_frame_id;
+            this.rotation = data.basis;
+            this.translation = data.origin;
+            this.stamp = TimeCache.toLong(data.stamp.data);
+            this.frame_id = frameId;
+            this.child_frame_id = childFrameId;
         }
     }
 }

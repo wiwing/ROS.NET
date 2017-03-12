@@ -1,16 +1,4 @@
-﻿// File: Socket.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 09/01/2015
-// Updated: 02/10/2016
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -19,12 +7,8 @@ using n = System.Net;
 using ns = System.Net.Sockets;
 using ROS_Comm.APMWorkaround;
 
-
-namespace Ros_CSharp.CustomSocket
+namespace Uml.Robotics.Ros
 {
-#if !TRACE
-    [DebuggerStepThrough]
-#endif
     public class Socket : IDisposable
     {
         internal ns.Socket realsocket { get; private set; }
@@ -267,9 +251,6 @@ namespace Ros_CSharp.CustomSocket
             return res;
         }
 
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
         public override string ToString()
         {
             if (String.IsNullOrEmpty(attemptedConnectionEndpoint))

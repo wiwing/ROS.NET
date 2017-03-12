@@ -1,31 +1,15 @@
-// File: Subscription.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Messages;
-using XmlRpc_Wrapper;
+using Uml.Robotics.XmlRpc;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class Subscription
     {
@@ -533,9 +517,6 @@ namespace Ros_CSharp
 
         #region Nested type: CallbackInfo
 
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
         public class CallbackInfo<M> : ICallbackInfo where M : IRosMessage, new()
         {
             public CallbackInfo()
@@ -548,9 +529,6 @@ namespace Ros_CSharp
 
         #region Nested type: ICallbackInfo
 
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
         public class ICallbackInfo
         {
             public CallbackQueueInterface callback;
@@ -567,9 +545,6 @@ namespace Ros_CSharp
 
         #region Nested type: LatchInfo
 
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
         public class LatchInfo
         {
             public IDictionary connection_header;

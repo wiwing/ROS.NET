@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XmlRpc_Wrapper.dotnetcore", "XmlRpc_Wrapper\XmlRpc_Wrapper.dotnetcore.csproj", "{89241CC9-5E28-4B95-B682-37A0AC58D306}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uml.Robotics.XmlRpc", "XmlRpc_Wrapper\Uml.Robotics.XmlRpc.csproj", "{89241CC9-5E28-4B95-B682-37A0AC58D306}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAMLParser", "YAMLParser\YAMLParser.csproj", "{C9AA7929-CEB0-44FC-BD0A-1148BE32CF8D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YAMLParser", "YAMLParser\YAMLParser.csproj", "{C9AA7929-CEB0-44FC-BD0A-1148BE32CF8D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ROS_Comm", "ROS_Comm\ROS_Comm.csproj", "{765D1079-C12B-4F10-9B52-C580B6DD597C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uml.Robotics.Ros", "ROS_Comm\Uml.Robotics.Ros.csproj", "{765D1079-C12B-4F10-9B52-C580B6DD597C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Messages", "Messages\Messages.csproj", "{5581B3D9-A601-4778-9D95-6725C7671BD9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Messages", "Messages\Messages.csproj", "{94C4DF5B-1566-4ACC-9BD3-167AAC83F9FD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tf.net", "tf.net\tf.net.csproj", "{DD9EFA90-09A4-45C9-BBF0-CB146507EAE8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uml.Robotics.Ros.Transforms", "tf.net\Uml.Robotics.Ros.Transforms.csproj", "{DD9EFA90-09A4-45C9-BBF0-CB146507EAE8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,10 +31,10 @@ Global
 		{765D1079-C12B-4F10-9B52-C580B6DD597C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{765D1079-C12B-4F10-9B52-C580B6DD597C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{765D1079-C12B-4F10-9B52-C580B6DD597C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5581B3D9-A601-4778-9D95-6725C7671BD9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5581B3D9-A601-4778-9D95-6725C7671BD9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5581B3D9-A601-4778-9D95-6725C7671BD9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5581B3D9-A601-4778-9D95-6725C7671BD9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94C4DF5B-1566-4ACC-9BD3-167AAC83F9FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94C4DF5B-1566-4ACC-9BD3-167AAC83F9FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94C4DF5B-1566-4ACC-9BD3-167AAC83F9FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94C4DF5B-1566-4ACC-9BD3-167AAC83F9FD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DD9EFA90-09A4-45C9-BBF0-CB146507EAE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DD9EFA90-09A4-45C9-BBF0-CB146507EAE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DD9EFA90-09A4-45C9-BBF0-CB146507EAE8}.Release|Any CPU.ActiveCfg = Release|Any CPU

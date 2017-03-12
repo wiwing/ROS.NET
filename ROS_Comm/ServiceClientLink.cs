@@ -1,32 +1,15 @@
-﻿// File: ServiceClientLink.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
-using System;
+﻿using System;
 using System.Collections;
 using Messages;
-using String = Messages.std_msgs.String;
+using std_msgs = Messages.std_msgs;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class IServiceClientLink
     {
         public Connection connection;
         public IServicePublication parent;
         public bool persistent;
-
 
         public bool initialize(Connection conn)
         {
@@ -93,7 +76,7 @@ namespace Ros_CSharp
 
         public virtual void processResponse(string error, bool success)
         {
-            String msg = new String(error);
+            var msg = new std_msgs.String(error);
             msg.Serialized = msg.Serialize();
             byte[] buf = new byte[msg.Serialized.Length + 1];
             buf[0] = (byte) (success ? 0x01 : 0x00);
@@ -126,7 +109,6 @@ namespace Ros_CSharp
                 parent.removeServiceClientLink(this);
             }
         }
-
 
         public virtual bool onRequestLength(Connection conn, byte[] buffer, int size, bool success)
         {

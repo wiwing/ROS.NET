@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ROS_Comm\ROS_Comm.csproj" />
+    <ProjectReference Include="..\ROS_Comm\Uml.Robotics.Ros.csproj" />
   </ItemGroup>
 
 </Project>

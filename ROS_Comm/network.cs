@@ -1,23 +1,7 @@
-﻿// File: network.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
-using System;
+﻿using System;
 using System.Collections;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public static class network
     {
@@ -27,7 +11,7 @@ namespace Ros_CSharp
         public static bool splitURI(string uri, ref string host, ref int port)
         {
             if (uri == null)
-                throw new Exception("NULL STUFF FAIL!");
+                throw new ArgumentNullException("uri");
             if (uri.Substring(0, 7) == "http://")
                 host = uri.Substring(7);
             else if (uri.Substring(0, 9) == "rosrpc://")
@@ -43,9 +27,9 @@ namespace Ros_CSharp
 
         public static bool isPrivateIp(string ip)
         {
-            bool b = (String.CompareOrdinal("192.168", ip) >= 7) || (String.CompareOrdinal("10.", ip) > 3) ||
-                     (String.CompareOrdinal("169.253", ip) > 7);
-            return b;
+            return String.CompareOrdinal("192.168", ip) >= 7
+                || String.CompareOrdinal("10.", ip) > 3
+                || String.CompareOrdinal("169.253", ip) > 7;
         }
 
         public static string determineHost()
@@ -56,11 +40,13 @@ namespace Ros_CSharp
         public static void init(IDictionary remappings)
         {
             if (remappings.Contains("__hostname"))
-                host = (string) remappings["__hostname"];
+            {
+                host = (string)remappings["__hostname"];
+            }
             else
             {
                 if (remappings.Contains("__ip"))
-                    host = (string) remappings["__ip"];
+                    host = (string)remappings["__ip"];
             }
 
             if (remappings.Contains("__tcpros_server_port"))

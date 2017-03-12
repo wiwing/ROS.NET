@@ -1,24 +1,8 @@
-﻿// File: ServicePublication.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Messages;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class ServicePublication<MReq, MRes> : IServicePublication
         where MReq : IRosMessage, new()
@@ -26,12 +10,11 @@ namespace Ros_CSharp
     {
         public ServiceCallbackHelper<MReq, MRes> helper;
 
-        //internal ftw?
-
         public ServicePublication(string name, string md5Sum, string datatype, string reqDatatype, string resDatatype, ServiceCallbackHelper<MReq, MRes> helper, CallbackQueueInterface callback, object trackedObject)
         {
-            if (name == null)
-                throw new Exception("NULL NAME?!");
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentNullException("name");
+
             // TODO: Complete member initialization
             this.name = name;
             md5sum = md5Sum;
@@ -79,7 +62,6 @@ namespace Ros_CSharp
             }
 
             public ServiceCallback(ServicePublication<MReq, MRes> sp, ServiceCallbackHelper<MReq, MRes> _helper, byte[] buf, int num_bytes, IServiceClientLink link, bool has_tracked_object, object tracked_object)
-
             {
                 isp = sp;
                 if (isp != null && _helper != null)

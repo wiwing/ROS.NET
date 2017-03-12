@@ -1,18 +1,4 @@
-﻿// File: PollSet.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 09/01/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,22 +6,21 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using Socket = Ros_CSharp.CustomSocket.Socket;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class PollSet : Poll_Signal
     {
-        private static Dictionary<uint, CustomSocket.Socket> socks = new Dictionary<uint,CustomSocket.Socket>();
+        private static Dictionary<uint, Socket> socks = new Dictionary<uint, Socket>();
+
         #region Delegates
 
         public delegate void SocketUpdateFunc(int stufftodo);
 
         #endregion
 
-        public PollSet() : base(null)
+        public PollSet()
+            : base(null)
         {
             base.Op = update;
         }
@@ -46,7 +31,8 @@ namespace Ros_CSharp
         public new void Dispose()
         {
             base.Dispose();
-            if (DisposingEvent != null) DisposingEvent.Invoke();
+            if (DisposingEvent != null)
+                DisposingEvent.Invoke();
         }
 
         public delegate void DisposingDelegate();
@@ -62,14 +48,18 @@ namespace Ros_CSharp
         {
             s.Info = new SocketInfo { sock = s.FD, func = update_func, transport = trans };
             lock (socks)
+            {
                 socks.Add(s.FD, s);
+            }
             return true;
         }
 
         public bool delSocket(Socket s)
         {
             lock (socks)
+            {
                 socks.Remove(s.FD);
+            }
             s.Dispose();
             return true;
         }
@@ -95,6 +85,7 @@ namespace Ros_CSharp
             ArrayList checkError = new ArrayList();
             List<Socket> lsocks = new List<Socket>();
             lock (socks)
+            {
                 foreach (Socket s in socks.Values)
                 {
                     lsocks.Add(s);
@@ -105,8 +96,10 @@ namespace Ros_CSharp
                     if ((s.Info.events & (Socket.POLLERR | Socket.POLLHUP | Socket.POLLNVAL)) != 0)
                         checkError.Add(s.realsocket);
                 }
+            }
             if (lsocks.Count == 0 || (checkRead.Count == 0 && checkWrite.Count == 0 && checkError.Count == 0))
                 return;
+
             try
             {
                 System.Net.Sockets.Socket.Select(checkRead, checkWrite, checkError, -1);

@@ -1,39 +1,23 @@
-// File: XmlRpcManager.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
-#if DEBUG
-//#define XMLRPC_DEBUG
-#endif
-//using XmlRpc_Wrapper;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using XmlRpc_Wrapper;
+using Uml.Robotics.XmlRpc;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
-    [DebuggerStepThrough]
     public class XmlRpcManager : IDisposable
     {
-        private static object singleton_mutex = new object();
-        private static XmlRpcManager _instance;
+        private static Lazy<XmlRpcManager> _instance = new Lazy<XmlRpcManager>(LazyThreadSafetyMode.ExecutionAndPublication);
+
+        public static XmlRpcManager Instance
+        {
+            get { return _instance.Value; }
+        }
+
         private List<AsyncXmlRpcConnection> added_connections = new List<AsyncXmlRpcConnection>();
         private object added_connections_mutex = new object();
         private List<CachedXmlRpcClient> clients = new List<CachedXmlRpcClient>();
@@ -64,28 +48,8 @@ namespace Ros_CSharp
 #endif
 #endif
 );
-
             server = new XmlRpcServer();
             getPid = (parms, result) => responseInt(1, "", Process.GetCurrentProcess().Id)(result);
-        }
-
-        public static XmlRpcManager Instance
-        {
-#if !TRACE
-            [DebuggerStepThrough]
-#endif
-            get
-            {
-                if (_instance == null)
-                {
-                    lock (singleton_mutex)
-                    {
-                        if (_instance == null)
-                            _instance = new XmlRpcManager();
-                    }
-                }
-                return _instance;
-            }
         }
 
         #region IDisposable Members
@@ -423,7 +387,6 @@ namespace Ros_CSharp
         #endregion
     }
 
-    [DebuggerStepThrough]
     public class CachedXmlRpcClient : IDisposable
     {
         private XmlRpcClient client;

@@ -5,7 +5,7 @@ using System.Text;
 using Messages;
 using Ros_CSharp;
 
-namespace tf.net
+namespace Uml.Robotics.Ros.Transforms
 {
     public class TimeCache
     {
@@ -119,7 +119,7 @@ namespace tf.net
             output.child_frame_id = one.child_frame_id;
         }
 
-        private emQuaternion slerp(emQuaternion q1, emQuaternion q2, double rt)
+        private Quaternion slerp(Quaternion q1, Quaternion q2, double rt)
         {
             return q1.slerp(q2, rt);
         }

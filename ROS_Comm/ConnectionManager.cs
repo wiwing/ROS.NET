@@ -1,18 +1,4 @@
-﻿// File: ConnectionManager.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#define TCPSERVER
-
-#region USINGZ
+﻿#define TCPSERVER
 
 using System;
 using System.Collections.Generic;
@@ -24,14 +10,17 @@ using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 using System.Threading;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class ConnectionManager
     {
-        private static ConnectionManager _instance;
-        private static object singleton_mutex = new object();
+        private static Lazy<ConnectionManager> _instance = new Lazy<ConnectionManager>(LazyThreadSafetyMode.ExecutionAndPublication);
+
+        public static ConnectionManager Instance
+        {
+            get { return _instance.Value; }
+        }
+
         private uint connection_id_counter;
         private object connection_id_counter_mutex = new object();
         private List<Connection> connections = new List<Connection>();
@@ -43,7 +32,6 @@ namespace Ros_CSharp
 #else
         public TcpTransport tcpserver_transport;
 #endif
-
 
         public int TCPPort
         {
@@ -58,25 +46,6 @@ namespace Ros_CSharp
                     return -1;
                 return ((IPEndPoint)tcpserver_transport.LocalEndPoint).Port;
 #endif
-            }
-        }
-
-        public static ConnectionManager Instance
-        {
-#if !TRACE
-            [DebuggerStepThrough]
-#endif
-                get
-            {
-                if (_instance == null)
-                {
-                    lock (singleton_mutex)
-                    {
-                        if (_instance == null)
-                            _instance = new ConnectionManager();
-                    }
-                }
-                return _instance;
             }
         }
 

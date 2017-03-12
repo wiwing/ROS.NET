@@ -1,31 +1,12 @@
-﻿// File: Master.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using XmlRpc_Wrapper;
+using Uml.Robotics.XmlRpc;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
-#if !TRACE
-    [DebuggerStepThrough]
-#endif
     public static class master
     {
         public static int port;
@@ -72,6 +53,7 @@ namespace Ros_CSharp
             args.Set(1, "");
             if (!execute("getPublishedTopics", args, result, payload, true))
                 return false;
+
             topicss.Clear();
             for (int i = 0; i < payload.Size; i++)
                 topicss.Add(new TopicInfo(payload[i][0].Get<string>(), payload[i][1].Get<string>()));
@@ -119,13 +101,16 @@ namespace Ros_CSharp
             XmlRpcValue payl = new XmlRpcValue();
             if (!execute("lookupNode", args, resp, payl, true))
                 return null;
+
             if (!XmlRpcManager.Instance.validateXmlrpcResponse("lookupNode", resp, payl))
                 return null;
+
             string nodeuri = payl.GetString();
             string nodehost = null;
             int nodeport = 0;
             if (!network.splitURI(nodeuri, ref nodehost, ref nodeport) || nodehost == null || nodeport <= 0)
                 return null;
+
             return XmlRpcManager.Instance.getXMLRPCClient(nodehost, nodeport, nodeuri);
         }
 
@@ -135,11 +120,13 @@ namespace Ros_CSharp
             CachedXmlRpcClient cl = clientForNode(node);
             if (cl == null)
                 return false;
+
             XmlRpcValue req = new XmlRpcValue(), resp = new XmlRpcValue(), payl = new XmlRpcValue();
             req.Set(0, this_node.Name);
             req.Set(1, "Out of respect for Mrs. " + this_node.Name);
             if (!cl.Execute("shutdown", req, resp) || !XmlRpcManager.Instance.validateXmlrpcResponse("lookupNode", resp, payl))
                 return false;
+
             payl.Dump();
             XmlRpcManager.Instance.releaseXMLRPCClient(cl);
             return true;
@@ -204,6 +191,7 @@ namespace Ros_CSharp
                             master_port, (wait_for_master ? "Retrying for the next "+retryTimeout.TotalSeconds+" seconds..." : ""));
                         printed = true;
                     }
+
                     if (retryTimeout.TotalSeconds > 0 && DateTime.Now.Subtract(startTime) > retryTimeout)
                     {
                         EDB.WriteLine("[{0}] Timed out trying to connect to the master after [{1}] seconds", method,

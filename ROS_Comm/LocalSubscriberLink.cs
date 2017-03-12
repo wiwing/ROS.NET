@@ -1,26 +1,10 @@
-﻿// File: LocalSubscriberLink.cs
-// Project: ROS_C-Sharp
-// 
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-// 
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
-// Created: 04/28/2015
-// Updated: 02/10/2016
-
-#region USINGZ
-
-using System;
+﻿using System;
 using Messages;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 
-#endregion
-
-namespace Ros_CSharp
+namespace Uml.Robotics.Ros
 {
     public class LocalSubscriberLink : SubscriberLink, IDisposable
     {
@@ -65,7 +49,6 @@ namespace Ros_CSharp
                 subscriber.handleMessage(holder.msg, holder.serialize, holder.nocopy);
         }
 
-
         public override void drop()
         {
             lock (drop_mutex)
@@ -81,7 +64,6 @@ namespace Ros_CSharp
             lock (parent)
                 parent.removeSubscriberLink(this);
         }
-
 
         public override void getPublishTypes(ref bool ser, ref bool nocopy, MsgTypes mt)
         {
