@@ -25,7 +25,7 @@ namespace YAMLParser
         /// <returns>"package name"</returns>
         private static string getPackageName(string path)
         {
-            string[] chunks = path.Split('\\');
+            string[] chunks = path.Split(System.IO.Path.DirectorySeparatorChar);
             string foldername = chunks[chunks.Length - 2];
             if (MSG_GEN_FOLDER_NAMES.Contains(foldername))
                 foldername = chunks[chunks.Length - 3];
@@ -73,7 +73,7 @@ namespace YAMLParser
 
         public override string  ToString()
         {
-            return string.Format("{0}\\{1}.{2}", package, basename, extension);
+            return string.Format("{0}.{1}", System.IO.Path.Combine(package, basename), extension);
         }
     }
 

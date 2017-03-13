@@ -247,7 +247,7 @@ namespace YAMLParser
             {
                 file.Write(outputdir);
             }
-            File.WriteAllText(outputdir + "\\MessageTypes.cs", ToString().Replace("FauxMessages", "Messages"));
+            File.WriteAllText(Path.Combine(outputdir, "MessageTypes.cs"), ToString().Replace("FauxMessages", "Messages"));
         }
 
         public static void GenerateProject(List<MsgsFile> files, List<SrvsFile> srvfiles)
@@ -304,7 +304,7 @@ namespace YAMLParser
             string output, error;
 
             Console.WriteLine("Running .NET dependency restorer...");
-            string restoreArgs = "restore \"" + outputdir + "\\" + name + ".csproj\"";
+            string restoreArgs = "restore \"" + Path.Combine(outputdir, name) + ".csproj\"";
             var proc = RunDotNet(restoreArgs);
             output = proc.StandardOutput.ReadToEnd();
             error = proc.StandardError.ReadToEnd();
@@ -314,15 +314,15 @@ namespace YAMLParser
                 Console.WriteLine(error);
 
             Console.WriteLine("Running .NET Builder...");
-            string buildArgs = "build \"" + outputdir + "\\" + name + ".csproj\" -c " + configuration;
+            string buildArgs = "build \"" + Path.Combine(outputdir, name) + ".csproj\" -c " + configuration;
             proc = RunDotNet(buildArgs);
 
             output = proc.StandardOutput.ReadToEnd();
             error = proc.StandardError.ReadToEnd();
             if (File.Exists(Path.Combine(outputdir, "bin", configuration, name + ".dll")))
             {
-                Console.WriteLine("\n\nGenerated DLL has been copied to:\n\t" + outputdir + "\\" + name + ".dll\n\n");
-                File.Copy(outputdir + "\\bin\\" + configuration + "\\" + name + ".dll", outputdir + "\\" + name + ".dll", true);
+                Console.WriteLine("\n\nGenerated DLL has been copied to:\n\t" + Path.Combine(outputdir, name + ".dll") + "\n\n");
+                File.Copy(Path.Combine(outputdir,  "bin", configuration, name + ".dll"), Path.Combine(outputdir, name + ".dll"), true);
                 Thread.Sleep(100);
             }
             else
@@ -379,36 +379,5 @@ namespace YAMLParser
             }
             return uberpwnage;
         }
-
-        //public static void GenDict(string dictname, string keytype, string valuetype, ref string appendto, int start, int end,
-        //    Func<int, string> genKey)
-        //{
-        //    GenDict(dictname, keytype, valuetype, ref appendto, start, end, genKey, null, null);
-        //}
-
-        //public static void GenDict(string dictname, string keytype, string valuetype, ref string appendto, int start, int end,
-        //    Func<int, string> genKey, Func<int, string> genVal)
-        //{
-        //    GenDict(dictname, keytype, valuetype, ref appendto, start, end, genKey, genVal, null);
-        //}
-
-        //public static void GenDict
-        //    (string dictname, string keytype, string valuetype, ref string appendto, int start, int end,
-        //        Func<int, string> genKey, Func<int, string> genVal, string DEFAULT)
-        //{
-        //    appendto +=
-        //        string.Format("\n\t\tpublic static Dictionary<{1}, {2}> {0} = new Dictionary<{1}, {2}>()\n\t\t{{",
-        //            dictname, keytype, valuetype);
-        //    if (DEFAULT != null)
-        //        appendto += "\n\t\t\t{" + DEFAULT + ",\n";
-        //    for (int i = start; i < end; i++)
-        //    {
-        //        if (genVal != null)
-        //            appendto += string.Format("\t\t\t{{{0}, {1}}}{2}", genKey(i), genVal(i), (i < end - 1 ? ",\n" : ""));
-        //        else
-        //            appendto += string.Format("\t\t\t{{{0}}}{1}", genKey(i), (i < end - 1 ? ",\n" : ""));
-        //    }
-        //    appendto += "\n\t\t};";
-        //}
     }
 }

@@ -230,14 +230,13 @@ namespace Messages
         }
     }
 
-
-
     public enum ServiceMessageType
     {
         Not,
         Request,
         Response
     }
+
     [System.Diagnostics.DebuggerStepThrough]
     public struct TimeData
     {

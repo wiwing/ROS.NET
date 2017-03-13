@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using YAMLParser;
 
 namespace FauxMessages
@@ -84,12 +83,12 @@ namespace FauxMessages
         {
             string[] chunks = Name.Split('.');
             for (int i = 0; i < chunks.Length - 1; i++)
-                outdir += "\\" + chunks[i];
+                outdir = Path.Combine(outdir, chunks[i]);
             if (!Directory.Exists(outdir))
                 Directory.CreateDirectory(outdir);
-            string contents = ToString();
+            string contents = this.ToString();
             if (contents != null)
-                File.WriteAllText(outdir + "\\" + msgfilelocation.basename + ".cs", contents.Replace("FauxMessages", "Messages"));
+                File.WriteAllText(Path.Combine(outdir, msgfilelocation.basename + ".cs"), contents.Replace("FauxMessages", "Messages"));
         }
 
         public override string ToString()

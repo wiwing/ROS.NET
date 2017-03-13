@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using YAMLParser;
 
 namespace FauxMessages
@@ -87,20 +86,11 @@ namespace FauxMessages
             for (int i = 0; i < lines.Count; i++)
                 lines[i] = lines[i].Split('#')[0].Trim();
 
-            // AKo: TODO check comment handling
-            // AKo: commented out, strings are immutable, ForEach seems to be NOP?!
-            //lines.ForEach(s =>
-            //{
-            //    if (s.Contains('#') && s.Split('#')[0].Length != 0)
-            //        s = s.Split('#')[0];
-            //    if (s.Contains('#'))
-            //        s = "";
-            //});
             this.lines = lines.Where(s => s.Trim().Length > 0).ToList();
         }
 
         public MsgsFile(MsgFileLocation filename, bool isrequest, List<string> lines)
-            : this(filename, isrequest, lines, "")
+            : this(filename, isrequest, lines, string.Empty)
         {
         }
 
@@ -113,8 +103,9 @@ namespace FauxMessages
 
             if (resolver == null)
                 resolver = new Dictionary<string, Dictionary<string, List<ResolvedMsg>>>();
+
             serviceMessageType = isrequest ? ServiceMessageType.Request : ServiceMessageType.Response;
-            //Parse The file name to get the classname;
+            //Parse The file name to get the classname
             classname = filename.basename;
             //Parse for the Namespace
             Namespace += "." + filename.package;
@@ -400,6 +391,7 @@ namespace FauxMessages
         /// How many 4-space "tabs" to prepend
         /// </summary>
         private const int LEADING_WHITESPACE = 3;
+
         private string GenerateSerializationForOne(string type, string name, SingleType st, int extraTabs = 0)
         {
             string leadingWhitespace = "";
@@ -639,6 +631,7 @@ namespace FauxMessages
             string leadingWhitespace = "";
             for (int i = 0; i < LEADING_WHITESPACE + extraTabs; i++)
                 leadingWhitespace += "    ";
+
             // this happens  for each member of the outer message
             // after concluding, make sure part of the string is "currentIndex += <amount read while deserializing this thing>"
             // start of deserializing piece referred to by st is currentIndex (its value at time of call to this fn)"
@@ -848,19 +841,21 @@ namespace FauxMessages
         {
             string[] chunks = Name.Split('.');
             for (int i = 0; i < chunks.Length - 1; i++)
-                outdir += "\\" + chunks[i];
+                outdir = Path.Combine(outdir, chunks[i]);
             if (!Directory.Exists(outdir))
                 Directory.CreateDirectory(outdir);
+            
             string localcn = classname;
             if (serviceMessageType != ServiceMessageType.Not)
                 localcn = classname.Replace("Request", "").Replace("Response", "");
-            string contents = ToString();
+
+            string contents = this.ToString();
             if (contents == null)
                 return;
             if (serviceMessageType == ServiceMessageType.Response)
-                File.AppendAllText(outdir + "\\" + localcn + ".cs", contents.Replace("FauxMessages", "Messages"));
+                File.AppendAllText(Path.Combine(outdir, localcn + ".cs"), contents.Replace("FauxMessages", "Messages"));
             else
-                File.WriteAllText(outdir + "\\" + localcn + ".cs", contents.Replace("FauxMessages", "Messages"));
+                File.WriteAllText(Path.Combine(outdir, localcn + ".cs"), contents.Replace("FauxMessages", "Messages"));
         }
     }
 }
