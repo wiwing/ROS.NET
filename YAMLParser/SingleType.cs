@@ -120,7 +120,7 @@ namespace FauxMessages
                     otherstuff = otherstuff.Replace("-1", "255");
                 }
                 Const = isconst;
-                bool wantsconstructor = false;
+                bool wantsconstructor = true;
                 if (otherstuff.Contains("="))
                 {
                     string[] chunks = otherstuff.Split('=');
@@ -128,6 +128,7 @@ namespace FauxMessages
                     if (type.Equals("string", StringComparison.OrdinalIgnoreCase))
                     {
                         otherstuff = chunks[0] + " = \"" + chunks[1].Trim() + "\"";
+                        wantsconstructor = false;
                     }
                 }
                 string prefix = "", suffix = "";
@@ -136,8 +137,10 @@ namespace FauxMessages
                     if (!type.Equals("string", StringComparison.OrdinalIgnoreCase))
                     {
                         prefix = "const ";
+                        wantsconstructor = false;
                     }
                 }
+                string t = KnownStuff.GetNamespacedType(this, type);
                 if (otherstuff.Contains('='))
                 {
                     if (wantsconstructor)
@@ -150,7 +153,12 @@ namespace FauxMessages
                     else
                         suffix = KnownStuff.GetConstTypesAffix(type);
                 }
-                string t = KnownStuff.GetNamespacedType(this, type);
+                else{
+                    if (type == "string")
+                        suffix = " = \"\"";
+                    else
+                        suffix = " = new " + prefix + t + "()";
+                }
                 output = lowestindent + "public " + prefix + t + " " + name + otherstuff + suffix + "; //woo";
             }
             else
