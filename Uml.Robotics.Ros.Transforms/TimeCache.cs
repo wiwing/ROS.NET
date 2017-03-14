@@ -158,7 +158,7 @@ namespace Uml.Robotics.Ros.Transforms
                     }
                     break;
                 default:
-                    ROS.FREAKOUT();
+                    throw new Exception("Function getData in TimeCache.cs failed: num_nodes has to be <=2.");
                     break;
             }
             return true;
