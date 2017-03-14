@@ -21,6 +21,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RosParamClient", "Samples\R
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{9C75EAAD-EACA-4E4F-B9DA-D7BADB3B7577}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransformsSample", "Samples\TransformsSample\TransformsSample.csproj", "{F121E1E2-A1A4-42E1-B0FA-EB6B41A10EAF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,11 +61,16 @@ Global
 		{7A7269E9-8D9A-4F0F-BA49-D5BFA91F9CB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A7269E9-8D9A-4F0F-BA49-D5BFA91F9CB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A7269E9-8D9A-4F0F-BA49-D5BFA91F9CB9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F121E1E2-A1A4-42E1-B0FA-EB6B41A10EAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F121E1E2-A1A4-42E1-B0FA-EB6B41A10EAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F121E1E2-A1A4-42E1-B0FA-EB6B41A10EAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F121E1E2-A1A4-42E1-B0FA-EB6B41A10EAF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{7A7269E9-8D9A-4F0F-BA49-D5BFA91F9CB9} = {9C75EAAD-EACA-4E4F-B9DA-D7BADB3B7577}
+		{F121E1E2-A1A4-42E1-B0FA-EB6B41A10EAF} = {9C75EAAD-EACA-4E4F-B9DA-D7BADB3B7577}
 	EndGlobalSection
 EndGlobal
