@@ -1,3 +1,14 @@
+## .NET Core 1.1 Build Instructions
+
+1. `cd YamlParser`
+2. `dotnet restore`
+3. `dotnet build`
+4. `dotnet run -- Debug <YourPathToSolutionRoot>` (ignore Build FAILED message but verify that `../Messages/Messages.dll` exists)
+5. `cd ..`
+5. `dotnet restore Uml.Robotics.Ros.sln`
+6. `dotnet build Uml.Robotics.Ros.sln` (build should succeed now)
+
+
 ![ROS.NET](https://github.com/uml-robotics/ROS.NET/raw/master/Logo.png)
 
 ## What is ROS,NET?
