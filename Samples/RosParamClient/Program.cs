@@ -3,9 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Ros_CSharp;
+using Uml.Robotics.Ros;
 
-namespace RosParamClient
+namespace Uml.Robotics.Samples
 {
     class Program
     {
@@ -28,17 +28,17 @@ namespace RosParamClient
         private Program(string[] args)
         {
             op OP = op.list;
-			try
-			{
-				OP = (op)Enum.Parse(typeof(op), args[0], true);
-				if (args.Length == 0)
-				{
-					ShowUsage(0);
-					return;
-				}
-			}catch(Exception ex)
-				{
-				}
+            try
+            {
+                OP = (op)Enum.Parse(typeof(op), args[0], true);
+                if (args.Length == 0)
+                {
+                    ShowUsage(0);
+                    return;
+                }
+            }catch(Exception ex)
+                {
+                }
             if (args.Length == 1 && OP != op.list)
             {
                 ShowUsage(1);

@@ -275,16 +275,7 @@ namespace Uml.Robotics.Ros
         {
             return IRosMessage.generate(type);
         }
-
-        /// <summary>
-        ///     If this happens, then the fact that there's a static function called FREAKOUT exists is the least of your problems.
-        /// </summary>
-        public static void FREAKOUT()
-        {
-            if (ROS.ProcessName != "devenv")
-                throw new Exception("ROS IS FREAKING OUT!");
-        }
-        
+       
         public class ONLY_AUTO_PARAMS
         {
             private ONLY_AUTO_PARAMS() {}
