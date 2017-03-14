@@ -8,9 +8,8 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Messages;
 using Uml.Robotics.XmlRpc;
-using m = Messages.std_msgs;
-using gm = Messages.geometry_msgs;
-using nm = Messages.nav_msgs;
+using std_msgs = Messages.std_msgs;
+
 
 namespace Uml.Robotics.Ros
 {
@@ -185,9 +184,9 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="time"> DateTime to convert </param>
         /// <returns> containing secs, nanosecs since 1/1/1970 </returns>
-        public static m.Time GetTime(DateTime time)
+        public static std_msgs.Time GetTime(DateTime time)
         {
-            return GetTime<m.Time>(time.Subtract(new DateTime(1970, 1, 1, 0, 0, 0)));
+            return GetTime<std_msgs.Time>(time.Subtract(new DateTime(1970, 1, 1, 0, 0, 0)));
         }
 
         #region time helpers
@@ -217,7 +216,7 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="time"> std_msgs.Time to convert </param>
         /// <returns> a DateTime </returns>
-        public static DateTime GetTime(m.Time time)
+        public static DateTime GetTime(std_msgs.Time time)
         {
             return new DateTime(1970, 1, 1, 0, 0, 0).Add(new TimeSpan(ticksFromData(time.data)));
         }
@@ -227,7 +226,7 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="time"> std_msgs.Duration to convert </param>
         /// <returns> a TimeSpan </returns>
-        public static TimeSpan GetTime(m.Duration duration)
+        public static TimeSpan GetTime(std_msgs.Duration duration)
         {
             return new TimeSpan(ticksFromData(duration.data));
         }
@@ -256,7 +255,7 @@ namespace Uml.Robotics.Ros
         ///     Gets the current time as secs/nsecs
         /// </summary>
         /// <returns> </returns>
-        public static m.Time GetTime()
+        public static std_msgs.Time GetTime()
         {
             return GetTime(DateTime.Now);
         }
