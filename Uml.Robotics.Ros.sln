@@ -17,6 +17,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Talker", "Samples\Talker\Ta
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Listener", "Samples\Listener\Listener.csproj", "{2E3D7D89-3595-4794-B8D9-DC1A4665899F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RosParamClient", "Samples\RosParamClient\RosParamClient.csproj", "{7A7269E9-8D9A-4F0F-BA49-D5BFA91F9CB9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{9C75EAAD-EACA-4E4F-B9DA-D7BADB3B7577}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,8 +55,15 @@ Global
 		{2E3D7D89-3595-4794-B8D9-DC1A4665899F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E3D7D89-3595-4794-B8D9-DC1A4665899F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E3D7D89-3595-4794-B8D9-DC1A4665899F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A7269E9-8D9A-4F0F-BA49-D5BFA91F9CB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A7269E9-8D9A-4F0F-BA49-D5BFA91F9CB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A7269E9-8D9A-4F0F-BA49-D5BFA91F9CB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A7269E9-8D9A-4F0F-BA49-D5BFA91F9CB9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7A7269E9-8D9A-4F0F-BA49-D5BFA91F9CB9} = {9C75EAAD-EACA-4E4F-B9DA-D7BADB3B7577}
 	EndGlobalSection
 EndGlobal
