@@ -79,9 +79,9 @@ namespace Uml.Robotics.Samples
                 */
                 tf.Transform result2 = new tf.Transform() {
                     basis = new tf.Quaternion(-0.5, 0.5, -0.5, 0.5),
-                    origin = new tf.Vector3(0.0, -0.045, 0.0),
+                    origin = new tf.Vector3(0.0, 0.0, 0.0),
                     child_frame_id = "camera_rgb_optical_frame",
-                    frame_id = "camera_link"
+                    frame_id = "camera_rgb_frame"
                 };
 
                 /*
@@ -91,9 +91,9 @@ namespace Uml.Robotics.Samples
                  */
                 tf.Transform result3 = new tf.Transform() {
                     basis = new tf.Quaternion(0, 0, 0, 1),
-                    origin = new tf.Vector3(0.0, 0.025, 0.0),
+                    origin = new tf.Vector3(0.0, -0.02, 0.0),
                     child_frame_id = "camera_depth_frame",
-                    frame_id = "camera_rgb_frame"
+                    frame_id = "camera_link"
                 };
 
                 /*
@@ -102,10 +102,10 @@ namespace Uml.Robotics.Samples
                  *      (0.5,-0.5,0.5,0.5)
                  */
                 tf.Transform result4 = new tf.Transform() {
-                    basis = new tf.Quaternion(0.5, -0.5, 0.5, 0.5),
-                    origin = new tf.Vector3(-0.025, 0.0, 0.0),
-                    child_frame_id = "camera_depth_frame",
-                    frame_id = "camera_rgb_optical_frame"
+                    basis = new tf.Quaternion(-0.5, 0.5, -0.5, 0.5),
+                    origin = new tf.Vector3(0.0, 0.0, 0.0),
+                    child_frame_id = "camera_depth_optical_frame",
+                    frame_id = "camera_depth_frame"
                 };
 
                 #endregion
@@ -129,11 +129,10 @@ namespace Uml.Robotics.Samples
                         test4 = testLookup(result4);
                     Thread.Sleep(100);
                 } while (ROS.ok && !ROS.shutting_down && (
-                    test1 == null || !string.Equals(result1.ToString(),
-                    test1.ToString()) || test2 == null || !string.Equals(result2.ToString(),
-                    test2.ToString()) || test3 == null || !string.Equals(result3.ToString(),
-                    test3.ToString()) || test4 == null || !string.Equals(result4.ToString(),
-                    test4.ToString()))
+                    test1 == null || !string.Equals(result1.ToString(), test1.ToString()) ||
+                    test2 == null || !string.Equals(result2.ToString(), test2.ToString()) ||
+                    test3 == null || !string.Equals(result3.ToString(), test3.ToString()) ||
+                    test4 == null || !string.Equals(result4.ToString(), test4.ToString()))
                 );
             }
             if (ROS.ok && !ROS.shutting_down)
