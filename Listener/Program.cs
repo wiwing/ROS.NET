@@ -23,7 +23,7 @@ namespace Listener
         }
         private static void Main(string[] args)
         {
-            //Trace.Listeners.Add(new ConsoleTraceListener());
+            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
             ROS.Init(args, "Listener");
             NodeHandle node = new NodeHandle();
             Subscriber<m.String> Subscriber = node.subscribe<m.String>("/chatter", 1, chatterCallback);

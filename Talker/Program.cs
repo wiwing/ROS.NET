@@ -11,7 +11,7 @@ namespace Talker
     {
         private static void Main(string[] args)
         {
-            //Trace.Listeners.Add(new ConsoleTraceListener());
+            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
             ROS.Init(args, "Talker");
             NodeHandle node = new NodeHandle();
             Publisher<std_msgs.String> Talker = node.advertise<std_msgs.String>("/chatter", 1);
