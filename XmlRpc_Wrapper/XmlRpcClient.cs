@@ -377,10 +377,13 @@ namespace Uml.Robotics.XmlRpc
             // If an error occurred last time through, or if the server closed the connection, close our end
             if ((_connectionState != ConnectionState.NO_CONNECTION && _connectionState != ConnectionState.IDLE) || _eof)
                 close();
+
             _eof = false;
             if (_connectionState == ConnectionState.NO_CONNECTION)
-                if (! doConnect())
+            {
+                if (!doConnect())
                     return false;
+            }
 
             // Prepare to write the request
             _connectionState = ConnectionState.WRITE_REQUEST;

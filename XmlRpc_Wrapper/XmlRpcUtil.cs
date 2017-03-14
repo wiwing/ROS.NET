@@ -135,7 +135,8 @@ namespace Uml.Robotics.XmlRpc
             get
             {
                 int contentlength = ContentLength;
-                if (contentlength <= 0) return false;
+                if (contentlength <= 0)
+                    return false;
 
                 return DataString != null && DataString.Length >= contentlength;
             }
@@ -169,7 +170,7 @@ namespace Uml.Robotics.XmlRpc
         {
             if (m_headerStatus != STATUS.COMPLETE_HEADER)
             {
-                int betweenHeaderAndData = HTTPRequest.IndexOf("\r\n\r\n", StringComparison.OrdinalIgnoreCase);
+                int betweenHeaderAndData = HTTPRequest.IndexOf("\r\n\r\n");
                 if (betweenHeaderAndData > 0)
                 {
                     m_headerStatus = STATUS.COMPLETE_HEADER;
@@ -225,6 +226,24 @@ namespace Uml.Robotics.XmlRpc
 
         private Dictionary<HTTPHeaderField, string> HeaderFieldToStrings = new Dictionary<HTTPHeaderField, string>();
 
+        // Fix for .net Core 1.0 IndexOf with StringComparison.OrdinalIgnoreCase bug.
+        // see https://github.com/dotnet/corefx/issues/4587
+        private static int IndexOfNoCase(string str, string part)
+        {
+            for (int i = 0; i <= str.Length-part.Length; ++i)
+            {
+                int j;
+                for (j =0; j < part.Length; ++j)
+                {
+                    if (char.ToLower(str[i+j]) != char.ToLower(part[j]))
+                        break;
+                }
+                if (j == part.Length)
+                    return i;
+            }
+            return -1;
+        }
+
         private void HTTPHeaderParse(string Header)
         {
             #region HTTP HEADER REQUEST & RESPONSE
@@ -244,12 +263,13 @@ namespace Uml.Robotics.XmlRpc
                 }
 
                 // Si le champ n'est pas pr?sent dans la requ?te, on passe au champ suivant
-                Index = Header.IndexOf(HTTPfield, StringComparison.OrdinalIgnoreCase);
+                //Index = Header.IndexOf(HTTPfield, StringComparison.OrdinalIgnoreCase);
+                Index = IndexOfNoCase(Header, HTTPfield);
                 if (Index == -1)
                     continue;
 
                 buffer = Header.Substring(Index + HTTPfield.Length);
-                Index = buffer.IndexOf("\r\n", StringComparison.OrdinalIgnoreCase);
+                Index = buffer.IndexOf("\r\n");
                 if (Index == -1)
                     m_StrHTTPField[HHField] = buffer.Trim();
                 else

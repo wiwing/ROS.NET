@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using Uml.Robotics.Ros;
 using std_msgs = Messages.std_msgs;
@@ -10,6 +11,7 @@ namespace Talker
     {
         private static void Main(string[] args)
         {
+            //Trace.Listeners.Add(new ConsoleTraceListener());
             ROS.Init(args, "Talker");
             NodeHandle node = new NodeHandle();
             Publisher<std_msgs.String> Talker = node.advertise<std_msgs.String>("/chatter", 1);

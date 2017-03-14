@@ -44,12 +44,12 @@ namespace Uml.Robotics.Ros
             {
                 try
                 {
-                    if (Console.CursorVisible)
+                    if (Console.CursorVisible)       // throws PlatformNotSupported on .NET Core
                     {
                         toDebugInstead = false;
                     }
                 }
-                catch (System.IO.IOException)
+                catch
                 {
                     toDebugInstead = true;
                 }

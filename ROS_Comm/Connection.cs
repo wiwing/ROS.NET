@@ -1,4 +1,4 @@
-﻿#define BEGIN_INVOKE
+﻿// #define BEGIN_INVOKE
 
 using System;
 using System.Collections;

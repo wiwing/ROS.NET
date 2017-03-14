@@ -12,6 +12,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Diagnostics.TraceSource " Version="4.3.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
     <ProjectReference Include="..\ROS_Comm\Uml.Robotics.Ros.csproj" />
   </ItemGroup>
 

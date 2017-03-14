@@ -1,6 +1,5 @@
-﻿#region Imports
-
-using System;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using Messages;
@@ -14,8 +13,6 @@ using nm = Messages.nav_msgs;
 using sm = Messages.sensor_msgs;
 using System.Text;
 
-#endregion
-
 namespace Listener
 {
     public class Program
@@ -26,6 +23,7 @@ namespace Listener
         }
         private static void Main(string[] args)
         {
+            //Trace.Listeners.Add(new ConsoleTraceListener());
             ROS.Init(args, "Listener");
             NodeHandle node = new NodeHandle();
             Subscriber<m.String> Subscriber = node.subscribe<m.String>("/chatter", 1, chatterCallback);

@@ -54,22 +54,26 @@ namespace YAMLParser
                 }
             }
 
-            string yamlparser_parent = "";
-            DirectoryInfo di = new DirectoryInfo(Directory.GetCurrentDirectory());
-            while (di.Name != "YAMLParser")
-            {
-                di = Directory.GetParent(di.FullName);
-            }
-            di = Directory.GetParent(di.FullName);
-            yamlparser_parent = di.FullName;
             if (args.Length - firstarg >= 1)
             {
                 solutiondir = new DirectoryInfo(Path.GetFullPath(args[firstarg])).FullName;
             }
             else
             {
+                string yamlparser_parent = "";
+                DirectoryInfo di = new DirectoryInfo(Directory.GetCurrentDirectory());
+                while (di != null && di.Name != "YAMLParser")
+                {
+                    di = Directory.GetParent(di.FullName);
+                }
+                if (di == null)
+                    throw new Exception("Not started from within YAMLParser directory.");
+                di = Directory.GetParent(di.FullName);
+                yamlparser_parent = di.FullName;
                 solutiondir = yamlparser_parent;
             }
+
+            Templates.LoadTemplateStrings(Path.Combine(solutiondir, "YAMLParser", "TemplateProject"));
 
             outputdir = Path.Combine(solutiondir, outputdir);
             var paths = new List<MsgFileLocation>();
@@ -78,7 +82,7 @@ namespace YAMLParser
             for (int i = firstarg; i < args.Length; i++)
             {
                 string d = new DirectoryInfo(Path.GetFullPath(args[i])).FullName;
-                Console.WriteLine("Spelunking in " + d);
+                Console.WriteLine("Looking in " + d);
                 MsgFileLocator.findMessages(paths, pathssrv, d);
             }
 
@@ -197,7 +201,7 @@ namespace YAMLParser
                 foreach (MsgsFile m in files.Except(mresolved))
                 {
                     string md5 = null;
-                    string typename = null;;
+                    string typename = null;
                     md5 = MD5.Sum(m);
                     typename = m.Name;
                     if (md5 != null && !md5.StartsWith("$") && !md5.EndsWith("MYMD5SUM"))
@@ -252,7 +256,6 @@ namespace YAMLParser
 
         public static void GenerateProject(List<MsgsFile> files, List<SrvsFile> srvfiles)
         {
-            File.WriteAllText(Path.Combine(outputdir, "SerializationHelper.cs"), Templates.SerializationHelper);
             File.WriteAllText(Path.Combine(outputdir, "Interfaces.cs"), Templates.Interfaces);
             string[] lines = Templates.MessagesProj.Split('\n');
             string output = "";
