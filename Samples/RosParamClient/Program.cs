@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Uml.Robotics.Ros;
 
-namespace Uml.Robotics.Samples
+namespace Uml.Robotics.Ros.Samples
 {
     class Program
     {
@@ -46,7 +46,7 @@ namespace Uml.Robotics.Samples
             switch (OP)
             {
                 case op.del:
-                    if (!Param.del(names.resolve(args[1]))) 
+                    if (!Param.del(names.resolve(args[1])))
                             Console.WriteLine("Failed to delete "+args[1]);
                     break;
                 case op.get:

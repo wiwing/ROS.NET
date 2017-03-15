@@ -9,7 +9,7 @@ using Uml.Robotics.Ros;
 using tf = Uml.Robotics.Ros.Transforms;
 
 
-namespace Uml.Robotics.Tests
+namespace Uml.Robotics.Ros.Tests
 {
     [Collection(RosFixture.ROS_COLLECTION)]
     public class TransformerFacts

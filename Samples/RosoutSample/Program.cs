@@ -7,7 +7,7 @@ using System.Collections.ObjectModel;
 using System;
 using Microsoft.Extensions.CommandLineUtils;
 
-namespace Uml.Robotics.Samples
+namespace Uml.Robotics.Ros.Samples
 {
     public class Program
     {
