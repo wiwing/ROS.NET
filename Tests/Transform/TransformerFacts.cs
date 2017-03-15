@@ -11,27 +11,21 @@ using tf = Uml.Robotics.Ros.Transforms;
 
 namespace Uml.Robotics.Tests
 {
+    [Collection(RosFixture.ROS_COLLECTION)]
     public class TransformerFacts
     {
         private tf.Transformer transformer;
         private Time when;
+        private RosFixture rosFixture;
 
 
-        public TransformerFacts()
+        public TransformerFacts(RosFixture rosFixture)
         {
-            ROS.Init(new string[0], "TransformerFacts");
             when = ROS.GetTime();
             //
             // TODO: Add constructor logic here
             //
             transformer = new tf.Transformer();
-        }
-
-
-        ~TransformerFacts()
-        {
-            Console.WriteLine("Shutting down ROS");
-            ROS.shutdown();
         }
 
 
