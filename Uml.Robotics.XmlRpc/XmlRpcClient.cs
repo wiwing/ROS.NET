@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Xml;
@@ -26,12 +27,8 @@ namespace Uml.Robotics.XmlRpc
         private bool _eof;
         private bool _executing;
         private string _host;
-        private bool _isFault;
-        private bool _keepOpen;
         private int _port;
         private string _request;
-
-        //HttpWebRequest webRequester;
 
         // Number of times the client has attempted to send the request
         private int _sendAttempts;
@@ -41,23 +38,24 @@ namespace Uml.Robotics.XmlRpc
         public delegate void DisposedEvent();
         public event DisposedEvent Disposed;
 
-        public XmlRpcClient(string HostName, int Port, string Uri)
+        public XmlRpcClient(string hostName, int port, string path)
         {
-            Initialize(HostName, Port, Uri);
+            Initialize(hostName, port, path);
         }
 
-        public XmlRpcClient(string HostName, int Port)
-            : this(HostName, Port, "/")
+        public XmlRpcClient(string hostName, int port)
+            : this(hostName, port, "/")
         {
         }
 
-        public XmlRpcClient(string WHOLESHEBANG)
+        public XmlRpcClient(string uri)
         {
-            if (!WHOLESHEBANG.Contains("://"))
-                throw new Exception("INVALID ARGUMENT DIE IN A FIRE!");
-            WHOLESHEBANG = WHOLESHEBANG.Remove(0, WHOLESHEBANG.IndexOf("://") + 3);
-            WHOLESHEBANG.Trim('/');
-            string[] chunks = WHOLESHEBANG.Split(':');
+            if (!uri.Contains("://"))
+                throw new ArgumentException("Protocol part is missing in URI argument.", "uri");
+            uri = uri.Remove(0, uri.IndexOf("://") + 3);
+            uri.Trim('/');
+
+            string[] chunks = uri.Split(':');
             string hn = chunks[0];
             string[] chunks2 = chunks[1].Split('/');
             int p = int.Parse(chunks2[0]);
@@ -159,7 +157,6 @@ namespace Uml.Robotics.XmlRpc
                 //ClearFlagOnExit cf(_executing);
 
                 _sendAttempts = 0;
-                _isFault = false;
 
                 if (!setupConnection())
                 {
@@ -208,7 +205,6 @@ namespace Uml.Robotics.XmlRpc
             _executing = true;
 
             _sendAttempts = 0;
-            _isFault = false;
 
             if (!setupConnection())
             {
@@ -269,7 +265,7 @@ namespace Uml.Robotics.XmlRpc
         public override void Close()
         {
             XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.DEBUG, "XmlRpcClient::Close()");
-            close();
+            CloseInternal();
             if (Disposed != null)
                 Disposed();
         }
@@ -305,7 +301,7 @@ namespace Uml.Robotics.XmlRpc
         }
 
         // Close the owned fd
-        public void close()
+        private void CloseInternal()
         {
             XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.DEBUG, "XmlRpcClient::close.");
             _connectionState = ConnectionState.NO_CONNECTION;
@@ -316,6 +312,7 @@ namespace Uml.Robotics.XmlRpc
             if (socket != null)
             {
                 socket.Dispose();
+                socket = null;
                 //reader = null;
                 //writer = null;
             }
@@ -376,7 +373,7 @@ namespace Uml.Robotics.XmlRpc
         {
             // If an error occurred last time through, or if the server closed the connection, close our end
             if ((_connectionState != ConnectionState.NO_CONNECTION && _connectionState != ConnectionState.IDLE) || _eof)
-                close();
+                CloseInternal();
 
             _eof = false;
             if (_connectionState == ConnectionState.NO_CONNECTION)
@@ -399,24 +396,28 @@ namespace Uml.Robotics.XmlRpc
         // Connect to the xmlrpc server
         private bool doConnect()
         {
-            if (socket == null)
+            if (socket != null)
+                throw new InvalidOperationException("XmlRpcClient: TcpClient has already been created.");
+
+            try
             {
-                try
+                socket = new TcpClient();
+                socket.ConnectAsync(_host, _port).Wait();       // wait synchronously
+            }
+            catch (AggregateException ex)
+            {
+                var socketException = ex.InnerExceptions.OfType<SocketException>().FirstOrDefault();
+                if (socketException != null)
                 {
-                    socket = new TcpClient();
-                    socket.ConnectAsync(_host, _port).Wait();
-                }
-                catch (SocketException)
-                {
+                    XmlRpcUtil.error("Error in XmlRpcClient::doConnect: Could not connect to server ({0}).", socketException.Message);
+                    socket.Dispose();
+                    socket = null;
                     return false;
                 }
+
+                throw;
             }
-            if (!socket.Connected)
-            {
-                close();
-                XmlRpcUtil.error("Error in XmlRpcClient::doConnect: Could not connect to server ({0}).", getSocketError());
-                return false;
-            }
+    
             return true;
         }
 

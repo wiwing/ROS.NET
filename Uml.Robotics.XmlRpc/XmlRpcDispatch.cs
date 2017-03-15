@@ -24,7 +24,6 @@ namespace Uml.Robotics.XmlRpc
         public void AddSource(XmlRpcSource source, EventType eventMask)
         {
             sources.Add(new DispatchRecord { client = source, mask = eventMask });
-            //addsource(instance, source.instance, (uint) eventMask);
         }
 
         public void RemoveSource(XmlRpcSource source)
@@ -74,16 +73,11 @@ namespace Uml.Robotics.XmlRpc
             }
 
             // Check for events
-
-            if (timeout < 0.0)
+            if (timeout < 0)
                 Socket.Select(checkRead, checkWrite, checkExc, -1);
             else
             {
-                //struct timeval tv;
-                //tv.tv_sec = (int)floor(timeout);
-                //tv.tv_usec = ((int)floor(1000000.0 * (timeout-floor(timeout)))) % 1000000;
                 Socket.Select(checkRead, checkWrite, checkExc, (int)(timeout * 1000000.0));
-                //nEvents = select(maxFd+1, &inFd, &outFd, &excFd, &tv);
             }
 
             int nEvents = checkRead.Count + checkWrite.Count + checkExc.Count;
