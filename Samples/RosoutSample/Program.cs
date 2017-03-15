@@ -14,22 +14,38 @@ namespace Uml.Robotics.Samples
         static void Main(string[] args)
         {
             var options = new CommandLineApplication(throwOnUnexpectedArg: false);
-            CommandArgument names = null;
-            //options.Option("-");
+            CommandOption levelOption = options.Option("-l | --level <level>",
+                "Defines the verbosity level for displaying messages 0-4; default: 0 - very verbose",
+                CommandOptionType.SingleValue
+            );
+            CommandOption filterOption = options.Option("-f | --filter <ignorestring>",
+                "Semicolon sepperated list of strings that should filter out messages; default: ''",
+                CommandOptionType.SingleValue
+            );
+            options.HelpOption("-h | --help");
 
-            string ignoredStrings = null;
-            if (args.Length > 0)
+            options.OnExecute(() =>
             {
-                ignoredStrings = args[0];
-            }
+                int level;
+                try
+                {
+                    level = int.Parse(levelOption.Value());
+                } catch (Exception e)
+                {
+                    level = 0;
+                }
+                Console.WriteLine("Using verbose level " + level);
+                var rosoutDebug = new RosoutDebug(level);
 
-            var rosoutDebug = new RosoutDebug();
+                if (filterOption.HasValue())
+                {
+                    Console.WriteLine("Using filter string: " + filterOption.Value());
+                    rosoutDebug.Filter = filterOption.Value();
+                }
+                return 0;
+            });
 
-            if (ignoredStrings != null)
-            {
-                Console.WriteLine("Using ignoredStrings: " + ignoredStrings);
-                rosoutDebug.IgnoredStrings = ignoredStrings;
-            }
+            options.Execute(args);
         }
     }
 
@@ -38,14 +54,15 @@ namespace Uml.Robotics.Samples
     {
         Subscriber<Messages.rosgraph_msgs.Log> subscriber;
         private NodeHandle nodeHandle;
+        private int verboseLevel;
 
-        // Right now, these are split from a semicolon-delimited string, and matching is REALLY DUMB...
-        // Just a containment check.
-        private List<string> ignoredStrings = new List<string>();
+        // Right now, these are split from a semicolon-delimited string, and matching could be improved
+        private List<string> filter = new List<string>();
 
 
-        public RosoutDebug()
+        public RosoutDebug(int verboseLevel)
         {
+            this.verboseLevel = verboseLevel;
             ROS.Init(new string[0], "RosoutDebug");
             ROS.WaitForMaster();
             nodeHandle = new NodeHandle();
@@ -57,13 +74,13 @@ namespace Uml.Robotics.Samples
         /// A semicolon-delimited list of substrings that, when found in a concatenation of any rosout msgs fields,
         /// will not display that message
         /// </summary>
-        public string IgnoredStrings
+        public string Filter
         {
-            get { return ignoredStrings.ToString(); }
+            get { return filter.ToString(); }
             set
             {
-                ignoredStrings.Clear();
-                ignoredStrings.AddRange(value.Split(';'));
+                filter.Clear();
+                filter.AddRange(value.Split(';'));
             }
         }
 
@@ -110,9 +127,11 @@ namespace Uml.Robotics.Samples
                 msg.file,
                 msg.function, msg.line
             );
-            if (ignoredStrings.Count > 0 && ignoredStrings.Any(teststring.Contains))
+
+            bool containesFilteredString = filter.Count > 0 && filter.Any(teststring.Contains);
+            bool isFilteredByVerboseLevel = Math.Pow(2, this.verboseLevel) > msg.level;
+            if (containesFilteredString || isFilteredByVerboseLevel)
             {
-                Console.WriteLine("Ignored Message");
                 return;
             }
 
