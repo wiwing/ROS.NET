@@ -136,8 +136,14 @@ namespace Uml.Robotics.Ros
 
         public bool urisEqual(string uri1, string uri2)
         {
-            if (uri1 == null || uri2 == null)
-                throw new Exception("ZOMG IT'S NULL IN URISEQUAL!");
+            if (uri1 == null)
+            {
+                throw new ArgumentNullException(nameof(uri1));
+            }
+            if (uri2 == null)
+            {
+                throw new ArgumentNullException(nameof(uri2));
+            }
             string n1;
             string h1 = n1 = "";
             int p2;

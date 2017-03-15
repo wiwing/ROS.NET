@@ -59,7 +59,7 @@ namespace Uml.Robotics.XmlRpc
             SetArray(initialvalues.Length);
             for (int i = 0; i < initialvalues.Length; i++)
             {
-                setFromObject(i, initialvalues[i]);
+                SetFromObject(i, initialvalues[i]);
             }
         }
 
@@ -109,7 +109,8 @@ namespace Uml.Robotics.XmlRpc
                 }
 
                 XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.DEBUG, "Trying to get size of something without a size! -- type={0}", _type);
-                throw new XmlRpcException("type error");
+                throw new XmlRpcException($"Invalid or unkown type: {_type}. Expected {ValueType.TypeString}, " +
+                    $"{ValueType.TypeBase64}, {ValueType.TypeArray} or {ValueType.TypeStruct}");
             }
         }
 
@@ -163,29 +164,28 @@ namespace Uml.Robotics.XmlRpc
             set { Set(key, value); }
         }
 
-        private void setFromObject(int i, object o)
+        private void SetFromObject(int key, object value)
         {
-            int ires = 0;
-            double dres = 0;
-            bool bres = false;
-            if (o == null)
+            int parsedInt = 0;
+            double parsedDouble = 0;
+            bool parsedBool = false;
+            if (value == null)
             {
-                Set(i, "");
+                Set(key, "");
                 return;
             }
-            Type type = o.GetType();
+            Type type = value.GetType();
             if (type.Equals(typeof (String)))
-                Set(i, o != null ? o.ToString() : "");
-            else if (type.Equals(typeof (Int32)) && int.TryParse(o.ToString(), out ires))
-                Set(i, ires);
-            else if (type.Equals(typeof (Double)) && double.TryParse(o.ToString(), out dres))
-                Set(i, dres);
-            else if (type.Equals(typeof (Boolean)) && bool.TryParse(o.ToString(), out bres))
-                Set(i, bres);
+                Set(key, value != null ? value.ToString() : "");
+            else if (type.Equals(typeof (Int32)) && int.TryParse(value.ToString(), out parsedInt))
+                Set(key, parsedInt);
+            else if (type.Equals(typeof (Double)) && double.TryParse(value.ToString(), out parsedDouble))
+                Set(key, parsedDouble);
+            else if (type.Equals(typeof (Boolean)) && bool.TryParse(value.ToString(), out parsedBool))
+                Set(key, parsedBool);
             else
             {
-                throw new Exception("Why is this thing a " + o + "??");         // ## AKo: review
-                // Set(i, o.ToString());
+                throw new XmlRpcException($"Invalid type {type} or error while parsing {value.ToString()} as {type}");
             }
         }
 
@@ -206,7 +206,7 @@ namespace Uml.Robotics.XmlRpc
             asTime = null;
         }
 
-        private void assertArray(int size)
+        private void AssertArray(int size)
         {
             if (_type == ValueType.TypeInvalid)
             {
@@ -222,7 +222,7 @@ namespace Uml.Robotics.XmlRpc
                 throw new XmlRpcException("type error: expected an array");
         }
 
-        private void assertStruct()
+        private void AssertStruct()
         {
             if (_type == ValueType.TypeInvalid)
             {
@@ -456,12 +456,12 @@ namespace Uml.Robotics.XmlRpc
                     el.AppendChild(doc.CreateTextNode(asTime.ToString()));
                     break;
                 case ValueType.TypeString:
-                    //asString = other.asString; 
+                    //asString = other.asString;
                     el = doc.CreateElement(STRING_TAG);
                     el.AppendChild(doc.CreateTextNode(asString));
                     break;
                 case ValueType.TypeBase64:
-                    //asBinary = other.asBinary; 
+                    //asBinary = other.asBinary;
                     el = doc.CreateElement(BASE64_TAG);
                     var base64 = Convert.ToBase64String(asBinary);
                     el.AppendChild(doc.CreateTextNode(base64));
@@ -525,14 +525,14 @@ namespace Uml.Robotics.XmlRpc
             }
             else
             {
-                throw new Exception("What do I do to Set<T> for a " + type);
+                throw new XmlRpcException($"Invalid type {type}. Expected types are String, Int32, XmlRpcValue, Bool and Double");
             }
         }
 
         public void EnsureArraySize(int size)
         {
             if (_type != ValueType.TypeInvalid && _type != ValueType.TypeArray)
-                throw new Exception("Converting to array existing value");
+                throw new XmlRpcException($"Cannot convert {_type} to array");
             int before = 0;
             if (asArray != null)
             {
@@ -596,7 +596,7 @@ namespace Uml.Robotics.XmlRpc
             {
                 return (T) (object) asArray;
             }
-            throw new Exception(string.Format("Trying to Get {0} from:\n{1}", type.FullName, ToString()));
+            throw new Exception($"Trying to Get {type.FullName} from: {ToString()}");
         }
 
         private T Get<T>(int key)

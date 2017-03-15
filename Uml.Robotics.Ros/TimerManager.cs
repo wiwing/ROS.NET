@@ -148,7 +148,7 @@ namespace Uml.Robotics.Ros
             set
             {
                 if (timer == null)
-                    throw new Exception("This wrapper is no longer with the living");
+                    throw new NullReferenceException("Timer instance has already been disposed");
                 if (_delay != value && running)
                     timer.Change(value, _period);
                 _delay = value;
@@ -164,7 +164,7 @@ namespace Uml.Robotics.Ros
             set
             {
                 if (timer == null)
-                    throw new Exception("This wrapper is no longer with the living");
+                    throw new NullReferenceException("Timer instance has already been disposed");
                 if (_period != value && running)
                     timer.Change(_delay, value);
                 _period = value;
@@ -180,7 +180,7 @@ namespace Uml.Robotics.Ros
             set
             {
                 if (timer == null)
-                    throw new Exception("This wrapper is no longer with the living");
+                    throw new NullReferenceException("Timer instance has already been disposed");
                 if (value && !_running) Start();
                 if (!value && _running) Stop();
             }
@@ -205,7 +205,7 @@ namespace Uml.Robotics.Ros
         public void Start()
         {
             if (timer == null)
-                throw new Exception("This wrapper is no longer with the living");
+                throw new NullReferenceException("Timer instance has already been disposed");
             if (running) return;
             try
             {
@@ -226,7 +226,7 @@ namespace Uml.Robotics.Ros
         public void Start(int d, int p)
         {
             if (timer == null)
-                throw new Exception("This wrapper is no longer with the living");
+                throw new NullReferenceException("Timer instance has already been disposed");
             _delay = d;
             _period = p;
             try
@@ -255,7 +255,7 @@ namespace Uml.Robotics.Ros
         public void Stop()
         {
             if (timer == null)
-                throw new Exception("This wrapper is no longer with the living");
+                throw new NullReferenceException("Timer instance has already been disposed");
             if (!running) return;
             try
             {

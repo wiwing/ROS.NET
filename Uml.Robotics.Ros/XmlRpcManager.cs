@@ -67,7 +67,7 @@ namespace Uml.Robotics.Ros
             {
                 if (server.Dispatch == null)
                 {
-                    throw new Exception("XmlRpcManager isn't initialized yet!");
+                    throw new NullReferenceException("XmlRpcManager is not initialized yet!");
                 }
                 lock (added_connections_mutex)
                 {
@@ -149,7 +149,7 @@ namespace Uml.Robotics.Ros
                 case XmlRpcValue.ValueType.TypeInvalid:
                     break;
                 default:
-                    throw new Exception("Unhandled valid xmlrpc payload type: " + response[2].Type);
+                    throw new ArgumentException("Unhandled valid xmlrpc payload type: " + response[2].Type, nameof(response));
             }
             return true;
         }
@@ -311,7 +311,7 @@ namespace Uml.Robotics.Ros
 
             if (p != 0)
             {
-                //if port isn't 0, then we better be the master, 
+                //if port isn't 0, then we better be the master,
                 //      so let's grab this bull by the horns
                 uri = ROS.ROS_MASTER_URI;
                 port = p;

@@ -370,7 +370,7 @@ namespace Uml.Robotics.Ros
                 }
                 return srv;
             }
-            throw new Exception("Something ain't right with this advertisement.");
+            throw new InvalidOperationException("Could not advertise service");
         }
 
         public ServiceClient<MReq, MRes> serviceClient<MReq, MRes>(string service_name)
