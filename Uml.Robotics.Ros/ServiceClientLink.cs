@@ -22,7 +22,7 @@ namespace Uml.Robotics.Ros
         {
             if (!header.Values.ContainsKey("md5sum") || !header.Values.ContainsKey("service") || !header.Values.ContainsKey("callerid"))
             {
-                string bbq = "Bogus tcpros header. did not have required elements: md5sum, service, callerid";
+                string bbq = "Error in TcpRos header. Required elements (md5sum, service, callerid) are missing";
                 ROS.Error()(bbq);
                 connection.sendHeaderError(ref bbq);
                 return false;
@@ -38,7 +38,7 @@ namespace Uml.Robotics.Ros
             IServicePublication isp = ServiceManager.Instance.lookupServicePublication(service);
             if (isp == null)
             {
-                string bbq = string.Format("received a tcpros connection for a nonexistent service [{0}]", service);
+                string bbq = string.Format("Received a TcpRos connection for a nonexistent service [{0}]", service);
                 ROS.Error()(bbq);
                 connection.sendHeaderError(ref bbq);
                 return false;
@@ -46,7 +46,7 @@ namespace Uml.Robotics.Ros
 
             if (isp.md5sum != md5sum && md5sum != "*" && isp.md5sum != "*")
             {
-                string bbq = "client wants service " + service + " to have md5sum " + md5sum + " but it has " + isp.md5sum + ". Dropping connection";
+                string bbq = "Client wants service " + service + " to have md5sum " + md5sum + " but it has " + isp.md5sum + ". Dropping connection";
                 ROS.Error()(bbq);
                 connection.sendHeaderError(ref bbq);
                 return false;
@@ -54,7 +54,7 @@ namespace Uml.Robotics.Ros
 
             if (isp.isDropped)
             {
-                string bbq = "received a tcpros connection for a nonexistent service [" + service + "]";
+                string bbq = "Received a TcpRos connection for a nonexistent service [" + service + "]";
                 ROS.Error()(bbq);
                 connection.sendHeaderError(ref bbq);
                 return false;
@@ -118,9 +118,10 @@ namespace Uml.Robotics.Ros
                 throw new Exception("Invalid request length read");
 
             int len = BitConverter.ToInt32(buffer, 0);
-            if (len > 1000000000)
+            int lengthLimit = 1000000000;
+            if (len > lengthLimit)
             {
-                ROS.Error()("A message over a gigabyte was predicted... stop... being... bad.");
+                ROS.Error()($"Message length exceeds limit of {lengthLimit}. Dropping connection.");
                 connection.drop(Connection.DropReason.Destructing);
                 return false;
             }

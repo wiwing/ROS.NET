@@ -246,7 +246,7 @@ namespace Uml.Robotics.Ros
                 }
                 return pub;
             }
-            EDB.WriteLine("ADVERTISE FAILED!!!!");
+            EDB.WriteLine("Advertisement of publisher has failed");
             return null;
         }
 

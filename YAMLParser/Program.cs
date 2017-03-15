@@ -334,7 +334,7 @@ namespace YAMLParser
                     Console.WriteLine(output);
                 if (error.Length > 0)
                     Console.WriteLine(error);
-                Console.WriteLine("AMG BUILD FAIL!");
+                Console.WriteLine("Build was not successful");
             }
         }
 

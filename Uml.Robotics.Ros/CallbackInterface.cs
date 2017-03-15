@@ -156,7 +156,7 @@ namespace Uml.Robotics.Ros
             }
             else
             {
-                EDB.WriteLine("EVENT IS NULL");
+                EDB.WriteLine($"{nameof(Event)} is null");
             }
         }
 

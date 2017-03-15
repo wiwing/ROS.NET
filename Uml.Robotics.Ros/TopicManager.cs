@@ -432,12 +432,12 @@ namespace Uml.Robotics.Ros
                 }
                 if (proto_name == "UDPROS")
                 {
-                    EDB.WriteLine("IGNORING UDP GIZNARBAGE");
+                    EDB.WriteLine("Ignoring topics with UdpRos as protocol");
                 }
                 else
                     EDB.WriteLine("an unsupported protocol was offered: [{0}]", proto_name);
             }
-            EDB.WriteLine("The caller to requestTopic has NO IDEA WHAT'S GOING ON!");
+            EDB.WriteLine("No supported protocol was provided");
             return false;
         }
 

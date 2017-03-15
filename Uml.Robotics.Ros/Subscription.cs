@@ -216,7 +216,7 @@ namespace Uml.Robotics.Ros
                 }
                 else
                 {
-                    EDB.WriteLine("NOT DISCONNECTING FROM MYSELF FOR TOPIC " + name);
+                    EDB.WriteLine("Cannot disconnect from self for topic: " + name);
                 }
             }
 
@@ -308,13 +308,13 @@ namespace Uml.Robotics.Ros
             string proto_name = proto[0].Get<string>();
             if (proto_name == "UDPROS")
             {
-                EDB.WriteLine("OWNED! Only tcpros is supported right now.");
+                EDB.WriteLine("Udp is currently not supported. Use TcpRos instead.");
             }
             else if (proto_name == "TCPROS")
             {
                 if (proto.Size != 3 || proto[1].Type != XmlRpcValue.ValueType.TypeString || proto[2].Type != XmlRpcValue.ValueType.TypeInt)
                 {
-                    EDB.WriteLine("publisher implements TCPROS... BADLY! parameters aren't string,int");
+                    EDB.WriteLine("TcpRos Publisher should implement string, int as parameter");
                     return;
                 }
                 string pub_host = proto[1].Get<string>();
@@ -354,7 +354,7 @@ namespace Uml.Robotics.Ros
             }
             else
             {
-                EDB.WriteLine("Your xmlrpc server be talking jibber jabber, foo");
+                EDB.WriteLine("The XmlRpc Server does not provide a supported protocol.");
             }
         }
 

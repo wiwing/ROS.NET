@@ -186,7 +186,7 @@ namespace Uml.Robotics.Ros
 
                     if (!printed)
                     {
-                        EDB.WriteLine("[{0}] FAILED TO CONTACT MASTER AT [{1}:{2}]. {3}", method, master_host,
+                        EDB.WriteLine("[{0}] Could not connect to master at [{1}:{2}]. {3}", method, master_host,
                             master_port, (wait_for_master ? "Retrying for the next "+retryTimeout.TotalSeconds+" seconds..." : ""));
                         printed = true;
                     }
