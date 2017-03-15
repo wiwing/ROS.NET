@@ -1,12 +1,13 @@
 ﻿using System;
-using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace Uml.Robotics.Ros
 {
     public class Header
     {
-        public IDictionary Values = new Hashtable();
+        public IDictionary<string, string> Values = new Dictionary<string, string>();
 
         public bool Parse(byte[] buffer, int size, ref string error_msg)
         {
@@ -41,25 +42,29 @@ namespace Uml.Robotics.Ros
             return result;
         }
 
-        public void Write(IDictionary dict, ref byte[] buffer, ref int totallength)
+        public void Write(IDictionary<string, string> dict, out byte[] buffer, out int totallength)
         {
-            Values = new Hashtable(dict);
-            buffer = new byte[0];
-            totallength = 0;
-            foreach (object k in dict.Keys)
+            var ms = new MemoryStream();
+            using(var writer=new BinaryWriter(ms, Encoding.ASCII)) 
             {
-                int linelength = 0;
-                byte[] key = Encoding.ASCII.GetBytes((string) k);
-                byte[] val = Encoding.ASCII.GetBytes(dict[k].ToString());
-                totallength += val.Length + key.Length + 1 + 4;
-                linelength = val.Length + key.Length + 1;
-                buffer = concat(buffer, ByteLength(linelength));
-                buffer = concat(buffer, key);
-                buffer = concat(buffer, Encoding.ASCII.GetBytes("="));
-                buffer = concat(buffer, val);
+                foreach (string k in dict.Keys)
+                {
+                    byte[] key = Encoding.ASCII.GetBytes(k);
+                    byte[] val = Encoding.ASCII.GetBytes(dict[k]);
+                    int lineLength = val.Length + key.Length + 1;
+
+                    writer.Write(lineLength);
+                    writer.Write(key);
+                    writer.Write('=');
+                    writer.Write(val);
+                }
             }
-            if (totallength != buffer.Length)
-                throw new InvalidOperationException("Error during header creation: mismatch in buffer length");
+
+            ArraySegment<byte> result;
+            ms.TryGetBuffer(out result);
+            buffer = new byte[result.Count];
+            Array.Copy(result.Array, result.Offset, buffer, 0, result.Count);
+            totallength = result.Count;
         }
 
         public static byte[] ByteLength(int num)

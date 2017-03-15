@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System.Collections.Generic;
 using Messages;
 
 namespace Uml.Robotics.Ros
@@ -15,7 +15,7 @@ namespace Uml.Robotics.Ros
 
     public class IServiceCallbackHelperParams
     {
-        public IDictionary connection_header;
+        public IDictionary<string, string> connection_header;
         public IRosMessage request, response;
     }
 
@@ -77,10 +77,10 @@ namespace Uml.Robotics.Ros
             //return SerializationHelper.Deserialize<T>(parms.buffer);
         }
 
-        private void assignSubscriptionConnectionHeader(ref IRosMessage msg, IDictionary p)
+        private void assignSubscriptionConnectionHeader(ref IRosMessage msg, IDictionary<string, string> p)
         {
             // EDB.WriteLine("ISubscriptionCallbackHelper: assignSubscriptionConnectionHeader");
-            msg.connection_header = new Hashtable(p);
+            msg.connection_header = new Dictionary<string, string>(p);
         }
     }
 }

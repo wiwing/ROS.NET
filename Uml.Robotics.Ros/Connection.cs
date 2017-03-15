@@ -1,10 +1,10 @@
 ﻿// #define BEGIN_INVOKE
 
 using System;
-using System.Collections;
 using System.Threading;
 using System.Reflection;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace Uml.Robotics.Ros
 {
@@ -47,7 +47,7 @@ namespace Uml.Robotics.Ros
         {
             get
             {
-                if (header != null && header.Values.Contains("callerid"))
+                if (header != null && header.Values.ContainsKey("callerid"))
                     return (string) header.Values["callerid"];
                 return string.Empty;
             }
@@ -57,13 +57,13 @@ namespace Uml.Robotics.Ros
 
         public void sendHeaderError(ref string error_message)
         {
-            IDictionary m = new Hashtable();
+            IDictionary<string, string> m = new Dictionary<string, string>();
             m["error"] = error_message;
             writeHeader(m, onErrorHeaderWritten);
             sendingHeaderError = true;
         }
 
-        public void writeHeader(IDictionary key_vals, WriteFinishedFunc finished_func)
+        public void writeHeader(IDictionary<string, string> key_vals, WriteFinishedFunc finished_func)
         {
             header_written_callback = finished_func;
             if (!transport.getRequiresHeader())
@@ -73,7 +73,7 @@ namespace Uml.Robotics.Ros
             }
             int len = 0;
             byte[] buffer = null;
-            header.Write(key_vals, ref buffer, ref len);
+            header.Write(key_vals, out buffer, out len);
             int msg_len = (int) len + 4;
             byte[] full_msg = new byte[msg_len];
             int j = 0;
@@ -208,7 +208,7 @@ namespace Uml.Robotics.Ros
             else
             {
                 string error_val = "";
-                if (header.Values.Contains("error"))
+                if (header.Values.ContainsKey("error"))
                 {
                     error_val = (string) header.Values["error"];
                     EDB.WriteLine("Received error message in header for connection to [{0}]: [{1}]",

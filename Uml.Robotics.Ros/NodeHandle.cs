@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Messages;
@@ -20,14 +19,15 @@ namespace Uml.Robotics.Ros
         private bool no_validate = false;
         private bool node_started_by_nh;
         private bool started_by_visual_studio = true;
-        private IDictionary remappings = new Hashtable(), unresolved_remappings = new Hashtable();
+        private IDictionary<string, string> remappings = new Dictionary<string, string>();
+        private IDictionary<string, string> unresolved_remappings = new Dictionary<string, string>();
 
         /// <summary>
         ///     Creates a new node
         /// </summary>
         /// <param name="ns">Namespace of node</param>
         /// <param name="remappings">any remappings</param>
-        public NodeHandle(string ns, IDictionary remappings = null)
+        public NodeHandle(string ns, IDictionary<string, string> remappings = null)
         {
             if (ROS.IsVisualStudio)
                 return;
@@ -48,8 +48,8 @@ namespace Uml.Robotics.Ros
                 return;
             started_by_visual_studio = false;
             Callback = rhs.Callback;
-            remappings = new Hashtable(rhs.remappings);
-            unresolved_remappings = new Hashtable(rhs.unresolved_remappings);
+            remappings = new Dictionary<string, string>(rhs.remappings);
+            unresolved_remappings = new Dictionary<string, string>(rhs.unresolved_remappings);
             construct(rhs.Namespace, true);
             UnresolvedNamespace = rhs.UnresolvedNamespace;
         }
@@ -66,8 +66,8 @@ namespace Uml.Robotics.Ros
             started_by_visual_studio = false;
             Namespace = parent.Namespace;
             Callback = parent.Callback;
-            remappings = new Hashtable(parent.remappings);
-            unresolved_remappings = new Hashtable(parent.unresolved_remappings);
+            remappings = new Dictionary<string, string>(parent.remappings);
+            unresolved_remappings = new Dictionary<string, string>(parent.unresolved_remappings);
             construct(ns, false);
         }
 
@@ -77,14 +77,14 @@ namespace Uml.Robotics.Ros
         /// <param name="parent">Parent node to attach</param>
         /// <param name="ns">Namespace of new node</param>
         /// <param name="remappings">Remappings</param>
-        public NodeHandle(NodeHandle parent, string ns, IDictionary remappings)
+        public NodeHandle(NodeHandle parent, string ns, IDictionary<string, string> remappings)
         {
             if (ROS.IsVisualStudio)
                 return;
             started_by_visual_studio = false;
             Namespace = parent.Namespace;
             Callback = parent.Callback;
-            this.remappings = new Hashtable(remappings);
+            this.remappings = new Dictionary<string, string>(remappings);
             construct(ns, false);
         }
 
@@ -390,7 +390,7 @@ namespace Uml.Robotics.Ros
         }
 
         public ServiceClient<MReq, MRes> serviceClient<MReq, MRes>(string service_name, bool persistent,
-            IDictionary header_values)
+            IDictionary<string, string> header_values)
             where MReq : IRosMessage, new()
             where MRes : IRosMessage, new()
         {
@@ -425,7 +425,7 @@ namespace Uml.Robotics.Ros
         }
 
         public ServiceClient<MSrv> serviceClient<MSrv>(string service_name, bool persistent,
-            IDictionary header_values)
+            IDictionary<string, string> header_values)
             where MSrv : IRosService, new()
 
         {
@@ -477,13 +477,13 @@ namespace Uml.Robotics.Ros
                 ROS.shutdown();
         }
 
-        private void initRemappings(IDictionary rms)
+        private void initRemappings(IDictionary<string, string> rms)
         {
             if (rms == null) return;
-            foreach (object k in rms.Keys)
+            foreach (string k in rms.Keys)
             {
-                string left = (string) k;
-                string right = (string) rms[k];
+                string left = k;
+                string right = rms[k];
                 if (left != "" && left[0] != '_')
                 {
                     string resolved_left = resolveName(left, false);
@@ -499,7 +499,7 @@ namespace Uml.Robotics.Ros
             string resolved = resolveName(name, false);
             if (resolved == null)
                 resolved = "";
-            else if (remappings.Contains(resolved))
+            else if (remappings.ContainsKey(resolved))
                 return (string) remappings[resolved];
             return names.remap(resolved);
         }

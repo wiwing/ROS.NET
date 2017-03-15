@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Messages;
@@ -8,7 +8,7 @@ namespace Uml.Robotics.Ros
 {
     public class ServiceClient<MReq, MRes> : IServiceClient where MReq : IRosMessage, new() where MRes : IRosMessage, new()
     {
-        internal ServiceClient(string service, bool persistent, IDictionary header_values, string md5sum)
+        internal ServiceClient(string service, bool persistent, IDictionary<string, string> header_values, string md5sum)
         {
             this.service = service;
             this.persistent = persistent;
@@ -42,7 +42,7 @@ namespace Uml.Robotics.Ros
     public class ServiceClient<MSrv> : IServiceClient
         where MSrv : IRosService, new()
     {
-        internal ServiceClient(string service, bool persistent, IDictionary header_values, string md5sum)
+        internal ServiceClient(string service, bool persistent, IDictionary<string, string> header_values, string md5sum)
         {
             this.service = service;
             this.persistent = persistent;
@@ -78,7 +78,7 @@ namespace Uml.Robotics.Ros
         internal double constructed =
             (int) Math.Floor(DateTime.Now.Subtract(Process.GetCurrentProcess().StartTime).TotalMilliseconds);
 
-        internal IDictionary header_values;
+        internal IDictionary<string, string> header_values;
         internal bool is_shutdown;
         internal string md5sum;
         internal bool persistent;

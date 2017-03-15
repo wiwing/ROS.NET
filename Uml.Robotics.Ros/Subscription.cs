@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -368,7 +367,7 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        internal ulong handleMessage(IRosMessage msg, bool ser, bool nocopy, IDictionary connection_header,
+        internal ulong handleMessage(IRosMessage msg, bool ser, bool nocopy, IDictionary<string, string> connection_header,
             PublisherLink link)
         {
             IRosMessage t = null;
@@ -553,7 +552,7 @@ namespace Uml.Robotics.Ros
 
         public class LatchInfo
         {
-            public IDictionary connection_header;
+            public IDictionary<string, string> connection_header;
             public PublisherLink link;
             public IRosMessage message;
             public TimeData receipt_time;

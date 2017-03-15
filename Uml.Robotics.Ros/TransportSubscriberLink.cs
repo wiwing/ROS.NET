@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using m = Messages.std_msgs;
@@ -47,7 +46,7 @@ namespace Uml.Robotics.Ros
 
         public bool handleHeader(Header header)
         {
-            if (!header.Values.Contains("topic"))
+            if (!header.Values.ContainsKey("topic"))
             {
                 string msg = "Header from subscriber did not have the required element: topic";
                 EDB.WriteLine(msg);
@@ -80,12 +79,12 @@ namespace Uml.Robotics.Ros
             {
                 max_queue = parent.MaxQueue;
             }
-            IDictionary m = new Hashtable();
+            IDictionary<string, string> m = new Dictionary<string, string>();
             m["type"] = pt.DataType;
             m["md5sum"] = pt.Md5sum;
             m["message_definition"] = pt.MessageDefinition;
             m["callerid"] = this_node.Name;
-            m["latching"] = pt.Latch;
+            m["latching"] = Convert.ToString(pt.Latch);
             connection.writeHeader(m, onHeaderWritten);
             pt.addSubscriberLink(this);
 #if DEBUG

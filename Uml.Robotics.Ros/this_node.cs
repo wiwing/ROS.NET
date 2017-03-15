@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -10,25 +9,28 @@ namespace Uml.Robotics.Ros
         public static string Name = "empty";
         public static string Namespace = "";
 
-        public static void Init(string n, IDictionary remappings)
+        public static void Init(string n, IDictionary<string, string> remappings)
         {
             Init(n, remappings, 0);
         }
 
-        public static void Init(string n, IDictionary remappings, int options)
+        public static void Init(string n, IDictionary<string, string> remappings, int options)
         {
             Name = n;
             bool disable_anon = false;
-            if (remappings.Contains("__name"))
+            if (remappings.ContainsKey("__name"))
             {
-                Name = (string) remappings["__name"];
+                Name = remappings["__name"];
                 disable_anon = true;
             }
-            if (remappings.Contains("__ns"))
+            if (remappings.ContainsKey("__ns"))
             {
-                Namespace = (string) remappings["__ns"];
+                Namespace = remappings["__ns"];
             }
-            if (Namespace == "") Namespace = "/";
+            if (Namespace == "")
+            {
+                Namespace = "/";
+            } 
 
             long walltime = DateTime.Now.Subtract(Process.GetCurrentProcess().StartTime).Ticks;
             names.Init(remappings);

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections;
+using System.Collections.Generic;
 
 namespace Uml.Robotics.Ros
 {
@@ -37,21 +37,21 @@ namespace Uml.Robotics.Ros
             return Environment.MachineName;
         }
 
-        public static void init(IDictionary remappings)
+        public static void init(IDictionary<string, string> remappings)
         {
-            if (remappings.Contains("__hostname"))
+            if (remappings.ContainsKey("__hostname"))
             {
-                host = (string)remappings["__hostname"];
+                host = remappings["__hostname"];
             }
             else
             {
-                if (remappings.Contains("__ip"))
-                    host = (string)remappings["__ip"];
+                if (remappings.ContainsKey("__ip"))
+                    host = remappings["__ip"];
             }
 
-            if (remappings.Contains("__tcpros_server_port"))
+            if (remappings.ContainsKey("__tcpros_server_port"))
             {
-                tcpros_server_port = int.Parse((string) remappings["__tcpros_server_port"]);
+                tcpros_server_port = int.Parse(remappings["__tcpros_server_port"]);
             }
 
             if (string.IsNullOrEmpty(host))

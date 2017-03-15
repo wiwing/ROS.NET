@@ -32,11 +32,11 @@ namespace Uml.Robotics.Ros
         public bool setHeader(Header h)
         {
             CallerID = (string) h.Values["callerid"];
-            if (!h.Values.Contains("md5sum"))
+            if (!h.Values.ContainsKey("md5sum"))
                 return false;
             md5sum = (string) h.Values["md5sum"];
             Latched = false;
-            if (!h.Values.Contains("latching"))
+            if (!h.Values.ContainsKey("latching"))
                 return false;
             if ((string) h.Values["latching"] == "1")
                 Latched = true;

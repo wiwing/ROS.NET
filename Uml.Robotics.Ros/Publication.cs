@@ -153,8 +153,8 @@ namespace Uml.Robotics.Ros
         public bool validateHeader(Header header, ref string error_message)
         {
             string md5sum = "", topic = "", client_callerid = "";
-            if (!header.Values.Contains("md5sum") || !header.Values.Contains("topic") ||
-                !header.Values.Contains("callerid"))
+            if (!header.Values.ContainsKey("md5sum") || !header.Values.ContainsKey("topic") ||
+                !header.Values.ContainsKey("callerid"))
             {
                 const string msg = "Header from subscriber did not have the required elements: md5sum, topic, callerid";
                 EDB.WriteLine(msg);
@@ -175,7 +175,7 @@ namespace Uml.Robotics.Ros
 
             if (Md5sum != md5sum && (md5sum != "*") && Md5sum != "*")
             {
-                string datatype = header.Values.Contains("type") ? (string) header.Values["type"] : "unknown";
+                string datatype = header.Values.ContainsKey("type") ? (string) header.Values["type"] : "unknown";
                 string msg = "Client [" + client_callerid + "] wants topic [" + topic + "] to hava datatype/md5sum [" +
                              datatype + "/" + md5sum + "], but our version has [" + DataType + "/" + Md5sum +
                              "]. Dropping connection";

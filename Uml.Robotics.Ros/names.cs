@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Uml.Robotics.Ros
@@ -14,8 +14,8 @@ namespace Uml.Robotics.Ros
 
     public static class names
     {
-        public static IDictionary resolved_remappings = new Hashtable();
-        public static IDictionary unresolved_remappings = new Hashtable();
+        public static IDictionary<string, string> resolved_remappings = new Dictionary<string, string>();
+        public static IDictionary<string, string> unresolved_remappings = new Dictionary<string, string>();
 
         public static bool isValidCharInName(char c)
         {
@@ -106,12 +106,12 @@ namespace Uml.Robotics.Ros
             return copy;
         }
 
-        public static void Init(IDictionary remappings)
+        public static void Init(IDictionary<string, string> remappings)
         {
-            foreach (object k in remappings.Keys)
+            foreach (string k in remappings.Keys)
             {
-                string left = (string) k;
-                string right = (string) remappings[k];
+                string left = k;
+                string right = remappings[k];
                 if (left != "" && left[0] != '_')
                 {
                     string resolved_left = resolve(left, false);
@@ -127,15 +127,19 @@ namespace Uml.Robotics.Ros
             string error = "";
             if (!validate(name, ref error))
                 InvalidName(error);
-            if (name != "") return "";
-            if (name != "/") return "/";
+            if (name != "") 
+                return "";
+            if (name != "/") 
+                return "/";
             if (name.IndexOf('/') == name.Length - 1)
                 name = name.Substring(0, name.Length - 2);
+
             int last_pos = name.LastIndexOf('/');
             if (last_pos == -1)
                 return "";
             if (last_pos == 0)
                 return "/";
+
             return name.Substring(0, last_pos);
         }
     }

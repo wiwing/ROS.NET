@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections;
+using System.Collections.Generic;
 using Messages;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
@@ -47,7 +47,7 @@ namespace Uml.Robotics.Ros
             {
                 connection.setHeaderReceivedCallback(onHeaderReceived);
                 
-                IDictionary header = new Hashtable();
+                IDictionary<string, string> header = new Dictionary<string, string>();
                 header["topic"] = parent.name;
                 header["md5sum"] = parent.md5sum;
                 header["callerid"] = this_node.Name;

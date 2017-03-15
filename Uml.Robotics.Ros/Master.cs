@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -14,9 +13,9 @@ namespace Uml.Robotics.Ros
         public static string uri = "";
         public static TimeSpan retryTimeout = TimeSpan.FromSeconds(5);
 
-        public static void init(IDictionary remapping_args)
+        public static void init(IDictionary<string, string> remapping_args)
         {
-            if (remapping_args.Contains("__master"))
+            if (remapping_args.ContainsKey("__master"))
             {
                 uri = (string) remapping_args["__master"];
                 ROS.ROS_MASTER_URI = uri;
@@ -207,7 +206,8 @@ namespace Uml.Robotics.Ros
                     client = XmlRpcManager.Instance.getXMLRPCClient(master_host, master_port, "/");
                 }
             }
-            catch (Exception e)
+            //catch (Exception e)
+            catch (ArgumentNullException e)
             {
                 EDB.WriteLine(e);
             }

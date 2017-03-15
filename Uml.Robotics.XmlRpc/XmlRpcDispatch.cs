@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Net.Sockets;
 
@@ -53,9 +52,9 @@ namespace Uml.Robotics.XmlRpc
         {
             EventType defaultMask = EventType.ReadableEvent | EventType.WritableEvent | EventType.Exception;
 
-            ArrayList checkRead = new ArrayList();
-            ArrayList checkWrite = new ArrayList();
-            ArrayList checkExc = new ArrayList();
+            List<System.Net.Sockets.Socket> checkRead = new List<System.Net.Sockets.Socket>();
+            List<System.Net.Sockets.Socket> checkWrite = new List<System.Net.Sockets.Socket>();
+            List<System.Net.Sockets.Socket> checkExc = new List<System.Net.Sockets.Socket>();
 
             foreach (var src in sources)
             {

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -67,7 +66,7 @@ namespace Messages
         public virtual bool IsServiceComponent() { return false; }
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
 
-        public IDictionary connection_header;
+        public IDictionary<string, string> connection_header;
 
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [System.Diagnostics.DebuggerStepThrough]

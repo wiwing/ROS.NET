@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -368,7 +367,7 @@ namespace Uml.Robotics.Ros
             // 2. passed in as remap argument
             // 3. environment variable
 
-            IDictionary remapping;
+            IDictionary<string, string> remapping;
             if (RemappingHelper.GetRemappings(ref args, out remapping))
                 Init(remapping, name, options);
             else
@@ -380,7 +379,7 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="remapping_args"> Dictionary of remapping args </param>
         /// <param name="name"> node name </param>
-        internal static void Init(IDictionary remapping_args, string name)
+        internal static void Init(IDictionary<string, string> remapping_args, string name)
         {
             Init(remapping_args, name, 0);
         }
@@ -391,7 +390,7 @@ namespace Uml.Robotics.Ros
         /// <param name="remapping_args"> dictionary of remapping args </param>
         /// <param name="name"> node name </param>
         /// <param name="options"> options? </param>
-        internal static void Init(IDictionary remapping_args, string name, int options)
+        internal static void Init(IDictionary<string, string> remapping_args, string name, int options)
         {
             // if we haven't sunk our fangs into the processes jugular so we can tell
             //    when it has stopped kicking, do so now

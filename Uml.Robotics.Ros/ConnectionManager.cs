@@ -140,13 +140,13 @@ namespace Uml.Robotics.Ros
         public bool onConnectionHeaderReceived(Connection conn, Header header)
         {
             bool ret = false;
-            if (header.Values.Contains("topic"))
+            if (header.Values.ContainsKey("topic"))
             {
                 TransportSubscriberLink sub_link = new TransportSubscriberLink();
                 ret = sub_link.initialize(conn);
                 ret &= sub_link.handleHeader(header);
             }
-            else if (header.Values.Contains("service"))
+            else if (header.Values.ContainsKey("service"))
             {
                 IServiceClientLink iscl = new IServiceClientLink();
                 ret = iscl.initialize(conn);

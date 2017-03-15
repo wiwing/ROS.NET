@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace Uml.Robotics.Ros
@@ -17,7 +17,7 @@ namespace Uml.Robotics.Ros
             {
                 TcpTransport transport = new TcpTransport();
 
-                IDictionary m = new Hashtable
+                IDictionary<string, string> m = new Dictionary<string, string>
                 {
                     { "probe", "1" },
                     { "md5sum", "*" },
@@ -28,7 +28,7 @@ namespace Uml.Robotics.Ros
                 byte[] headerbuf = null;
                 int size = 0;
                 Header h = new Header();
-                h.Write(m, ref headerbuf, ref size);
+                h.Write(m, out headerbuf, out size);
 
                 if (transport.connect(host, port))
                 {

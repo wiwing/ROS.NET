@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -80,10 +79,10 @@ namespace Uml.Robotics.Ros
 
         public void update()
         {
-            ArrayList checkWrite = new ArrayList();
-            ArrayList checkRead = new ArrayList();
-            ArrayList checkError = new ArrayList();
-            List<Socket> lsocks = new List<Socket>();
+            List<System.Net.Sockets.Socket> checkWrite = new List<System.Net.Sockets.Socket>();
+            List<System.Net.Sockets.Socket> checkRead = new List<System.Net.Sockets.Socket>();
+            List<System.Net.Sockets.Socket> checkError = new List<System.Net.Sockets.Socket>();
+            List<Uml.Robotics.Ros.Socket> lsocks = new List<Uml.Robotics.Ros.Socket>();
             lock (socks)
             {
                 foreach (Socket s in socks.Values)

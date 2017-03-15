@@ -353,11 +353,11 @@ namespace Uml.Robotics.Ros
         {
             if (_topic == null)
             {
-                if (header.Values.Contains("topic"))
+                if (header.Values.ContainsKey("topic"))
                     _topic = header.Values["topic"].ToString();
             }
             string nodelay = "";
-            if (header.Values.Contains("tcp_nodelay"))
+            if (header.Values.ContainsKey("tcp_nodelay"))
                 nodelay = (string) header.Values["tcp_nodelay"];
             if (nodelay == "1")
             {

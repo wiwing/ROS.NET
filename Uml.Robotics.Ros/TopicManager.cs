@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics;
@@ -219,7 +218,10 @@ namespace Uml.Robotics.Ros
             XmlRpcValue args = new XmlRpcValue(this_node.Name, ops.topic, ops.datatype, XmlRpcManager.Instance.uri),
                 result = new XmlRpcValue(),
                 payload = new XmlRpcValue();
+
+            Console.WriteLine("This is here");
             master.execute("registerPublisher", args, result, payload, true);
+            Console.WriteLine("This is there");
             return true;
         }
 
@@ -324,12 +326,12 @@ namespace Uml.Robotics.Ros
                 serfunc = msg.Serialize;
             if (p.connection_header == null)
             {
-                p.connection_header = new Header {Values = new Hashtable()};
+                p.connection_header = new Header {Values = new Dictionary<string, string>()};
                 p.connection_header.Values["type"] = p.DataType;
                 p.connection_header.Values["md5sum"] = p.Md5sum;
                 p.connection_header.Values["message_definition"] = p.MessageDefinition;
                 p.connection_header.Values["callerid"] = this_node.Name;
-                p.connection_header.Values["latching"] = p.Latch;
+                p.connection_header.Values["latching"] = Convert.ToString(p.Latch);
             }
             if (!ROS.ok || shutting_down) return;
             if (p.HasSubscribers || p.Latch)

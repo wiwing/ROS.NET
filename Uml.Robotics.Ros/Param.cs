@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Uml.Robotics.XmlRpc;
@@ -310,12 +309,11 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-        public static void init(IDictionary remapping_args)
+        public static void init(IDictionary<string, string> remapping_args)
         {
-            foreach (object o in remapping_args.Keys)
+            foreach (string name in remapping_args.Keys)
             {
-                string name = (string) o;
-                string param = (string) remapping_args[o];
+                string param = (string) remapping_args[name];
                 if (name.Length < 2) continue;
                 if (name[0] == '_' && name[1] != '_')
                 {

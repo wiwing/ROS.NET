@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -49,7 +48,7 @@ namespace Uml.Robotics.Ros
             return null;
         }
 
-        internal ServiceServerLink<S> createServiceServerLink<S>(string service, bool persistent, string request_md5sum, string response_md5sum, IDictionary header_values)
+        internal ServiceServerLink<S> createServiceServerLink<S>(string service, bool persistent, string request_md5sum, string response_md5sum, IDictionary<string, string> header_values)
             where S : IRosService, new()
         {
             lock (shutting_down_mutex)
@@ -78,7 +77,8 @@ namespace Uml.Robotics.Ros
             return null;
         }
 
-        internal ServiceServerLink<M, T> createServiceServerLink<M, T>(string service, bool persistent, string request_md5sum, string response_md5sum, IDictionary header_values)
+        internal ServiceServerLink<M, T> createServiceServerLink<M, T>(string service, bool persistent, string request_md5sum, 
+                                                                       string response_md5sum, IDictionary<string, string> header_values)
             where M : IRosMessage, new()
             where T : IRosMessage, new()
         {

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -20,13 +19,13 @@ namespace Uml.Robotics.Ros
         public Connection connection;
         private CallInfo current_call;
         public bool header_read;
-        private IDictionary header_values;
+        private IDictionary<string, string> header_values;
         public bool header_written;
         public string name;
         public bool persistent;
 
         public IServiceServerLink(string name, bool persistent, string requestMd5Sum, string responseMd5Sum,
-            IDictionary header_values)
+            IDictionary<string, string> header_values)
         {
             // TODO: Complete member initialization
             this.name = name;
@@ -74,14 +73,18 @@ namespace Uml.Robotics.Ros
             connection.DroppedEvent += onConnectionDropped;
             connection.setHeaderReceivedCallback(onHeaderReceived);
 
-            IDictionary dict = new Hashtable();
+            IDictionary<string, string> dict = new Dictionary<string, string>();
             dict["service"] = name;
             dict["md5sum"] = IRosService.generate((SrvTypes) Enum.Parse(typeof (SrvTypes), RequestType.ToString().Replace("__Request", "").Replace("__Response", ""))).MD5Sum();
             dict["callerid"] = this_node.Name;
             dict["persistent"] = persistent ? "1" : "0";
-            if (header_values != null)
-                foreach (object o in header_values.Keys)
+            if (header_values != null) 
+            {
+                foreach (string o in header_values.Keys)
+                {
                     dict[o] = header_values[o];
+                }
+            }
             connection.writeHeader(dict, onHeaderWritten);
         }
 
@@ -103,7 +106,7 @@ namespace Uml.Robotics.Ros
         private bool onHeaderReceived(Connection conn, Header header)
         {
             string md5sum;
-            if (header.Values.Contains("md5sum"))
+            if (header.Values.ContainsKey("md5sum"))
                 md5sum = (string) header.Values["md5sum"];
             else
             {
@@ -343,7 +346,7 @@ namespace Uml.Robotics.Ros
         where MRes : IRosMessage, new()
     {
         public ServiceServerLink(string name, bool persistent, string requestMd5Sum, string responseMd5Sum,
-            IDictionary header_values)
+            IDictionary<string, string> header_values)
             : base(name, persistent, requestMd5Sum, responseMd5Sum, header_values)
         {
             initialize<MReq, MRes>();
@@ -363,7 +366,7 @@ namespace Uml.Robotics.Ros
         where MSrv : IRosService, new()
     {
         public ServiceServerLink(string name, bool persistent, string requestMd5Sum, string responseMd5Sum,
-            IDictionary header_values)
+            IDictionary<string, string> header_values)
             : base(name, persistent, requestMd5Sum, responseMd5Sum, header_values)
         {
             initialize<MSrv>();

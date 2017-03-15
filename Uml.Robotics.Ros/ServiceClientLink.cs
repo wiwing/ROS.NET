@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections;
+using System.Collections.Generic;
 using Messages;
 using std_msgs = Messages.std_msgs;
 
@@ -20,7 +20,7 @@ namespace Uml.Robotics.Ros
 
         public bool handleHeader(Header header)
         {
-            if (!header.Values.Contains("md5sum") || !header.Values.Contains("service") || !header.Values.Contains("callerid"))
+            if (!header.Values.ContainsKey("md5sum") || !header.Values.ContainsKey("service") || !header.Values.ContainsKey("callerid"))
             {
                 string bbq = "Bogus tcpros header. did not have required elements: md5sum, service, callerid";
                 ROS.Error()(bbq);
@@ -31,7 +31,7 @@ namespace Uml.Robotics.Ros
             string service = (string) header.Values["service"];
             string client_callerid = (string) header.Values["client_callerid"];
 
-            if (header.Values.Contains("persistent") && ((string) header.Values["persistent"] == "1" || (string) header.Values["persistent"] == "true"))
+            if (header.Values.ContainsKey("persistent") && ((string) header.Values["persistent"] == "1" || (string) header.Values["persistent"] == "true"))
                 persistent = true;
 
             ROS.Debug()("Service client [{0}] wants service [{1}] with md5sum [{2}]", client_callerid, service, md5sum);
@@ -61,7 +61,7 @@ namespace Uml.Robotics.Ros
             }
 
             parent = isp;
-            IDictionary m = new Hashtable();
+            IDictionary<string, string> m = new Dictionary<string, string>();
             m["request_type"] = isp.req_datatype;
             m["response_type"] = isp.res_datatype;
             m["type"] = isp.datatype;

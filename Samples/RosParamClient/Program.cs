@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -87,7 +86,7 @@ namespace Uml.Robotics.Samples
 
         static void Main(string[] args)
         {
-            IDictionary remappings;
+            IDictionary<string, string> remappings;
             RemappingHelper.GetRemappings(ref args, out remappings);
             network.init(remappings);
             master.init(remappings);
