@@ -374,7 +374,7 @@ namespace Uml.Robotics.Ros
 
         public virtual CallResult call()
         {
-            ROS.Debug()("CALLED PEERCONNDISCONNCALLBACK");
+            ROS.Debug()("Called PeerConnDisconnCallback");
             SingleSubscriberPublisher pub = new SingleSubscriberPublisher(sub_link);
             callback(pub);
             return CallResult.Success;

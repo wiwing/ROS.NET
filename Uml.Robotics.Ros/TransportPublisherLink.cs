@@ -46,7 +46,7 @@ namespace Uml.Robotics.Ros
             if (connection.transport.getRequiresHeader())
             {
                 connection.setHeaderReceivedCallback(onHeaderReceived);
-                
+
                 IDictionary header = new Hashtable();
                 header["topic"] = parent.name;
                 header["md5sum"] = parent.md5sum;
@@ -98,7 +98,7 @@ namespace Uml.Robotics.Ros
             {
                 if (reason == Connection.DropReason.HeaderError)
                 {
-                    EDB.WriteLine("SOMETHING BE WRONG WITH THE HEADER FOR: " +
+                    EDB.WriteLine("Error in the Header: " +
                                     (parent != null ? parent.name : "unknown"));
                 }
                 drop();
@@ -129,7 +129,7 @@ namespace Uml.Robotics.Ros
             if (parent != null)
                 stats.drops += parent.handleMessage(m, ser, nocopy, connection.header.Values, this);
             else
-                Console.WriteLine("merrr?");
+                Console.WriteLine($"{nameof(parent)} is null");
         }
 
         private bool onHeaderWritten(Connection conn)
@@ -151,9 +151,10 @@ namespace Uml.Robotics.Ros
             if (conn != connection || size != 4)
                 return false;
             int len = BitConverter.ToInt32(buffer, 0);
-            if (len > 1000000000)
+            int lengthLimit = 1000000000;
+            if (len > lengthLimit)
             {
-                EDB.WriteLine("TransportPublisherLink: 1 GB message WTF?!");
+                EDB.WriteLine($"TransportPublisherLink length exceeds limit of {lengthLimit}. Dropping connection");
                 drop();
                 return false;
             }

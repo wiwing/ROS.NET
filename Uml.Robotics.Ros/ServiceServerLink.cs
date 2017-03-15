@@ -107,7 +107,7 @@ namespace Uml.Robotics.Ros
                 md5sum = (string) header.Values["md5sum"];
             else
             {
-                ROS.Error()("TCPROS header from service server did not have required element: md5sum");
+                ROS.Error()("TcpRos header from service server did not have required element: md5sum");
                 return false;
             }
             //TODO check md5sum
@@ -239,9 +239,10 @@ namespace Uml.Robotics.Ros
             if (!success) return false;
             byte ok = buf[0];
             int len = BitConverter.ToInt32(buf, 1);
-            if (len > 1000000000)
+            int lengthLimit = 1000000000;
+            if (len > lengthLimit)
             {
-                ROS.Error()("GIGABYTE IS TOO BIIIIG");
+                ROS.Error()($"Message length exceeds limit of {lengthLimit}. Dropping connection.");
                 connection.drop(Connection.DropReason.Destructing);
                 return false;
             }

@@ -88,7 +88,7 @@ namespace Uml.Robotics.Ros
             }
             else
             {
-                EDB.WriteLine("Uh oh! Null pollset in tcptransport ctor");
+                EDB.WriteLine("Null pollset in tcptransport ctor");
             }
             this.flags = flags;
         }
@@ -541,7 +541,7 @@ namespace Uml.Robotics.Ros
                 return null;
             if (args.AcceptSocket == null)
             {
-                EDB.WriteLine("NOTHING TO ACCEPT SO RETURNING NULL!");
+                EDB.WriteLine("Nothing to accept, return null");
                 return null;
             }
             Socket acc = new Socket(args.AcceptSocket);
