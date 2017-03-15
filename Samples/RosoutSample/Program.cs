@@ -5,6 +5,7 @@ using System.Threading;
 using Uml.Robotics.Ros;
 using System.Collections.ObjectModel;
 using System;
+using Microsoft.Extensions.CommandLineUtils;
 
 namespace Uml.Robotics.Samples
 {
@@ -12,6 +13,10 @@ namespace Uml.Robotics.Samples
     {
         static void Main(string[] args)
         {
+            var options = new CommandLineApplication(throwOnUnexpectedArg: false);
+            CommandArgument names = null;
+            //options.Option("-");
+
             string ignoredStrings = null;
             if (args.Length > 0)
             {
@@ -31,10 +36,8 @@ namespace Uml.Robotics.Samples
 
     public class RosoutDebug
     {
-        ObservableCollection<RosoutString> rosoutdata = new ObservableCollection<RosoutString>();
-        Subscriber<Messages.rosgraph_msgs.Log> sub;
-        private NodeHandle nh;
-        private Thread waitforinit;
+        Subscriber<Messages.rosgraph_msgs.Log> subscriber;
+        private NodeHandle nodeHandle;
 
         // Right now, these are split from a semicolon-delimited string, and matching is REALLY DUMB...
         // Just a containment check.
@@ -45,18 +48,9 @@ namespace Uml.Robotics.Samples
         {
             ROS.Init(new string[0], "RosoutDebug");
             ROS.WaitForMaster();
-            nh = new NodeHandle();
+            nodeHandle = new NodeHandle();
             Init();
         }
-
-
-        public RosoutDebug(NodeHandle n, string IgnoredStrings)
-            : this()
-        {
-            nh = n;
-            this.IgnoredStrings = IgnoredStrings;
-        }
-
 
 
         /// <summary>
@@ -68,85 +62,62 @@ namespace Uml.Robotics.Samples
             get { return ignoredStrings.ToString(); }
             set
             {
-                if (Process.GetCurrentProcess().ProcessName == "devenv")
-                    return;
                 ignoredStrings.Clear();
                 ignoredStrings.AddRange(value.Split(';'));
-                Init();
             }
         }
 
 
         public void Shutdown()
         {
-            if (sub != null)
+            if (subscriber != null)
             {
-                sub.shutdown();
-                sub = null;
+                subscriber.shutdown();
+                subscriber = null;
             }
-            if (nh != null)
+            if (nodeHandle != null)
             {
-                nh.shutdown();
-                nh = null;
+                nodeHandle.shutdown();
+                nodeHandle = null;
             }
+            ROS.shutdown();
         }
 
 
         private void Init()
         {
-            lock (this)
-            {
-                if (!ROS.isStarted())
-                {
-                    if (waitforinit == null)
-                    {
-                        string workaround = IgnoredStrings;
-                        waitforinit = new Thread(() => Waitfunc(workaround));
-                    }
-                    if (!waitforinit.IsAlive)
-                    {
-                        waitforinit.Start();
-                    }
-                }
-                else
-                    SetupIgnore(IgnoredStrings);
-            }
-        }
-
-
-        private void Waitfunc(string ignored)
-        {
             while (!ROS.isStarted())
             {
                 Thread.Sleep(100);
             }
-            SetupIgnore(ignored);
-        }
-
-
-        private void SetupIgnore(string ignored)
-        {
-            if (Process.GetCurrentProcess().ProcessName == "devenv")
-                return;
-            if (nh == null)
-                nh = new NodeHandle();
-            if (sub == null)
-                sub = nh.subscribe<Messages.rosgraph_msgs.Log>("/rosout_agg", 100, Callback);
+            if (nodeHandle == null)
+            {
+                nodeHandle = new NodeHandle();
+            }
+            if (subscriber == null)
+            {
+                subscriber = nodeHandle.subscribe<Messages.rosgraph_msgs.Log>("/rosout_agg", 100, Callback);
+            }
         }
 
 
         private void Callback(Messages.rosgraph_msgs.Log msg)
         {
-            string teststring = string.Format("{0}\n{1}\n{2}\n{3}\n{4}\n{5}", msg.level, msg.msg, msg.name, msg.file,
+            string teststring = string.Format("{0}\n{1}\n{2}\n{3}\n{4}\n{5}",
+                msg.level,
+                msg.msg,
+                msg.name,
+                msg.file,
                 msg.function, msg.line
             );
             if (ignoredStrings.Count > 0 && ignoredStrings.Any(teststring.Contains))
             {
+                Console.WriteLine("Ignored Message");
                 return;
             }
 
-            RosoutString rss = new RosoutString((1.0 * msg.header.stamp.data.sec +
-                (1.0 * msg.header.stamp.data.nsec) / 1000000000.0),
+            RosoutString rss = new RosoutString(
+                (1.0 * msg.header.stamp.data.sec + (1.0 * msg.header.stamp.data.nsec) / 1000000000.0),
                 msg.level,
                 msg.msg,
                 msg.name,
@@ -155,12 +126,7 @@ namespace Uml.Robotics.Samples
                 "" + msg.line
             );
 
-            rosoutdata.Add(rss);
-
-            if (rosoutdata.Count > 1000)
-            {
-                rosoutdata.RemoveAt(0);
-            }
+            Console.WriteLine(rss.ToString());
         }
     }
 
@@ -175,15 +141,15 @@ namespace Uml.Robotics.Samples
                 case 1:
                     return "DEBUG";
                 case 2:
-                    return "INFO";
+                    return "INFO ";
                 case 4:
-                    return "WARN";
+                    return "WARN ";
                 case 8:
                     return "ERROR";
                 case 16:
                     return "FATAL";
                 default:
-                    return "" + level;
+                    return "NONE " + level;
             }
         }
 
@@ -210,6 +176,13 @@ namespace Uml.Robotics.Samples
             this.Filename = filename;
             this.Functionname = function;
             this.Lineno = lineno;
+        }
+
+
+        public override string ToString()
+        {
+            var result = $"[{Timestamp}] [{Level}] <{Filename}:{Lineno}::{Functionname}> \"{Msgname}\" - {Msgdata}";
+            return result;
         }
     }
 }
