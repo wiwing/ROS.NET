@@ -219,9 +219,7 @@ namespace Uml.Robotics.Ros
                 result = new XmlRpcValue(),
                 payload = new XmlRpcValue();
 
-            Console.WriteLine("This is here");
             master.execute("registerPublisher", args, result, payload, true);
-            Console.WriteLine("This is there");
             return true;
         }
 
