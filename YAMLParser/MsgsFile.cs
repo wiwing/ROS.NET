@@ -61,7 +61,7 @@ namespace FauxMessages
         public MsgsFile(MsgFileLocation filename, string extraindent)
         {
             if (filename == null)
-                throw new ArgumentNullException("filename");
+                throw new ArgumentNullException(nameof(filename));
 
             if (!filename.Path.Contains(".msg"))
                 throw new ArgumentException($"'{filename}' is not a valid .msg file name.", nameof(filename));
@@ -71,7 +71,7 @@ namespace FauxMessages
 
             if (resolver == null)
                 resolver = new Dictionary<string, Dictionary<string, List<ResolvedMsg>>>();
-            
+
             classname = filename.basename;
             Package = filename.package;
 
@@ -143,7 +143,7 @@ namespace FauxMessages
             }
         }
 
-        public static void resolve(MsgsFile parent, SingleType st)
+        public static void Resolve(MsgsFile parent, SingleType st)
         {
             if (st.Type == null)
             {
@@ -157,7 +157,6 @@ namespace FauxMessages
                 st.Type = pieces[1];
             }
 
-            bool resolved = false;
             prefixes[0] = !string.IsNullOrEmpty(st.Package) ? st.Package : parent.Package;
             foreach (string p in prefixes)
             {
@@ -169,10 +168,9 @@ namespace FauxMessages
                         {
                             st.Package = p;
                             st.Definer = resolver[p][st.Type][0].Definer;
-                            resolved = true;
                         }
                         else if (resolver[p][st.Type].Count > 1)
-                            throw new Exception($"Could not resolve: {st.Type}");
+                            throw new ArgumentException($"Could not resolve: {st.Type}");
                     }
                 }
             }
@@ -180,7 +178,7 @@ namespace FauxMessages
 
         public void resolve(SingleType st)
         {
-            resolve(this, st);
+            Resolve(this, st);
         }
 
         public string GetSrvHalf()
@@ -247,7 +245,7 @@ namespace FauxMessages
             GeneratedDictHelper = "";
             foreach (SingleType S in Stuff)
             {
-                resolve(this, S);
+                Resolve(this, S);
                 GeneratedDictHelper += MessageFieldHelper.Generate(S);
             }
             GUTS = fronthalf + memoizedcontent + "\n" +
@@ -784,7 +782,7 @@ namespace FauxMessages
             }
             else if (st.IsLiteral)
             {
-                throw new Exception(st.Type + " needs to be handled SPECIFICALLY!");
+                throw new ArgumentException($"{st.Type} is not supported");
             }
             else
             {
@@ -845,7 +843,7 @@ namespace FauxMessages
                 outdir = Path.Combine(outdir, chunks[i]);
             if (!Directory.Exists(outdir))
                 Directory.CreateDirectory(outdir);
-            
+
             string localcn = classname;
             if (serviceMessageType != ServiceMessageType.Not)
                 localcn = classname.Replace("Request", "").Replace("Response", "");

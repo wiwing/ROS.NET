@@ -142,7 +142,7 @@ namespace Uml.Robotics.Ros
         private static readonly string ROSOUT_WARN_PREFIX  = "[Warn ]";
         private static readonly string ROSOUT_ERROR_PREFIX = "[Error]";
         private static readonly string ROSOUT_FATAL_PREFIX = "[FATAL]";
-   
+
         private static Dictionary<RosOutAppender.ROSOUT_LEVEL, string> ROSOUT_PREFIX =
             new Dictionary<RosOutAppender.ROSOUT_LEVEL, string> {
                 { RosOutAppender.ROSOUT_LEVEL.DEBUG, ROSOUT_DEBUG_PREFIX },
@@ -275,7 +275,7 @@ namespace Uml.Robotics.Ros
         {
             return IRosMessage.generate(type);
         }
-       
+
         public class ONLY_AUTO_PARAMS
         {
             private ONLY_AUTO_PARAMS() {}
@@ -321,7 +321,7 @@ namespace Uml.Robotics.Ros
                 throw new ArgumentNullException(nameof(format));
 
             string text = (args == null || args.Length == 0) ? format.ToString() : string.Format((string)format, args);
-            
+
             bool printit = true;
             if (level == RosOutAppender.ROSOUT_LEVEL.DEBUG)
             {
@@ -372,7 +372,7 @@ namespace Uml.Robotics.Ros
             if (RemappingHelper.GetRemappings(ref args, out remapping))
                 Init(remapping, name, options);
             else
-                throw new Exception("Init failed");
+                throw new InvalidOperationException("Could not initialize ROS");
         }
 
         /// <summary>

@@ -435,7 +435,7 @@ namespace Uml.Robotics.Ros
         {
             if (use)
             {
-                if (!setKeepAlive(sock, (ulong) idle, (ulong) interval, (ulong) count) && 
+                if (!setKeepAlive(sock, (ulong) idle, (ulong) interval, (ulong) count) &&
                     !setKeepAlive(sock, (ulong) idle, (ulong) interval))
 
                     try
@@ -548,7 +548,7 @@ namespace Uml.Robotics.Ros
             TcpTransport transport = new TcpTransport(poll_set, flags);
             if (!transport.setSocket(acc))
             {
-                throw new Exception("FAILED TO ADD SOCKET TO TRANSPORT ZOMG!");
+                throw new InvalidOperationException("Could not add socket to transport");
             }
             return transport;
         }
@@ -571,7 +571,7 @@ namespace Uml.Robotics.Ros
                 TcpTransport transport = accept();
                 if (transport != null)
                 {
-                    if (accept_cb == null) throw new Exception("NULL ACCEPT_CB FTL!");
+                    if (accept_cb == null) throw new NullReferenceException("Accept callback is null");
                     accept_cb(transport);
                 }
             }

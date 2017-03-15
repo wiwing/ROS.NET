@@ -126,7 +126,7 @@ namespace Uml.Robotics.Ros
                 if (write_callback != null)
                     writeTransport();
                 if (write_callback != null)
-                    throw new Exception("Not finished writing previous data on this connection");
+                    throw new InvalidOperationException("Not finished writing previous data on this connection");
 
                 write_callback = finished_func;
                 write_buffer = data;

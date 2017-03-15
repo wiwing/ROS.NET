@@ -51,7 +51,7 @@ namespace Uml.Robotics.XmlRpc
         public XmlRpcClient(string uri)
         {
             if (!uri.Contains("://"))
-                throw new ArgumentException("Protocol part is missing in URI argument.", "uri");
+                throw new ArgumentException("Protocol part is missing in URI argument.", nameof(uri));
             uri = uri.Remove(0, uri.IndexOf("://") + 3);
             uri.Trim('/');
 

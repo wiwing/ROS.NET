@@ -1,12 +1,12 @@
 ﻿// File: Program.cs
 // Project: YAMLParser
-// 
+//
 // ROS.NET
 // Eric McCann <emccann@cs.uml.edu>
 // UMass Lowell Robotics Laboratory
-// 
+//
 // Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-// 
+//
 // Created: 04/28/2015
 // Updated: 10/07/2015
 
@@ -67,7 +67,7 @@ namespace YAMLParser
                     di = Directory.GetParent(di.FullName);
                 }
                 if (di == null)
-                    throw new Exception("Not started from within YAMLParser directory.");
+                    throw new InvalidOperationException("Not started from within YAMLParser directory.");
                 di = Directory.GetParent(di.FullName);
                 yamlparser_parent = di.FullName;
                 solutiondir = yamlparser_parent;

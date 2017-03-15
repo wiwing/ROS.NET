@@ -132,7 +132,7 @@ namespace Uml.Robotics.Ros
         {
             if (!success) return false;
             if (conn != connection)
-                throw new Exception("WRONG CONNECTION!");
+                throw new ArgumentException("Unkown connection", nameof(conn));
 
             if (parent != null)
                 lock (parent)
@@ -152,7 +152,7 @@ namespace Uml.Robotics.Ros
         public virtual bool onResponseWritten(Connection conn)
         {
             if (conn != connection)
-                throw new Exception("WRONG CONNECTION!");
+                throw new ArgumentException("Unkown connection", nameof(conn));
 
             if (persistent)
                 connection.read(4, onRequestLength);

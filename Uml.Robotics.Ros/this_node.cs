@@ -33,9 +33,9 @@ namespace Uml.Robotics.Ros
             long walltime = DateTime.Now.Subtract(Process.GetCurrentProcess().StartTime).Ticks;
             names.Init(remappings);
             if (Name.Contains("/"))
-                throw new Exception("NAMES CANT HAVE SLASHES, WENCH!");
+                throw new ArgumentException("Slashes '/' are not allowed in names", nameof(n));
             if (Name.Contains("~"))
-                throw new Exception("NAMES CANT HAVE SQUIGGLES, WENCH!");
+                throw new ArgumentException("Tildes '~' are not allowed in names", nameof(n));
             try
             {
                 Name = names.resolve(Namespace, Name);

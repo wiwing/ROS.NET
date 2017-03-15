@@ -1361,7 +1361,7 @@ namespace ROS_Comm.APMWorkaround
             // Make sure we actually got a task, then complete the operation by waiting on it.
             if (task == null)
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(task));
             }
 
             task.GetAwaiter().GetResult();
@@ -1389,7 +1389,7 @@ namespace ROS_Comm.APMWorkaround
             // Make sure we actually got a task, then complete the operation by waiting on it.
             if (task == null)
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(task));
             }
 
             return task.GetAwaiter().GetResult();

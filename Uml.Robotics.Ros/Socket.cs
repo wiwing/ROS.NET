@@ -18,7 +18,7 @@ namespace Uml.Robotics.Ros
 
         private string attemptedConnectionEndpoint;
         private bool disposed = true;
-        
+
         public Socket(ns.Socket sock)
         {
             realsocket = sock;
@@ -61,7 +61,7 @@ namespace Uml.Robotics.Ros
         {
             n.IPEndPoint ipep = endpoint as n.IPEndPoint;
             if (endpoint == null)
-                throw new Exception("Sorry, guy... but this isn't in the scope of this class's purpose.");
+                throw new ArgumentNullException(nameof(endpoint));
             attemptedConnectionEndpoint = ipep.Address.ToString();
             return realsocket.BeginConnect(endpoint, callback, state);
         }
@@ -134,7 +134,7 @@ namespace Uml.Robotics.Ros
         {
             if (realsocket != null)
             {
-                //realsocket.Close(timeout);        // AKo: will be added in .net CoreFx 1.2, see 
+                //realsocket.Close(timeout);        // AKo: will be added in .net CoreFx 1.2, see
 
                 realsocket.Shutdown(ns.SocketShutdown.Send);
                 realsocket.SetSocketOption(ns.SocketOptionLevel.Socket, ns.SocketOptionName.ReceiveTimeout, timeout);

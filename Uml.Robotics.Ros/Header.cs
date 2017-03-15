@@ -29,7 +29,7 @@ namespace Uml.Robotics.Ros
             }
             bool res = (i == size);
             if (!res)
-                EDB.WriteLine("OH NOES CONNECTION HEADER FAILED TO PARSE!");
+                EDB.WriteLine("Warning: Could not parse connection header.");
             return res;
         }
 
@@ -59,7 +59,7 @@ namespace Uml.Robotics.Ros
                 buffer = concat(buffer, val);
             }
             if (totallength != buffer.Length)
-                throw new Exception("HEADER AIN'T WRITE GOOD! SHOULD'VE STAYED IN SCHOOL!");
+                throw new InvalidOperationException("Error during header creation: mismatch in buffer length");
         }
 
         public static byte[] ByteLength(int num)

@@ -17,8 +17,8 @@ namespace YAMLParser
             if (!dir.Exists)
             {
                 throw new DirectoryNotFoundException(
-                    "Source directory does not exist or could not be found: "
-                    + sourceDirName);
+                    $"Source directory does not exist or could not be found: {sourceDirName}"
+                );
             }
 
             DirectoryInfo[] dirs = dir.GetDirectories();

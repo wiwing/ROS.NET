@@ -67,11 +67,12 @@ namespace Uml.Robotics.Ros
             }
             else
                 //this is fatal
-                throw new Exception("Unknown ROS_MASTER_URI\n" + @"ROS_MASTER_URI needs to be defined for your program to function.
-Either:
-    set an environment variable called ROS_MASTER_URI,
-    pass a __master remapping argument to your program, 
-    or set the URI explicitely in your program before calling Init.");
+                throw new InvalidOperationException("Unknown ROS_MASTER_URI\n" +
+                    "ROS_MASTER_URI needs to be defined for your program to function Either:\n" +
+                    "set an environment variable called ROS_MASTER_URI,\n" +
+                    "pass a __master remapping argument to your program,\n" +
+                    "or set the URI explicitely in your program before calling Init."
+                );
 
             if (!string.IsNullOrEmpty(ROS.ROS_HOSTNAME))
             {

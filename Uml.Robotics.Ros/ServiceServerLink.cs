@@ -87,7 +87,7 @@ namespace Uml.Robotics.Ros
 
         private void onConnectionDropped(Connection connection, Connection.DropReason dr)
         {
-            if (connection != this.connection) throw new Exception("WRONG CONNECTION ZOMG!");
+            if (connection != this.connection) throw new ArgumentException("Unkown connection", nameof(connection));
 
 #if DEBUG
             EDB.WriteLine("Service client from [{0}] for [{1}] dropped", connection.RemoteString, name);
@@ -228,8 +228,14 @@ namespace Uml.Robotics.Ros
 
         private bool onResponseOkAndLength(Connection conn, byte[] buf, int size, bool success)
         {
-            if (conn != connection || size != 5)
-                throw new Exception("response or length NOT OK!");
+            if (conn != connection)
+            {
+                throw new ArgumentException("Unkown connection", nameof(conn));
+            }
+            if (size != 5)
+            {
+                throw new ArgumentException($"Wrong size {size}", nameof(size));
+            }
             if (!success) return false;
             byte ok = buf[0];
             int len = BitConverter.ToInt32(buf, 1);
@@ -259,7 +265,7 @@ namespace Uml.Robotics.Ros
         private bool onResponse(Connection conn, byte[] buf, int size, bool success)
         {
             if (conn != connection)
-                throw new Exception("WRONG CONNECTION");
+                throw new ArgumentException("Unkown connection", nameof(conn));
 
             if (!success)
                 return false;
@@ -269,7 +275,7 @@ namespace Uml.Robotics.Ros
                 if (current_call.success)
                 {
                     if (current_call.resp == null)
-                        throw new Exception("HAUUU?!");
+                        throw new NullReferenceException("Service response is null");
                     current_call.resp.Serialized = buf;
                 }
                 else if (buf.Length > 0)
