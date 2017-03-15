@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Threading;
 using System.Reflection;
+using System.Diagnostics;
 
 namespace Uml.Robotics.Ros
 {
@@ -36,7 +37,8 @@ namespace Uml.Robotics.Ros
         public WriteFinishedFunc write_callback;
         public object write_callback_mutex = new object();
         public int write_sent, write_size;
-        private object reading = new object(), writing = new object();
+        private object reading = new object();
+        private object writing = new object();
 
         /// <summary>
         ///     Returns the ID of the connection
@@ -88,11 +90,13 @@ namespace Uml.Robotics.Ros
 
         public void read(int size, ReadFinishedFunc finished_func)
         {
-            if (dropped || sendingHeaderError) return;
+            if (dropped || sendingHeaderError)
+                return;
+
             lock (read_callback_mutex)
             {
                 if (read_callback != null)
-                    throw new Exception("NOYOUBLO");
+                    throw new InvalidOperationException("Multiple concurrent read operations are not allowed (read_callback is not null).");
                 read_callback = finished_func;
             }
             if (size == 4)
@@ -152,7 +156,9 @@ namespace Uml.Robotics.Ros
 
         public void initialize(TcpTransport trans, bool is_server, HeaderReceivedFunc header_func)
         {
-            if (trans == null) throw new Exception("Connection innitialized with null transport");
+            if (trans == null)
+                throw new ArgumentNullException("Connection innitialized with null transport", nameof(trans));
+
             transport = trans;
             this.header_func = header_func;
             this.is_server = is_server;
@@ -169,25 +175,26 @@ namespace Uml.Robotics.Ros
 
         private void onReadable(TcpTransport trans)
         {
-            if (trans != transport) throw new Exception("THAT EVENT IS NOT FOR MEEE!");
+            Debug.Assert(trans == transport);
             readTransport();
         }
 
         private void onWriteable(TcpTransport trans)
         {
-            if (trans != transport) throw new Exception("THAT EVENT IS NOT FOR MEEE!");
+            Debug.Assert(trans == transport);
             writeTransport();
         }
 
         private void onDisconnect(TcpTransport trans)
         {
-            if (trans != transport) throw new Exception("THAT EVENT IS NOT FOR MEEE!");
+            Debug.Assert(trans == transport);
             drop(DropReason.TransportDisconnect);
         }
 
         private bool onHeaderRead(Connection conn, byte[] data, int size, bool success)
         {
-            if (conn != this) throw new Exception("THAT EVENT IS NOT FOR MEEE!");
+            Debug.Assert(conn == this);
+
             if (!success)
             {
                 return false;
@@ -211,7 +218,9 @@ namespace Uml.Robotics.Ros
                 }
                 else
                 {
-                    if (header_func == null) throw new Exception("AMG YOUR HEADERFUNC SUCKS");
+                    if (header_func == null)
+                        throw new InvalidOperationException("`header_func` callback was not registered");
+
                     transport.parseHeader(header);
                     header_func(conn, header);
                 }
@@ -221,10 +230,10 @@ namespace Uml.Robotics.Ros
 
         private bool onHeaderWritten(Connection conn)
         {
-            if (conn != this)
-                throw new Exception("THAT EVENT IS NOT FOR MEEE!");
+            Debug.Assert(conn == this);
+
             if (header_written_callback == null)
-                throw new Exception("NOBODY CARES ABOUT YOU, YOUR CHILDREN (neither present nor future), NOR YOUR GRANDCHILDREN (neither present nor future)");
+                throw new InvalidOperationException("`header_written_callback` was not registered.");
             header_written_callback(conn);
             header_written_callback = null;
             return true;
@@ -245,8 +254,11 @@ namespace Uml.Robotics.Ros
 
         private bool onHeaderLengthRead(Connection conn, byte[] data, int size, bool success)
         {
-            if (conn != this) throw new Exception("THAT EVENT IS NOT FOR MEEE!");
-            if (size != 4) throw new Exception("THAT SIZE ISN'T 4! SDKJSDLKJHSDLKJSHD");
+            Debug.Assert(conn == this);
+
+            if (size != 4)
+                throw new ArgumentException("Size argument with value 4 expected.", nameof(size));
+
             if (!success)
             {
                 return false;
@@ -277,12 +289,12 @@ namespace Uml.Robotics.Ros
                     ScopedTimer.Ping();
                     int to_read = read_size - read_filled;
                     if (to_read > 0 && read_buffer == null)
-                        throw new Exception("Trying to read "+to_read+" bytes with a null read_buffer!");
+                        throw new Exception($"Trying to read {to_read} bytes with a null read_buffer.");
                     if (callback == null)
                         lock (read_callback_mutex)
                             callback = read_callback;
                     if (callback == null)
-                        throw new Exception("Cannot determine which read_callback to invoke?!");
+                        throw new Exception("Cannot determine which read_callback to invoke.");
                     if (to_read > 0)
                     {
                         ScopedTimer.Ping();

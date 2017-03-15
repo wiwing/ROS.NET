@@ -21,39 +21,6 @@ namespace Uml.Robotics.XmlRpc
             TypeIDFK
         }
 
-        /*
-        public XmlRpcValue(XmlRpcValue value)
-            : this(value.instance)
-        {
-            this._type = value._type;
-
-            switch (_type) 
-            {    // Ensure there is a valid value for the type
-            case ValueType.TypeString:   asString = ""; 
-                break;
-            case ValueType.TypeDateTime: 
-                asTime = value.asTime;
-                break;
-            case ValueType.TypeBase64:
-                Array.Copy(value.asBinary, asBinary, value.asBinary.Length);
-                break;
-            case ValueType.TypeArray:
-                asArray = new ValueArray();   
-                break;
-            case ValueType.TypeStruct:   asStruct = new ValueStruct(); 
-                break;
-            }
-            this.variantValue = value.variantValue;
-        }*/
-        /*
-        public XmlRpcValue(IntPtr existingptr)
-        {
-            if (existingptr == IntPtr.Zero)
-                throw new Exception("SUCK IS CONTAGEOUS!");
-            __instance = existingptr;
-            AddRef(existingptr);
-        }
-        */
         private static string VALUE_TAG = "value";
         private static string BOOLEAN_TAG = "boolean";
         private static string DOUBLE_TAG = "double";
@@ -68,8 +35,6 @@ namespace Uml.Robotics.XmlRpc
         private static string MEMBER_TAG = "member";
         private static string NAME_TAG = "name";
 
-        // Format strings
-        private string _doubleFormat = "%.16g";
 
         // Type tag and values
         private ValueType _type;

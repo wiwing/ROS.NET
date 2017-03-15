@@ -60,13 +60,18 @@ namespace FauxMessages
 
         public MsgsFile(MsgFileLocation filename, string extraindent)
         {
+            if (filename == null)
+                throw new ArgumentNullException("filename");
+
+            if (!filename.Path.Contains(".msg"))
+                throw new ArgumentException($"'{filename}' is not a valid .msg file name.", nameof(filename));
+
             this.msgfilelocation = filename;
             this.extraindent = extraindent;
 
             if (resolver == null)
                 resolver = new Dictionary<string, Dictionary<string, List<ResolvedMsg>>>();
-            if (!filename.Path.Contains(".msg"))
-                throw new Exception("" + filename + " IS NOT A VALID MSG FILE!");
+            
             classname = filename.basename;
             Package = filename.package;
 
@@ -74,6 +79,7 @@ namespace FauxMessages
             Namespace += "." + filename.package;
             Name = filename.package + "." + classname;
             Namespace = Namespace.Trim('.');
+
             if (!resolver.Keys.Contains(Package))
                 resolver.Add(Package, new Dictionary<string, List<ResolvedMsg>>());
             if (!resolver[Package].ContainsKey(classname))
@@ -81,7 +87,7 @@ namespace FauxMessages
             else
                 resolver[Package][classname].Add(new ResolvedMsg { OtherType = Namespace + "." + classname, Definer = this });
 
-            List<string> lines = new List<string>(File.ReadAllLines(filename.Path));
+            var lines = new List<string>(File.ReadAllLines(filename.Path));
             lines = lines.Where(st => (!st.Contains('#') || st.Split('#')[0].Length != 0)).ToList();
             for (int i = 0; i < lines.Count; i++)
                 lines[i] = lines[i].Split('#')[0].Trim();
@@ -166,14 +172,9 @@ namespace FauxMessages
                             resolved = true;
                         }
                         else if (resolver[p][st.Type].Count > 1)
-                            throw new Exception("Could not resolve " + st.Type);
+                            throw new Exception($"Could not resolve: {st.Type}");
                     }
                 }
-            }
-
-            if (!resolved)
-            {
-                Console.WriteLine(string.Format("Not resolved: {0}", st.Name));
             }
         }
 
@@ -611,7 +612,7 @@ namespace FauxMessages
 {0}    h = Marshal.AllocHGlobal(piecesize);
 {0}    Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
 {0}}}
-{0}if (h == IntPtr.Zero) throw new Exception(""Alloc failed"");
+{0}if (h == IntPtr.Zero) throw new Exception(""Memory allocation failed"");
 {0}{2} = ({1})Marshal.PtrToStructure(h, typeof({1}));
 {0}Marshal.FreeHGlobal(h);
 {0}currentIndex+= piecesize;", leadingWhitespace, pt, name);
