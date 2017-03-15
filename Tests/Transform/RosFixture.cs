@@ -4,7 +4,7 @@ using System.Text;
 using Uml.Robotics.Ros;
 using Xunit;
 
-namespace Uml.Robotics.Tests
+namespace Uml.Robotics.Ros.Tests
 {
     /// <summary>
     /// This class contains a xUnit collection, which is created before any of the members of the collection and

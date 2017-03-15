@@ -1,6 +1,6 @@
 ## .NET Core 1.1 Build Instructions
 
-1. `cd YamlParser`
+1. `cd YAMLParser`
 2. `dotnet restore`
 3. `dotnet build`
 4. `dotnet run -- Debug <YourPathToSolutionRoot>` (ignore Build FAILED message but verify that `../Messages/Messages.dll` exists)

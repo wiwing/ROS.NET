@@ -8,7 +8,7 @@ using Messages.std_msgs;
 using Uml.Robotics.Ros;
 using tf = Uml.Robotics.Ros.Transforms;
 
-namespace Uml.Robotics.Samples
+namespace Uml.Robotics.Ros.Samples
 {
     class Program
     {
