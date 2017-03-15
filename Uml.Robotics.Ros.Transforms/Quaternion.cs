@@ -64,7 +64,7 @@ namespace Uml.Robotics.Ros.Transforms
 
         public static Quaternion operator *(Quaternion v1, double d)
         {
-            return new Quaternion(v1.x * d, v1.y * d, v1.z * d, v1.w);
+            return new Quaternion(v1.x * d, v1.y * d, v1.z * d, v1.w * d);
         }
 
         public static Quaternion operator *(float d, Quaternion v1)
@@ -92,7 +92,7 @@ namespace Uml.Robotics.Ros.Transforms
 
         public static Quaternion operator *(Quaternion v1, Vector3 v2)
         {
-            return v1 * new Quaternion(v2.x, v2.y, v2.z, 0.0);
+            return v1 * new Quaternion(v2.x, v2.y, v2.z, 0.0) * v1.inverse();
         }
 
         public static Quaternion operator /(Quaternion v1, float s)
@@ -140,9 +140,9 @@ namespace Uml.Robotics.Ros.Transforms
             get { return Math.Sqrt(norm); }
         }
 
-        public double arg
+        public double angle
         {
-            get { return Math.Acos(w / abs); }
+            get { return Math.Acos(w / abs) * 2.0; }
         }
 
         public override string ToString()
@@ -171,16 +171,21 @@ namespace Uml.Robotics.Ros.Transforms
             double cos_y2 = Math.Cos(halfyaw);
 
             return new Quaternion(
-                cos_r2 * cos_p2 * cos_y2 + sin_r2 * sin_p2 * sin_y2,
                 sin_r2 * cos_p2 * cos_y2 - cos_r2 * sin_p2 * sin_y2,
                 cos_r2 * sin_p2 * cos_y2 + sin_r2 * cos_p2 * sin_y2,
-                cos_r2 * cos_p2 * sin_y2 - sin_r2 * sin_p2 * cos_y2
+                cos_r2 * cos_p2 * sin_y2 - sin_r2 * sin_p2 * cos_y2,
+                cos_r2 * cos_p2 * cos_y2 + sin_r2 * sin_p2 * sin_y2
             );
         }
 
         public double angleShortestPath(Quaternion q)
         {
-            return (this - q).abs;
+            double s = Math.Sqrt(length2() * q.length2());
+            if (dot(q) < 0) // Take care of long angle case see http://en.wikipedia.org/wiki/Slerp
+            {
+                return Math.Acos(dot(-q) / s) * 2.0;
+            }
+            return Math.Acos(dot(q) / s) * 2.0;
         }
 
         public Quaternion slerp(Quaternion q, double t)
@@ -189,20 +194,21 @@ namespace Uml.Robotics.Ros.Transforms
             if (theta != 0)
             {
                 double d = 1.0 / Math.Sin(theta);
-                double s0 = Math.Sin(1.0 - t) * theta;
+                double s0 = Math.Sin((1.0 - t) * theta);
                 double s1 = Math.Sin(t * theta);
-                if (dot(q) < 0)
+                if (dot(q) < 0) // Take care of long angle case see http://en.wikipedia.org/wiki/Slerp
                 {
                     return new Quaternion(
-                        (w * s0 + -1 * q.w * s1) * d,
                         (x * s0 + -1 * q.x * s1) * d,
                         (y * s0 + -1 * q.y * s1) * d,
-                        (z * s0 + -1 * q.z * s1) * d);
+                        (z * s0 + -1 * q.z * s1) * d,
+                        (w * s0 + -1 * q.w * s1) * d);
                 }
-                return new Quaternion((w * s0 + q.w * s1) * d,
+                return new Quaternion(
                     (x * s0 + q.x * s1) * d,
                     (y * s0 + q.y * s1) * d,
-                    (z * s0 + q.z * s1) * d);
+                    (z * s0 + q.z * s1) * d,
+                    (w * s0 + q.w * s1) * d);
             }
             return new Quaternion(this);
         }
