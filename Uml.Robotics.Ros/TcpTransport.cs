@@ -274,7 +274,7 @@ namespace Uml.Robotics.Ros
                     break;
                 if (DateTime.Now.Subtract(connectionAttempted).TotalSeconds >= 3)
                 {
-                    EDB.WriteLine("TRYING TO CONNECT FOR " + DateTime.Now.Subtract(connectionAttempted).TotalSeconds + "s\t: " + this);
+                    EDB.WriteLine("Trying to connect for " + DateTime.Now.Subtract(connectionAttempted).TotalSeconds + "s\t: " + this);
                     if (!asyncres.AsyncWaitHandle.WaitOne(100))
                     {
                         sock.Close();
@@ -603,7 +603,7 @@ namespace Uml.Robotics.Ros
                         EDB.WriteLine("Failed to get sock options! (error: " + error + ")" + e);
                     }
                     if (error != 0)
-                        EDB.WriteLine("SOCKET ERROR = " + error);
+                        EDB.WriteLine("Socket error = " + error);
                     close();
                 }
             }
