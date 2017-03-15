@@ -14,16 +14,16 @@ namespace MoveitMsgTests
 {
     public class Program
     {
-        private static void getIK( NodeHandle node, gm.PoseStamped poseStamped, string group, double ikTimeout=1.0, int ikAttempts=0, bool avoidCollisions = false)
+        private static void GetIK( NodeHandle node, gm.PoseStamped poseStamped, string group, double ikTimeout=1.0, int ikAttempts=0, bool avoidCollisions = false)
         {
-            Console.WriteLine("getIK");
+            Console.WriteLine("GetIK");
             moveItMsgs.GetPositionIK.Request req = new moveItMsgs.GetPositionIK.Request();
             
             req.ik_request = new moveItMsgs.PositionIKRequest();
             Console.WriteLine(req.ik_request);
             req.ik_request.group_name = group;
             req.ik_request.pose_stamped = poseStamped;
-            req.ik_request.timeout.data = new TimeData(0,10000);
+            req.ik_request.timeout.data = new TimeData(1,0); // one second
             req.ik_request.attempts = ikAttempts;
             req.ik_request.avoid_collisions = avoidCollisions;
             
@@ -40,31 +40,57 @@ namespace MoveitMsgTests
                 Console.WriteLine("FAILED to receive respond from service");
             }
         }
-        private static gm.PoseStamped setPose (double x, double y, double z, double roll, double pitch, double yaw, string frame_id)
+
+
+        private static double Deg2Rad(double angle)
+        {
+            return Math.PI * angle / 180.0;
+        }
+
+
+        public static gm.Quaternion SetQuaternionFromRPY(double roll, double pitch,double yaw)
+        {
+            double halfRoll = roll / 2;
+            double halfPitch = pitch / 2;
+            double halfYaw = yaw / 2;
+
+            double sinRoll2 = Math.Sin(halfRoll);
+            double sinPitch2 = Math.Sin(halfPitch);
+            double sinYaw2 = Math.Sin(halfYaw);
+
+            double cosRoll2 = Math.Cos(halfRoll);
+            double cosPitch2 = Math.Cos(halfPitch);
+            double cosYaw2 = Math.Cos(halfYaw);
+            gm.Quaternion q = new gm.Quaternion();
+
+            q.x = cosPitch2*sinRoll2*cosYaw2 - sinPitch2*cosRoll2*sinYaw2;
+            q.y = cosPitch2*sinRoll2*sinYaw2 + sinPitch2*cosRoll2*cosYaw2;
+            q.z = cosPitch2*cosRoll2*sinYaw2 - sinPitch2*sinRoll2*cosYaw2;
+            q.w = cosPitch2*cosRoll2*cosYaw2 + sinPitch2*sinRoll2*sinYaw2;
+
+            return q;
+        }
+
+
+        private static gm.PoseStamped SetPose (double x, double y, double z, double roll, double pitch, double yaw, string frameID)
         {
             gm.PoseStamped ps = new gm.PoseStamped();
-            //ps.pose = new gm.Pose();
-            //ps.pose.position = new gm.Point();
-            //ps.header = new ms.Header();
             Console.WriteLine(ps.pose);
             ps.pose.position.x = x;
             ps.pose.position.y = y;
             ps.pose.position.z = z;
-            ps.pose.orientation.x = 0.0;
-            ps.pose.orientation.y = 1.0;
-            ps.pose.orientation.z = 0.0;
-            ps.pose.orientation.w = 0;
-            ps.header.frame_id = frame_id;
+            ps.pose.orientation = SetQuaternionFromRPY(Deg2Rad(roll), Deg2Rad(pitch) ,Deg2Rad(yaw));
+            ps.header.frame_id = frameID;
             return ps;
         }
         static void Main(string[] args)
         {
             ROS.Init(args, "MoveitTest");
             NodeHandle node = new NodeHandle();
-            gm.PoseStamped result = setPose(0.1,0.2,0.3,0.0,0.0,0.0,"base_link");
+            gm.PoseStamped result = SetPose(-0.1,0.1,0.2,0.0,180.0,0.0,"");
             Console.WriteLine("result");
             Console.WriteLine(result);
-            getIK(node, result, "endeffector");
+            GetIK(node, result, "endeffector");
             ROS.waitForShutdown();
         }
     }
