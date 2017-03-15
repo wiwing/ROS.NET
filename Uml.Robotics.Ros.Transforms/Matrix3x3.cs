@@ -18,9 +18,7 @@ namespace Uml.Robotics.Ros.Transforms
             double yx, double yy, double yz,
             double zx, double zy, double zz)
         {
-            m_el[0] = new Vector3(xx, xy, xz);
-            m_el[1] = new Vector3(yx, yy, yz);
-            m_el[2] = new Vector3(zx, zy, zz);
+            setValue(xx, xy, xz, yx, yy, yz, zx, zy, zz);
         }
 
         public Matrix3x3(Quaternion q)
@@ -55,9 +53,7 @@ namespace Uml.Robotics.Ros.Transforms
         {
             Euler euler_out;
             Euler euler_out2; //second solution
-            //get the pointer to the raw data
 
-            // Check that pitch is not at a singularity
             // Check that pitch is not at a singularity
             if (Math.Abs(m_el[2].x) >= 1)
             {
@@ -65,9 +61,9 @@ namespace Uml.Robotics.Ros.Transforms
                 euler_out2.yaw = 0;
 
                 // From difference of angles formula
-                double delta = Math.Atan2(m_el[2].y, m_el[2].z);
                 if (m_el[2].x < 0) //gimbal locked down
                 {
+                    double delta = Math.Atan2(m_el[0].y, m_el[0].z);
                     euler_out.pitch = Math.PI / 2.0d;
                     euler_out2.pitch = Math.PI / 2.0d;
                     euler_out.roll = delta;
@@ -75,6 +71,7 @@ namespace Uml.Robotics.Ros.Transforms
                 }
                 else // gimbal locked up
                 {
+                    double delta = Math.Atan2(-m_el[0].y, -m_el[0].z);
                     euler_out.pitch = -Math.PI / 2.0d;
                     euler_out2.pitch = -Math.PI / 2.0d;
                     euler_out.roll = delta;
@@ -99,9 +96,6 @@ namespace Uml.Robotics.Ros.Transforms
 
             if (solution_number == 1)
             {
-                /*yaw = euler_out.yaw; 
-                pitch = euler_out.pitch;
-                roll = euler_out.roll;*/
                 return new Vector3(euler_out.yaw, euler_out.pitch, euler_out.roll);
             }
             return new Vector3(euler_out2.yaw, euler_out2.pitch, euler_out2.roll);
