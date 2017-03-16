@@ -17,7 +17,7 @@ using sm = Messages.sensor_msgs;
 using cm = Messages.custom_msgs;
 using tf = Messages.tf;
 
-namespace ServiceClientSample2
+namespace ServiceClientSample
 {
     class Program
     {
@@ -29,7 +29,6 @@ namespace ServiceClientSample2
             ROS.Init(new string[0], NODE_NAME+DateTime.Now.Ticks);
 
             nodeHandle = new NodeHandle();
-            ServiceClient<TwoInts.Request, TwoInts.Response> client = nodeHandle.serviceClient<TwoInts.Request, TwoInts.Response>("/add_two_ints");
             while (ROS.ok)
             {
                 
@@ -38,7 +37,7 @@ namespace ServiceClientSample2
                 TwoInts.Response resp = new TwoInts.Response();
                 DateTime before = DateTime.Now;
                 Console.WriteLine("Before client call");
-                bool res = client.call(req, ref resp);
+                bool res = nodeHandle.serviceClient<TwoInts.Request, TwoInts.Response>("/add_two_ints").call(req, ref resp);
                 Console.WriteLine("After client call");
                 TimeSpan dif = DateTime.Now.Subtract(before);
 
