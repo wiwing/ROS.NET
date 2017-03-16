@@ -283,8 +283,10 @@ namespace Uml.Robotics.Ros
                     current_call.resp.Serialized = buf;
                 }
                 else if (buf.Length > 0)
+                {
                     // call failed with reason
                     current_call.exception = Encoding.UTF8.GetString(buf);
+                }
                 else { } // call failed, but no reason is given
 
             }
