@@ -95,9 +95,10 @@ namespace Uml.Robotics.Ros
                 }
                 catch (Exception e)
                 {
-                    string woops = "Exception thrown while processing service call: " + e;
-                    ROS.Error()(woops);
-                    link.processResponse(woops, false);
+                    string str = "Exception thrown while processing service call: " + e;
+                    ROS.Error()(str);
+                    EDB.WriteLine(str);
+                    link.processResponse(str, false);
                     return CallResult.Invalid;
                 }
                 return CallResult.Success;
