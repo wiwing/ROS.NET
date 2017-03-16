@@ -166,8 +166,7 @@ namespace Uml.Robotics.Ros
 
         private static string _processname = null;
         public static string ProcessName { get { if (_processname == null) _processname = Process.GetCurrentProcess().ProcessName; return _processname; } }
-        private const string VISUAL_STUDIO_EXE_NAME = "devenv";
-        public static bool IsVisualStudio { get { return ProcessName == VISUAL_STUDIO_EXE_NAME; } }
+
         /// <summary>
         ///     Gets the current thread's TID, emulating the behavior ROS has in a more interprocess situation on xnix
         /// </summary>
@@ -360,8 +359,6 @@ namespace Uml.Robotics.Ros
         /// <param name="options"> options? </param>
         public static void Init(string[] args, string name, int options)
         {
-            if (ROS.ProcessName == "devenv")
-                return;
             // ROS_MASTER_URI/ROS_HOSTNAME definition precedence:
             // 1. explicitely set by program
             // 2. passed in as remap argument

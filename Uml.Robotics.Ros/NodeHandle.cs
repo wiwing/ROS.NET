@@ -18,7 +18,7 @@ namespace Uml.Robotics.Ros
         private object nh_refcount_mutex = new object();
         private bool no_validate = false;
         private bool node_started_by_nh;
-        private bool started_by_visual_studio = true;
+
         private IDictionary<string, string> remappings = new Dictionary<string, string>();
         private IDictionary<string, string> unresolved_remappings = new Dictionary<string, string>();
 
@@ -29,9 +29,6 @@ namespace Uml.Robotics.Ros
         /// <param name="remappings">any remappings</param>
         public NodeHandle(string ns, IDictionary<string, string> remappings = null)
         {
-            if (ROS.IsVisualStudio)
-                return;
-            started_by_visual_studio = false;
             if (ns != "" && ns[0] == '~')
                 ns = names.resolve(ns);
             construct(ns, true);
@@ -44,9 +41,6 @@ namespace Uml.Robotics.Ros
         /// <param name="rhs">The nodehandle this new one aspires to be</param>
         public NodeHandle(NodeHandle rhs)
         {
-            if (ROS.IsVisualStudio)
-                return;
-            started_by_visual_studio = false;
             Callback = rhs.Callback;
             remappings = new Dictionary<string, string>(rhs.remappings);
             unresolved_remappings = new Dictionary<string, string>(rhs.unresolved_remappings);
@@ -61,9 +55,6 @@ namespace Uml.Robotics.Ros
         /// <param name="ns">Namespace of new node</param>
         public NodeHandle(NodeHandle parent, string ns)
         {
-            if (ROS.IsVisualStudio)
-                return;
-            started_by_visual_studio = false;
             Namespace = parent.Namespace;
             Callback = parent.Callback;
             remappings = new Dictionary<string, string>(parent.remappings);
@@ -79,9 +70,6 @@ namespace Uml.Robotics.Ros
         /// <param name="remappings">Remappings</param>
         public NodeHandle(NodeHandle parent, string ns, IDictionary<string, string> remappings)
         {
-            if (ROS.IsVisualStudio)
-                return;
-            started_by_visual_studio = false;
             Namespace = parent.Namespace;
             Callback = parent.Callback;
             this.remappings = new Dictionary<string, string>(remappings);
@@ -103,7 +91,6 @@ namespace Uml.Robotics.Ros
         {
             get
             {
-                if (started_by_visual_studio) return null;
                 if (_callback == null)
                 {
                     _callback = new CallbackQueue();
@@ -169,7 +156,6 @@ namespace Uml.Robotics.Ros
         /// <returns>A publisher with the specified topic type, name and options</returns>
         public Publisher<M> advertise<M>(string topic, int q_size) where M : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             return advertise<M>(topic, q_size, false);
         }
 
@@ -183,7 +169,6 @@ namespace Uml.Robotics.Ros
         /// <returns>A publisher with the specified topic type, name and options</returns>
         public Publisher<M> advertise<M>(string topic, int q_size, bool l) where M : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             return advertise(new AdvertiseOptions<M>(topic, q_size) {latch = l});
         }
 
@@ -200,7 +185,6 @@ namespace Uml.Robotics.Ros
             SubscriberStatusCallback disconnectcallback)
             where M : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             return advertise<M>(topic, queue_size, connectcallback, disconnectcallback, false);
         }
 
@@ -218,7 +202,6 @@ namespace Uml.Robotics.Ros
             SubscriberStatusCallback disconnectcallback, bool l)
             where M : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             return advertise(new AdvertiseOptions<M>(topic, queue_size, connectcallback, disconnectcallback) {latch = l});
         }
 
@@ -230,7 +213,6 @@ namespace Uml.Robotics.Ros
         /// <returns>A publisher with the specified options</returns>
         public Publisher<M> advertise<M>(AdvertiseOptions<M> ops) where M : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             ops.topic = resolveName(ops.topic);
             if (ops.callback_queue == null)
             {
@@ -260,7 +242,6 @@ namespace Uml.Robotics.Ros
         /// <returns>A subscriber</returns>
         public Subscriber<M> subscribe<M>(string topic, uint queue_size, CallbackDelegate<M> cb) where M : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             return subscribe<M>(topic, queue_size, new Callback<M>(cb), false);
         }
 
@@ -275,7 +256,6 @@ namespace Uml.Robotics.Ros
         /// <returns>A subscriber</returns>
         public Subscriber<M> subscribe<M>(string topic, uint queue_size, CallbackDelegate<M> cb, bool allow_concurrent_callbacks) where M : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             return subscribe<M>(topic, queue_size, new Callback<M>(cb), allow_concurrent_callbacks);
         }
 
@@ -291,7 +271,6 @@ namespace Uml.Robotics.Ros
         public Subscriber<M> subscribe<M>(string topic, uint queue_size, CallbackInterface cb, bool allow_concurrent_callbacks)
             where M : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             if (_callback == null)
             {
                 _callback = ROS.GlobalCallbackQueue;
@@ -310,7 +289,6 @@ namespace Uml.Robotics.Ros
         /// <returns>A subscriber</returns>
         public Subscriber<M> subscribe<M>(SubscribeOptions<M> ops) where M : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             ops.topic = resolveName(ops.topic);
             if (ops.callback_queue == null)
             {
@@ -340,7 +318,6 @@ namespace Uml.Robotics.Ros
             where MReq : IRosMessage, new()
             where MRes : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             return advertiseService(new AdvertiseServiceOptions<MReq, MRes>(service, srv_func));
         }
 
@@ -355,7 +332,6 @@ namespace Uml.Robotics.Ros
             where MReq : IRosMessage, new()
             where MRes : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             ops.service = resolveName(ops.service);
             if (ops.callback_queue == null)
             {
@@ -377,7 +353,6 @@ namespace Uml.Robotics.Ros
             where MReq : IRosMessage, new()
             where MRes : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             return serviceClient<MReq, MRes>(new ServiceClientOptions(service_name, false, null));
         }
 
@@ -385,7 +360,6 @@ namespace Uml.Robotics.Ros
             where MReq : IRosMessage, new()
             where MRes : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             return serviceClient<MReq, MRes>(new ServiceClientOptions(service_name, persistent, null));
         }
 
@@ -394,7 +368,6 @@ namespace Uml.Robotics.Ros
             where MReq : IRosMessage, new()
             where MRes : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             return serviceClient<MReq, MRes>(new ServiceClientOptions(service_name, persistent, header_values));
         }
 
@@ -402,7 +375,6 @@ namespace Uml.Robotics.Ros
             where MReq : IRosMessage, new()
             where MRes : IRosMessage, new()
         {
-            if (started_by_visual_studio) return null;
             ops.service = resolveName(ops.service);
             ops.md5sum = new MReq().MD5Sum();
             return new ServiceClient<MReq, MRes>(ops.service, ops.persistent, ops.header_values, ops.md5sum);
@@ -412,7 +384,6 @@ namespace Uml.Robotics.Ros
             where MSrv : IRosService, new()
 
         {
-            if (started_by_visual_studio) return null;
             return serviceClient<MSrv>(new ServiceClientOptions(service_name, false, null));
         }
 
@@ -420,7 +391,6 @@ namespace Uml.Robotics.Ros
             where MSrv : IRosService, new()
 
         {
-            if (started_by_visual_studio) return null;
             return serviceClient<MSrv>(new ServiceClientOptions(service_name, persistent, null));
         }
 
@@ -429,7 +399,6 @@ namespace Uml.Robotics.Ros
             where MSrv : IRosService, new()
 
         {
-            if (started_by_visual_studio) return null;
             return serviceClient<MSrv>(new ServiceClientOptions(service_name, persistent, header_values));
         }
 
@@ -437,7 +406,6 @@ namespace Uml.Robotics.Ros
             where MSrv : IRosService, new()
 
         {
-            if (started_by_visual_studio) return null;
             ops.service = resolveName(ops.service);
             ops.md5sum = new MSrv().RequestMessage.MD5Sum();
             return new ServiceClient<MSrv>(ops.service, ops.persistent, ops.header_values, ops.md5sum);
@@ -445,7 +413,6 @@ namespace Uml.Robotics.Ros
 
         private void construct(string ns, bool validate_name)
         {
-            if (started_by_visual_studio) return;
             if (!ROS.initialized)
                 throw new Exception("You must call ROS.Init before instantiating the first nodehandle");
             collection = new NodeHandleBackingCollection();

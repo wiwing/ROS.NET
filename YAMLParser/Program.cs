@@ -1,16 +1,4 @@
-﻿// File: Program.cs
-// Project: YAMLParser
-//
-// ROS.NET
-// Eric McCann <emccann@cs.uml.edu>
-// UMass Lowell Robotics Laboratory
-//
-// Reimplementation of the ROS (ros.org) ros_cpp client in C#.
-//
-// Created: 04/28/2015
-// Updated: 10/07/2015
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -87,7 +75,7 @@ namespace YAMLParser
             }
 
             // first pass: create all msg files (and register them in static resolver dictionary)
-            foreach (MsgFileLocation path   in paths)
+            foreach (MsgFileLocation path in paths)
             {
                 msgsFiles.Add(new MsgsFile(path));
             }

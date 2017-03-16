@@ -329,7 +329,6 @@ namespace Uml.Robotics.Ros.Transforms
             List<TimeAndFrameID> lct = new List<TimeAndFrameID>();
 
             uint frame = source_id;
-            TimeAndFrameID temp;
             uint depth = 0;
             ulong common_time = ulong.MaxValue;
             while (frame != 0)
