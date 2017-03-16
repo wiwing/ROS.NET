@@ -11,7 +11,7 @@ namespace Uml.Robotics.Ros.Tests
     public class Matrix3x3Theories
     {
         [Theory, MemberData(nameof(RotationData))]                
-        public void Should_SetRotationMatrixFromQuaternion(tf.Quaternion quaternion, tf.Vector3 vector)        
+        public void Should_SetRotationMatrixFromQuaternion(tf.Quaternion quaternion, tf.Vector3 vector, tf.Vector3 expectedResult = null)        
         {
             //Utils.WaitForDebugger();
 
@@ -41,7 +41,12 @@ namespace Uml.Robotics.Ros.Tests
             var tolerance = 1E-05;
             Assert.InRange(Math.Abs(resultVector1.x-resultVector2.x), 0.0, tolerance);
             Assert.InRange(Math.Abs(resultVector1.y-resultVector2.y), 0.0, tolerance);
-            Assert.InRange(Math.Abs(resultVector1.z-resultVector2.z), 0.0, tolerance);            
+            Assert.InRange(Math.Abs(resultVector1.z-resultVector2.z), 0.0, tolerance);   
+            if (expectedResult != null) {
+                Assert.InRange(Math.Abs(resultVector1.x-expectedResult.x), 0.0, tolerance);
+                Assert.InRange(Math.Abs(resultVector1.y-expectedResult.y), 0.0, tolerance);
+                Assert.InRange(Math.Abs(resultVector1.z-expectedResult.z), 0.0, tolerance);
+            }        
         }
 
 
@@ -59,7 +64,7 @@ namespace Uml.Robotics.Ros.Tests
                     // Hence, the result should be (0,0,-1). 
                     // See: https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
                     // and http://run.usc.edu/cs520-s12/quaternions/quaternions-cs520.pdf, slide 18.
-                    new object[] {new tf.Quaternion(0, Math.Sqrt(2.0)/2.0, 0, Math.Sqrt(2.0)/2.0), new tf.Vector3(1, 0, 0)}
+                    new object[] {new tf.Quaternion(0, Math.Sqrt(2.0)/2.0, 0, Math.Sqrt(2.0)/2.0), new tf.Vector3(1, 0, 0), new tf.Vector3(0, 0, -1)}
                 };
             }
         }
