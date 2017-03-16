@@ -7,7 +7,7 @@ using nm = Messages.nav_msgs;
 
 namespace Uml.Robotics.Ros
 {
-    public class Publisher<M> : IPublisher where M : IRosMessage, new()
+    public class Publisher<M> : IPublisher where M : RosMessage, new()
     {
         private Publication p;
 

@@ -375,7 +375,6 @@ namespace FauxMessages
                 GeneratedSerializationCode += this.GenerateSerializationCode(Stuff[i]);
                 GeneratedRandomizationCode += this.GenerateRandomizationCode(Stuff[i]);
                 GeneratedEqualityCode += this.GenerateEqualityCode(Stuff[i]);
-                //equality TOO
             }
             GUTS = GUTS.Replace("$SERIALIZATIONCODE", GeneratedSerializationCode);
             GUTS = GUTS.Replace("$DESERIALIZATIONCODE", GeneratedDeserializationCode);

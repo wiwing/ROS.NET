@@ -48,7 +48,7 @@ namespace Uml.Robotics.Ros
         }
 
         public void initialize<MSrv>()
-            where MSrv : IRosService, new()
+            where MSrv : RosService, new()
         {
             MSrv srv = new MSrv();
             RequestMd5Sum = srv.RequestMessage.MD5Sum();
@@ -57,7 +57,7 @@ namespace Uml.Robotics.Ros
             ResponseType = srv.ResponseMessage.msgtype();
         }
 
-        public void initialize<MReq, MRes>() where MReq : IRosMessage, new() where MRes : IRosMessage, new()
+        public void initialize<MReq, MRes>() where MReq : RosMessage, new() where MRes : RosMessage, new()
         {
             MReq req = new MReq();
             MRes res = new MRes();
@@ -75,7 +75,7 @@ namespace Uml.Robotics.Ros
 
             IDictionary<string, string> dict = new Dictionary<string, string>();
             dict["service"] = name;
-            dict["md5sum"] = IRosService.generate((SrvTypes) Enum.Parse(typeof (SrvTypes), RequestType.ToString().Replace("__Request", "").Replace("__Response", ""))).MD5Sum();
+            dict["md5sum"] = RosService.generate((SrvTypes) Enum.Parse(typeof (SrvTypes), RequestType.ToString().Replace("__Request", "").Replace("__Response", ""))).MD5Sum();
             dict["callerid"] = this_node.Name;
             dict["persistent"] = persistent ? "1" : "0";
             if (header_values != null) 
@@ -178,7 +178,7 @@ namespace Uml.Robotics.Ros
             }
             else
             {
-                IRosMessage request;
+                RosMessage request;
                 lock (call_queue_mutex)
                 {
                     request = current_call.req;
@@ -295,17 +295,17 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-        public bool call(IRosService srv)
+        public bool call(RosService srv)
         {
             return call(srv.RequestMessage, ref srv.ResponseMessage);
         }
 
-        public bool call(IRosMessage req, ref IRosMessage resp)
+        public bool call(RosMessage req, ref RosMessage resp)
         {
             if (resp == null)
             {
                 //instantiate null response IN CASE this call succeeds
-                resp = IRosMessage.generate((MsgTypes) Enum.Parse(typeof (MsgTypes), req.msgtype().ToString().Replace("Request", "Response")));
+                resp = RosMessage.generate((MsgTypes) Enum.Parse(typeof (MsgTypes), req.msgtype().ToString().Replace("Request", "Response")));
             }
 
             CallInfo info = new CallInfo {req = req, resp = resp, success = false, finished = false};
@@ -345,8 +345,8 @@ namespace Uml.Robotics.Ros
     }
 
     public class ServiceServerLink<MReq, MRes> : IServiceServerLink
-        where MReq : IRosMessage, new()
-        where MRes : IRosMessage, new()
+        where MReq : RosMessage, new()
+        where MRes : RosMessage, new()
     {
         public ServiceServerLink(string name, bool persistent, string requestMd5Sum, string responseMd5Sum,
             IDictionary<string, string> header_values)
@@ -357,7 +357,7 @@ namespace Uml.Robotics.Ros
 
         public bool call(MReq req, ref MRes resp)
         {
-            IRosMessage iresp = resp;
+            RosMessage iresp = resp;
             bool r = call(req, ref iresp);
             if (iresp != null)
                 resp = (MRes) iresp;
@@ -366,7 +366,7 @@ namespace Uml.Robotics.Ros
     }
 
     public class ServiceServerLink<MSrv> : IServiceServerLink
-        where MSrv : IRosService, new()
+        where MSrv : RosService, new()
     {
         public ServiceServerLink(string name, bool persistent, string requestMd5Sum, string responseMd5Sum,
             IDictionary<string, string> header_values)
@@ -380,7 +380,7 @@ namespace Uml.Robotics.Ros
             bool result = false;
             try
             {
-                bool r = call((IRosService) srv);
+                bool r = call((RosService) srv);
                 if (srv.ResponseMessage != null)
                     srv.ResponseMessage.Deserialize(srv.ResponseMessage.Serialized);
                 else
@@ -405,7 +405,7 @@ namespace Uml.Robotics.Ros
         internal bool finished;
         internal Semaphore finished_condition = new Semaphore(0, int.MaxValue);
         internal object finished_mutex = new object();
-        internal IRosMessage req, resp;
+        internal RosMessage req, resp;
         internal bool success;
 
         internal void notify_all()

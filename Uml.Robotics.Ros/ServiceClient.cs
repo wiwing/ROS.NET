@@ -6,7 +6,7 @@ using Messages;
 
 namespace Uml.Robotics.Ros
 {
-    public class ServiceClient<MReq, MRes> : IServiceClient where MReq : IRosMessage, new() where MRes : IRosMessage, new()
+    public class ServiceClient<MReq, MRes> : IServiceClient where MReq : RosMessage, new() where MRes : RosMessage, new()
     {
         internal ServiceClient(string service, bool persistent, IDictionary<string, string> header_values, string md5sum)
         {
@@ -40,7 +40,7 @@ namespace Uml.Robotics.Ros
     }
 
     public class ServiceClient<MSrv> : IServiceClient
-        where MSrv : IRosService, new()
+        where MSrv : RosService, new()
     {
         internal ServiceClient(string service, bool persistent, IDictionary<string, string> header_values, string md5sum)
         {

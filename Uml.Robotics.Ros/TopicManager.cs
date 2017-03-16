@@ -146,7 +146,7 @@ namespace Uml.Robotics.Ros
         /// <typeparam name="T">Advertise Options </typeparam>
         /// <param name="ops"></param>
         /// <returns></returns>
-        private bool isValid<T>(AdvertiseOptions<T> ops) where T : IRosMessage, new()
+        private bool isValid<T>(AdvertiseOptions<T> ops) where T : RosMessage, new()
         {
             if (ops.datatype == "*")
                 throw new Exception("Advertising with * as the datatype is not allowed.  Topic [" + ops.topic + "]");
@@ -170,7 +170,7 @@ namespace Uml.Robotics.Ros
         /// <param name="ops"></param>
         /// <param name="callbacks"></param>
         /// <returns></returns>
-        public bool advertise<T>(AdvertiseOptions<T> ops, SubscriberCallbacks callbacks) where T : IRosMessage, new()
+        public bool advertise<T>(AdvertiseOptions<T> ops, SubscriberCallbacks callbacks) where T : RosMessage, new()
         {
             if (!isValid(ops)) return false;
             Publication pub = null;
@@ -223,7 +223,7 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-        public bool subscribe<T>(SubscribeOptions<T> ops) where T : IRosMessage, new()
+        public bool subscribe<T>(SubscribeOptions<T> ops) where T : RosMessage, new()
         {
             lock (subs_mutex)
             {
@@ -256,7 +256,7 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-        public Exception subscribeFail<T>(SubscribeOptions<T> ops, string reason) where T : IRosMessage, new()
+        public Exception subscribeFail<T>(SubscribeOptions<T> ops, string reason) where T : RosMessage, new()
         {
             return new Exception("Subscribing to topic [" + ops.topic + "] " + reason);
         }
@@ -316,7 +316,7 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        public void publish(Publication p, IRosMessage msg, SerializeFunc serfunc = null)
+        public void publish(Publication p, RosMessage msg, SerializeFunc serfunc = null)
         {
             if (msg == null)
                 return;
@@ -371,7 +371,7 @@ namespace Uml.Robotics.Ros
             return (lhs == "*" || rhs == "*" || lhs == rhs);
         }
 
-        public bool addSubCallback<M>(SubscribeOptions<M> ops) where M : IRosMessage, new()
+        public bool addSubCallback<M>(SubscribeOptions<M> ops) where M : RosMessage, new()
         {
             bool found = false;
             bool found_topic = false;

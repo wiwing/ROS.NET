@@ -367,10 +367,10 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        internal ulong handleMessage(IRosMessage msg, bool ser, bool nocopy, IDictionary<string, string> connection_header,
+        internal ulong handleMessage(RosMessage msg, bool ser, bool nocopy, IDictionary<string, string> connection_header,
             PublisherLink link)
         {
-            IRosMessage t = null;
+            RosMessage t = null;
             ulong drops = 0;
             TimeData receipt_time = ROS.GetTime().data;
             if (msg.Serialized != null) //will be null if self-subscribed
@@ -420,7 +420,7 @@ namespace Uml.Robotics.Ros
         }
 
         internal bool addCallback<M>(SubscriptionCallbackHelper<M> helper, string md5sum, CallbackQueueInterface queue,
-            uint queue_size, bool allow_concurrent_callbacks, string topiclol) where M : IRosMessage, new()
+            uint queue_size, bool allow_concurrent_callbacks, string topiclol) where M : RosMessage, new()
         {
             lock (md5sum_mutex)
             {
@@ -522,7 +522,7 @@ namespace Uml.Robotics.Ros
 
         #region Nested type: CallbackInfo
 
-        public class CallbackInfo<M> : ICallbackInfo where M : IRosMessage, new()
+        public class CallbackInfo<M> : ICallbackInfo where M : RosMessage, new()
         {
             public CallbackInfo()
             {
@@ -554,7 +554,7 @@ namespace Uml.Robotics.Ros
         {
             public IDictionary<string, string> connection_header;
             public PublisherLink link;
-            public IRosMessage message;
+            public RosMessage message;
             public TimeData receipt_time;
         }
 

@@ -4,8 +4,8 @@ using Messages;
 namespace Uml.Robotics.Ros
 {
     public delegate bool ServiceFunction<in MReq, MRes>(MReq req, ref MRes res)
-        where MReq : IRosMessage, new()
-        where MRes : IRosMessage, new();
+        where MReq : RosMessage, new()
+        where MRes : RosMessage, new();
 
     public class ServiceCallbackHelperParams<MReq, MRes> : IServiceCallbackHelperParams
     {
@@ -16,12 +16,12 @@ namespace Uml.Robotics.Ros
     public class IServiceCallbackHelperParams
     {
         public IDictionary<string, string> connection_header;
-        public IRosMessage request, response;
+        public RosMessage request, response;
     }
 
     public class ServiceCallbackHelper<MReq, MRes> : IServiceCallbackHelper
-        where MReq : IRosMessage, new()
-        where MRes : IRosMessage, new()
+        where MReq : RosMessage, new()
+        where MRes : RosMessage, new()
     {
         protected new ServiceFunction<MReq, MRes> _callback;
 
@@ -39,7 +39,7 @@ namespace Uml.Robotics.Ros
 
     public class IServiceCallbackHelper
     {
-        protected ServiceFunction<IRosMessage, IRosMessage> _callback;
+        protected ServiceFunction<RosMessage, RosMessage> _callback;
 
         public MsgTypes type;
 
@@ -48,28 +48,28 @@ namespace Uml.Robotics.Ros
             // EDB.WriteLine("ISubscriptionCallbackHelper: 0 arg constructor");
         }
 
-        protected IServiceCallbackHelper(ServiceFunction<IRosMessage, IRosMessage> Callback)
+        protected IServiceCallbackHelper(ServiceFunction<RosMessage, RosMessage> Callback)
         {
             //EDB.WriteLine("ISubscriptionCallbackHelper: 1 arg constructor");
             //throw new NotImplementedException();
             _callback = Callback;
         }
 
-        public virtual ServiceFunction<IRosMessage, IRosMessage> callback()
+        public virtual ServiceFunction<RosMessage, RosMessage> callback()
         {
             return _callback;
         }
 
-        public virtual ServiceFunction<IRosMessage, IRosMessage> callback(ServiceFunction<IRosMessage, IRosMessage> cb)
+        public virtual ServiceFunction<RosMessage, RosMessage> callback(ServiceFunction<RosMessage, RosMessage> cb)
         {
             _callback = cb;
             return _callback;
         }
 
-        public virtual MReq deserialize<MReq, MRes>(ServiceCallbackHelperParams<MReq, MRes> parms) where MReq : IRosMessage where MRes : IRosMessage
+        public virtual MReq deserialize<MReq, MRes>(ServiceCallbackHelperParams<MReq, MRes> parms) where MReq : RosMessage where MRes : RosMessage
         {
             //EDB.WriteLine("ISubscriptionCallbackHelper: deserialize");
-            IRosMessage msg = ROS.MakeMessage(type);
+            RosMessage msg = ROS.MakeMessage(type);
             assignSubscriptionConnectionHeader(ref msg, parms.connection_header);
             MReq t = (MReq) msg;
             t.Deserialize(parms.response.Serialized);
@@ -77,7 +77,7 @@ namespace Uml.Robotics.Ros
             //return SerializationHelper.Deserialize<T>(parms.buffer);
         }
 
-        private void assignSubscriptionConnectionHeader(ref IRosMessage msg, IDictionary<string, string> p)
+        private void assignSubscriptionConnectionHeader(ref RosMessage msg, IDictionary<string, string> p)
         {
             // EDB.WriteLine("ISubscriptionCallbackHelper: assignSubscriptionConnectionHeader");
             msg.connection_header = new Dictionary<string, string>(p);

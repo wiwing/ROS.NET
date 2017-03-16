@@ -229,7 +229,7 @@ namespace Uml.Robotics.Ros
             return new TimeSpan(ticksFromData(duration.data));
         }
 
-        public static T GetTime<T>(TimeSpan ts) where T : IRosMessage, new()
+        public static T GetTime<T>(TimeSpan ts) where T : RosMessage, new()
         {
             T test = Activator.CreateInstance(typeof(T), GetTime(ts)) as T;
             return test;
@@ -269,9 +269,9 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="type"> The type of message to make </param>
         /// <returns> A message of that type </returns>
-        internal static IRosMessage MakeMessage(MsgTypes type)
+        internal static RosMessage MakeMessage(MsgTypes type)
         {
-            return IRosMessage.generate(type);
+            return RosMessage.generate(type);
         }
 
         public class ONLY_AUTO_PARAMS

@@ -4,7 +4,7 @@ using Messages;
 
 namespace Uml.Robotics.Ros
 {
-    public class AdvertiseOptions<T> where T : IRosMessage, new()
+    public class AdvertiseOptions<T> where T : RosMessage, new()
     {
         public CallbackQueueInterface callback_queue;
         public SubscriberStatusCallback connectCB;
@@ -73,7 +73,7 @@ namespace Uml.Robotics.Ros
 
         public static AdvertiseOptions<M> Create<M>(string topic, int q_size, SubscriberStatusCallback connectcallback,
             SubscriberStatusCallback disconnectcallback, CallbackQueue queue)
-            where M : IRosMessage, new()
+            where M : RosMessage, new()
         {
             return new AdvertiseOptions<M>(topic, q_size, connectcallback, disconnectcallback) {callback_queue = queue};
         }

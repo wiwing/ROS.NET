@@ -49,7 +49,7 @@ namespace Uml.Robotics.Ros
         }
 
         internal ServiceServerLink<S> createServiceServerLink<S>(string service, bool persistent, string request_md5sum, string response_md5sum, IDictionary<string, string> header_values)
-            where S : IRosService, new()
+            where S : RosService, new()
         {
             lock (shutting_down_mutex)
             {
@@ -79,8 +79,8 @@ namespace Uml.Robotics.Ros
 
         internal ServiceServerLink<M, T> createServiceServerLink<M, T>(string service, bool persistent, string request_md5sum, 
                                                                        string response_md5sum, IDictionary<string, string> header_values)
-            where M : IRosMessage, new()
-            where T : IRosMessage, new()
+            where M : RosMessage, new()
+            where T : RosMessage, new()
         {
             lock (shutting_down_mutex)
             {
@@ -108,14 +108,14 @@ namespace Uml.Robotics.Ros
         }
 
         internal void removeServiceServerLink<M, T>(ServiceServerLink<M, T> issl)
-            where M : IRosMessage, new()
-            where T : IRosMessage, new()
+            where M : RosMessage, new()
+            where T : RosMessage, new()
         {
             removeServiceServerLink((IServiceServerLink) issl);
         }
 
         internal void removeServiceServerLink<S>(ServiceServerLink<S> issl)
-            where S : IRosService, new()
+            where S : RosService, new()
         {
             removeServiceServerLink((IServiceServerLink) issl);
         }
@@ -130,7 +130,7 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        internal bool advertiseService<MReq, MRes>(AdvertiseServiceOptions<MReq, MRes> ops) where MReq : IRosMessage, new() where MRes : IRosMessage, new()
+        internal bool advertiseService<MReq, MRes>(AdvertiseServiceOptions<MReq, MRes> ops) where MReq : RosMessage, new() where MRes : RosMessage, new()
         {
             lock (shutting_down_mutex)
             {

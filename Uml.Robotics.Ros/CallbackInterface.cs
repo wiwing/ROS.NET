@@ -9,7 +9,7 @@ using nm = Messages.nav_msgs;
 namespace Uml.Robotics.Ros
 {
     internal class Callback<T>
-        : CallbackInterface where T : IRosMessage, new()
+        : CallbackInterface where T : RosMessage, new()
     {
         private volatile bool callback_state;
 
@@ -34,7 +34,7 @@ namespace Uml.Robotics.Ros
                 };
         }
 
-        public override void pushitgood(ISubscriptionCallbackHelper helper, IRosMessage message, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time)
+        public override void pushitgood(ISubscriptionCallbackHelper helper, RosMessage message, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time)
         {
             if (was_full)
                 was_full = false;
@@ -80,7 +80,7 @@ namespace Uml.Robotics.Ros
         public class Item
         {
             public ISubscriptionCallbackHelper helper;
-            public IRosMessage message;
+            public RosMessage message;
             public bool nonconst_need_copy;
             public TimeData receipt_time;
         }
@@ -128,7 +128,7 @@ namespace Uml.Robotics.Ros
 
         #region Delegates
 
-        public delegate void ICallbackDelegate(IRosMessage msg);
+        public delegate void ICallbackDelegate(RosMessage msg);
 
         #endregion
 
@@ -148,7 +148,7 @@ namespace Uml.Robotics.Ros
             Event += f;
         }
 
-        public void func<T>(T msg) where T : IRosMessage, new()
+        public void func<T>(T msg) where T : RosMessage, new()
         {
             if (Event != null)
             {
@@ -160,7 +160,7 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        public virtual void pushitgood(ISubscriptionCallbackHelper helper, IRosMessage msg, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time)
+        public virtual void pushitgood(ISubscriptionCallbackHelper helper, RosMessage msg, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time)
         {
             throw new NotImplementedException();
         }

@@ -54,7 +54,7 @@ namespace Uml.Robotics.Ros
                 parent.removePublisherLink(this);
         }
 
-        public void handleMessage<T>(T m, bool ser, bool nocopy) where T : IRosMessage, new()
+        public void handleMessage<T>(T m, bool ser, bool nocopy) where T : RosMessage, new()
         {
             stats.messages_received++;
             if (m.Serialized == null)

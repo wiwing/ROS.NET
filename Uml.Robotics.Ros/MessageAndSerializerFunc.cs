@@ -4,12 +4,12 @@ namespace Uml.Robotics.Ros
 {
     internal class MessageAndSerializerFunc
     {
-        internal IRosMessage msg;
+        internal RosMessage msg;
         internal bool nocopy;
         internal TopicManager.SerializeFunc serfunc;
         internal bool serialize;
 
-        internal MessageAndSerializerFunc(IRosMessage msg, TopicManager.SerializeFunc serfunc, bool ser, bool nc)
+        internal MessageAndSerializerFunc(RosMessage msg, TopicManager.SerializeFunc serfunc, bool ser, bool nc)
         {
             this.msg = msg;
             this.serfunc = serfunc;

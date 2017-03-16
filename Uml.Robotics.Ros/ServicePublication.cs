@@ -5,8 +5,8 @@ using Messages;
 namespace Uml.Robotics.Ros
 {
     public class ServicePublication<MReq, MRes> : IServicePublication
-        where MReq : IRosMessage, new()
-        where MRes : IRosMessage, new()
+        where MReq : RosMessage, new()
+        where MRes : RosMessage, new()
     {
         public ServiceCallbackHelper<MReq, MRes> helper;
 

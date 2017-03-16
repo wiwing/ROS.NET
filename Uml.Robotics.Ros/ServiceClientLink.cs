@@ -87,10 +87,10 @@ namespace Uml.Robotics.Ros
             connection.write(buf, buf.Length, onResponseWritten, true);
         }
 
-        public virtual void processResponse(IRosMessage msg, bool success)
+        public virtual void processResponse(RosMessage msg, bool success)
         {
 #if DEBUG
-            EDB.WriteLine("[ServiceClientLink] processResponse(IRosMessage msg, bool success)");
+            EDB.WriteLine("[ServiceClientLink] processResponse(RosMessage msg, bool success)");
 #endif
             msg.Serialized = msg.Serialize();
             byte[] buf = new byte[msg.Serialized.Length + 1];

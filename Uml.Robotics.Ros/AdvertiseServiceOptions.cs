@@ -3,7 +3,7 @@ using Messages;
 
 namespace Uml.Robotics.Ros
 {
-    public class AdvertiseServiceOptions<MReq, MRes> where MReq : IRosMessage, new() where MRes : IRosMessage, new()
+    public class AdvertiseServiceOptions<MReq, MRes> where MReq : RosMessage, new() where MRes : RosMessage, new()
     {
         public CallbackQueueInterface callback_queue;
         public string datatype;
@@ -32,7 +32,7 @@ namespace Uml.Robotics.Ros
             res_datatype = new MRes().msgtype().ToString().Replace("__", "/").Replace("/Response", "__Response");
             srvtype = (SrvTypes) Enum.Parse(typeof (SrvTypes), req_datatype.Replace("__Request", "").Replace("/", "__"));
             datatype = srvtype.ToString().Replace("__", "/");
-            md5sum = IRosService.generate(srvtype).MD5Sum();
+            md5sum = RosService.generate(srvtype).MD5Sum();
         }
     }
 }

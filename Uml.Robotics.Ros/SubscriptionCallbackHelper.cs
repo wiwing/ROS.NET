@@ -7,7 +7,7 @@ using nm = Messages.nav_msgs;
 
 namespace Uml.Robotics.Ros
 {
-    public class SubscriptionCallbackHelper<M> : ISubscriptionCallbackHelper where M : IRosMessage, new()
+    public class SubscriptionCallbackHelper<M> : ISubscriptionCallbackHelper where M : RosMessage, new()
     {
         public SubscriptionCallbackHelper(MsgTypes t, CallbackDelegate<M> cb) : this(new Callback<M>(cb))
         {
@@ -24,7 +24,7 @@ namespace Uml.Robotics.Ros
         {
         }
 
-        public override void call(IRosMessage msg)
+        public override void call(RosMessage msg)
         {
             Callback.func(msg);
         }
@@ -48,7 +48,7 @@ namespace Uml.Robotics.Ros
             this.Callback = Callback;
         }
 
-        public virtual void call(IRosMessage parms)
+        public virtual void call(RosMessage parms)
         {
             // EDB.WriteLine("ISubscriptionCallbackHelper: call");
             throw new NotImplementedException();

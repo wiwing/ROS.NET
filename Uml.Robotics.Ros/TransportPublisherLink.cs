@@ -121,7 +121,7 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-        public void handleMessage<T>(T m, bool ser, bool nocopy) where T : IRosMessage, new()
+        public void handleMessage<T>(T m, bool ser, bool nocopy) where T : RosMessage, new()
         {
             stats.bytes_received += (ulong) m.Serialized.Length;
             stats.messages_received++;
@@ -168,7 +168,7 @@ namespace Uml.Robotics.Ros
             if (!success || conn == null || conn != connection) return false;
             if (success)
             {
-                IRosMessage msg = IRosMessage.generate(parent.msgtype);
+                RosMessage msg = RosMessage.generate(parent.msgtype);
                 msg.Serialized = buffer;
                 msg.connection_header = getHeader().Values;
                 handleMessage(msg, true, false);

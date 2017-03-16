@@ -159,7 +159,7 @@ namespace FauxMessages
                     else
                         suffix = " = new " + prefix + t + "()";
                 }
-                output = lowestindent + "public " + prefix + t + " " + name + otherstuff + suffix + "; //woo";
+                output = lowestindent + "public " + prefix + t + " " + name + otherstuff + suffix + ";";
             }
             else
             {

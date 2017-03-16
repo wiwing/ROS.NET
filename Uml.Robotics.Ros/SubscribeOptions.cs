@@ -7,7 +7,7 @@ using nm = Messages.nav_msgs;
 
 namespace Uml.Robotics.Ros
 {
-    public class SubscribeOptions<T> where T : IRosMessage, new()
+    public class SubscribeOptions<T> where T : RosMessage, new()
     {
         public bool allow_concurrent_callbacks = true;
         public CallbackQueueInterface callback_queue;
@@ -45,5 +45,5 @@ namespace Uml.Robotics.Ros
         }
     }
 
-    public delegate void CallbackDelegate<in T>(T argument) where T : IRosMessage, new();
+    public delegate void CallbackDelegate<in T>(T argument) where T : RosMessage, new();
 }

@@ -154,7 +154,7 @@ namespace Uml.Robotics.Ros
         /// <param name="topic">Name of topic</param>
         /// <param name="q_size">How many messages to qeueue if asynchrinous</param>
         /// <returns>A publisher with the specified topic type, name and options</returns>
-        public Publisher<M> advertise<M>(string topic, int q_size) where M : IRosMessage, new()
+        public Publisher<M> advertise<M>(string topic, int q_size) where M : RosMessage, new()
         {
             return advertise<M>(topic, q_size, false);
         }
@@ -167,7 +167,7 @@ namespace Uml.Robotics.Ros
         /// <param name="q_size">How many messages to enqueue if asynchrinous</param>
         /// <param name="l">Boolean determines whether the given publisher will latch or not</param>
         /// <returns>A publisher with the specified topic type, name and options</returns>
-        public Publisher<M> advertise<M>(string topic, int q_size, bool l) where M : IRosMessage, new()
+        public Publisher<M> advertise<M>(string topic, int q_size, bool l) where M : RosMessage, new()
         {
             return advertise(new AdvertiseOptions<M>(topic, q_size) {latch = l});
         }
@@ -183,7 +183,7 @@ namespace Uml.Robotics.Ros
         /// <returns>A publisher with the specified topic type, name and options</returns>
         public Publisher<M> advertise<M>(string topic, int queue_size, SubscriberStatusCallback connectcallback,
             SubscriberStatusCallback disconnectcallback)
-            where M : IRosMessage, new()
+            where M : RosMessage, new()
         {
             return advertise<M>(topic, queue_size, connectcallback, disconnectcallback, false);
         }
@@ -200,7 +200,7 @@ namespace Uml.Robotics.Ros
         /// <returns>A publisher with the specified topic type, name and options</returns>
         public Publisher<M> advertise<M>(string topic, int queue_size, SubscriberStatusCallback connectcallback,
             SubscriberStatusCallback disconnectcallback, bool l)
-            where M : IRosMessage, new()
+            where M : RosMessage, new()
         {
             return advertise(new AdvertiseOptions<M>(topic, queue_size, connectcallback, disconnectcallback) {latch = l});
         }
@@ -211,7 +211,7 @@ namespace Uml.Robotics.Ros
         /// <typeparam name="M">Type of topic</typeparam>
         /// <param name="ops">Advertise options</param>
         /// <returns>A publisher with the specified options</returns>
-        public Publisher<M> advertise<M>(AdvertiseOptions<M> ops) where M : IRosMessage, new()
+        public Publisher<M> advertise<M>(AdvertiseOptions<M> ops) where M : RosMessage, new()
         {
             ops.topic = resolveName(ops.topic);
             if (ops.callback_queue == null)
@@ -240,7 +240,7 @@ namespace Uml.Robotics.Ros
         /// <param name="queue_size">How many messages to qeueue</param>
         /// <param name="cb">Callback to fire when a message is receieved</param>
         /// <returns>A subscriber</returns>
-        public Subscriber<M> subscribe<M>(string topic, uint queue_size, CallbackDelegate<M> cb) where M : IRosMessage, new()
+        public Subscriber<M> subscribe<M>(string topic, uint queue_size, CallbackDelegate<M> cb) where M : RosMessage, new()
         {
             return subscribe<M>(topic, queue_size, new Callback<M>(cb), false);
         }
@@ -254,7 +254,7 @@ namespace Uml.Robotics.Ros
         /// <param name="cb">Callback to fire when a message is receieved</param>
         /// <param name="allow_concurrent_callbacks">Probably breaks things when true</param>
         /// <returns>A subscriber</returns>
-        public Subscriber<M> subscribe<M>(string topic, uint queue_size, CallbackDelegate<M> cb, bool allow_concurrent_callbacks) where M : IRosMessage, new()
+        public Subscriber<M> subscribe<M>(string topic, uint queue_size, CallbackDelegate<M> cb, bool allow_concurrent_callbacks) where M : RosMessage, new()
         {
             return subscribe<M>(topic, queue_size, new Callback<M>(cb), allow_concurrent_callbacks);
         }
@@ -269,7 +269,7 @@ namespace Uml.Robotics.Ros
         /// <param name="allow_concurrent_callbacks">Probably breaks things when true</param>
         /// <returns>A subscriber</returns>
         public Subscriber<M> subscribe<M>(string topic, uint queue_size, CallbackInterface cb, bool allow_concurrent_callbacks)
-            where M : IRosMessage, new()
+            where M : RosMessage, new()
         {
             if (_callback == null)
             {
@@ -287,7 +287,7 @@ namespace Uml.Robotics.Ros
         /// <typeparam name="M">Topic type</typeparam>
         /// <param name="ops">Subscriber options</param>
         /// <returns>A subscriber</returns>
-        public Subscriber<M> subscribe<M>(SubscribeOptions<M> ops) where M : IRosMessage, new()
+        public Subscriber<M> subscribe<M>(SubscribeOptions<M> ops) where M : RosMessage, new()
         {
             ops.topic = resolveName(ops.topic);
             if (ops.callback_queue == null)
@@ -315,8 +315,8 @@ namespace Uml.Robotics.Ros
         /// <param name="srv_func">The handler for the service</param>
         /// <returns>The ServiceServer that will call the ServiceFunction on behalf of ServiceClients</returns>
         public ServiceServer advertiseService<MReq, MRes>(string service, ServiceFunction<MReq, MRes> srv_func)
-            where MReq : IRosMessage, new()
-            where MRes : IRosMessage, new()
+            where MReq : RosMessage, new()
+            where MRes : RosMessage, new()
         {
             return advertiseService(new AdvertiseServiceOptions<MReq, MRes>(service, srv_func));
         }
@@ -329,8 +329,8 @@ namespace Uml.Robotics.Ros
         /// <param name="ops">isn't it obvious?</param>
         /// <returns>The ServiceServer that will call the ServiceFunction on behalf of ServiceClients</returns>
         public ServiceServer advertiseService<MReq, MRes>(AdvertiseServiceOptions<MReq, MRes> ops)
-            where MReq : IRosMessage, new()
-            where MRes : IRosMessage, new()
+            where MReq : RosMessage, new()
+            where MRes : RosMessage, new()
         {
             ops.service = resolveName(ops.service);
             if (ops.callback_queue == null)
@@ -350,30 +350,30 @@ namespace Uml.Robotics.Ros
         }
 
         public ServiceClient<MReq, MRes> serviceClient<MReq, MRes>(string service_name)
-            where MReq : IRosMessage, new()
-            where MRes : IRosMessage, new()
+            where MReq : RosMessage, new()
+            where MRes : RosMessage, new()
         {
             return serviceClient<MReq, MRes>(new ServiceClientOptions(service_name, false, null));
         }
 
         public ServiceClient<MReq, MRes> serviceClient<MReq, MRes>(string service_name, bool persistent)
-            where MReq : IRosMessage, new()
-            where MRes : IRosMessage, new()
+            where MReq : RosMessage, new()
+            where MRes : RosMessage, new()
         {
             return serviceClient<MReq, MRes>(new ServiceClientOptions(service_name, persistent, null));
         }
 
         public ServiceClient<MReq, MRes> serviceClient<MReq, MRes>(string service_name, bool persistent,
             IDictionary<string, string> header_values)
-            where MReq : IRosMessage, new()
-            where MRes : IRosMessage, new()
+            where MReq : RosMessage, new()
+            where MRes : RosMessage, new()
         {
             return serviceClient<MReq, MRes>(new ServiceClientOptions(service_name, persistent, header_values));
         }
 
         public ServiceClient<MReq, MRes> serviceClient<MReq, MRes>(ServiceClientOptions ops)
-            where MReq : IRosMessage, new()
-            where MRes : IRosMessage, new()
+            where MReq : RosMessage, new()
+            where MRes : RosMessage, new()
         {
             ops.service = resolveName(ops.service);
             ops.md5sum = new MReq().MD5Sum();
@@ -381,14 +381,14 @@ namespace Uml.Robotics.Ros
         }
 
         public ServiceClient<MSrv> serviceClient<MSrv>(string service_name)
-            where MSrv : IRosService, new()
+            where MSrv : RosService, new()
 
         {
             return serviceClient<MSrv>(new ServiceClientOptions(service_name, false, null));
         }
 
         public ServiceClient<MSrv> serviceClient<MSrv>(string service_name, bool persistent)
-            where MSrv : IRosService, new()
+            where MSrv : RosService, new()
 
         {
             return serviceClient<MSrv>(new ServiceClientOptions(service_name, persistent, null));
@@ -396,14 +396,14 @@ namespace Uml.Robotics.Ros
 
         public ServiceClient<MSrv> serviceClient<MSrv>(string service_name, bool persistent,
             IDictionary<string, string> header_values)
-            where MSrv : IRosService, new()
+            where MSrv : RosService, new()
 
         {
             return serviceClient<MSrv>(new ServiceClientOptions(service_name, persistent, header_values));
         }
 
         public ServiceClient<MSrv> serviceClient<MSrv>(ServiceClientOptions ops)
-            where MSrv : IRosService, new()
+            where MSrv : RosService, new()
 
         {
             ops.service = resolveName(ops.service);

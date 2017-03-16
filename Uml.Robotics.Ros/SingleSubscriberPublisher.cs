@@ -24,7 +24,7 @@ namespace Uml.Robotics.Ros
             get { return link.destination_caller_id; }
         }
 
-        public void publish<M>(M message) where M : IRosMessage, new()
+        public void publish<M>(M message) where M : RosMessage, new()
         {
             link.enqueueMessage(new MessageAndSerializerFunc(message, message.Serialize, true, true));
         }

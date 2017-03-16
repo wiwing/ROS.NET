@@ -155,6 +155,7 @@ namespace FauxMessages
                 def[i] = def[i].Replace(" = ", "=");
                 def[i] = def[i].Replace("\"", "\"\"");
             }
+
             StringBuilder md = new StringBuilder();
             StringBuilder reqd = new StringBuilder();
             StringBuilder resd = null;
@@ -179,6 +180,7 @@ namespace FauxMessages
                 else
                     resd.AppendLine(s);
             }
+
             string MessageDefinition = md.ToString().Trim();
             string RequestDefinition = reqd.ToString().Trim();
             string ResponseDefinition = "";
@@ -223,6 +225,7 @@ namespace FauxMessages
             #endregion
 
             #region MD5
+
             GUTS = GUTS.Replace("$REQUESTMYMD5SUM", MD5.Sum(Request));
             GUTS = GUTS.Replace("$RESPONSEMYMD5SUM", MD5.Sum(Response));
             string GeneratedReqDeserializationCode = "", GeneratedReqSerializationCode = "", GeneratedResDeserializationCode = "", GeneratedResSerializationCode = "", GeneratedReqRandomizationCode = "", GeneratedResRandomizationCode = "", GeneratedReqEqualizationCode = "", GeneratedResEqualizationCode = "";
@@ -256,6 +259,7 @@ namespace FauxMessages
             if (md5 == null)
                 return null;
             GUTS = GUTS.Replace("$MYSRVMD5SUM", md5);
+
             #endregion
 
             /********END BLOCK**********/
