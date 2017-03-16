@@ -26,7 +26,10 @@ namespace ServiceServerSample
         
         private static bool addition(TwoInts.Request req, ref TwoInts.Response resp)
         {
+            EDB.WriteLine("[ServiceServerSample] addition callback");
             resp.sum = req.a + req.b;
+            EDB.WriteLine(req);
+            EDB.WriteLine(resp.sum);
             return true;
         }
         static void Main(string[] args)
@@ -41,7 +44,6 @@ namespace ServiceServerSample
             server = nodeHandle.advertiseService<TwoInts.Request, TwoInts.Response>("/add_two_ints", addition);
             while (ROS.ok && server.IsValid)
             {
-                Console.WriteLine("alive");
                 Thread.Sleep(10);
             }
             
