@@ -49,6 +49,13 @@ namespace Uml.Robotics.Ros.Transforms
                 xz - wy, yz + wx, 1.0 - (xx + yy));
         }
 
+        public static Vector3 operator *(Matrix3x3 mat1, Vector3 v1)
+        {
+            return new Vector3(mat1.m_el[0].x * v1.x + mat1.m_el[0].y * v1.y + mat1.m_el[0].z * v1.z, 
+                               mat1.m_el[1].x * v1.x + mat1.m_el[1].y * v1.y + mat1.m_el[1].z * v1.z, 
+                               mat1.m_el[2].x * v1.x + mat1.m_el[2].y * v1.y + mat1.m_el[2].z * v1.z);
+        }
+
         internal Vector3 getYPR(uint solution_number = 1)
         {
             Euler euler_out;
@@ -61,9 +68,10 @@ namespace Uml.Robotics.Ros.Transforms
                 euler_out2.yaw = 0;
 
                 // From difference of angles formula
+                double delta = Math.Atan2(m_el[2].y, m_el[2].z); // implementation in tf2
                 if (m_el[2].x < 0) //gimbal locked down
                 {
-                    double delta = Math.Atan2(m_el[0].y, m_el[0].z);
+                    //double delta = Math.Atan2(m_el[0].y, m_el[0].z); // implementation in tf
                     euler_out.pitch = Math.PI / 2.0d;
                     euler_out2.pitch = Math.PI / 2.0d;
                     euler_out.roll = delta;
@@ -71,7 +79,7 @@ namespace Uml.Robotics.Ros.Transforms
                 }
                 else // gimbal locked up
                 {
-                    double delta = Math.Atan2(-m_el[0].y, -m_el[0].z);
+                    //double delta = Math.Atan2(-m_el[0].y, -m_el[0].z); // implementation in tf
                     euler_out.pitch = -Math.PI / 2.0d;
                     euler_out2.pitch = -Math.PI / 2.0d;
                     euler_out.roll = delta;
@@ -101,6 +109,13 @@ namespace Uml.Robotics.Ros.Transforms
             return new Vector3(euler_out2.yaw, euler_out2.pitch, euler_out2.roll);
         }
 
+        public override string ToString()
+        {
+            return string.Format("({0:F4},{1:F4},{2:F4}; {3:F4},{4:F4},{5:F4}; {6:F4},{7:F4},{8:F4})", 
+                                 m_el[0].x, m_el[0].y, m_el[0].z, 
+                                 m_el[1].x, m_el[1].y, m_el[1].z,
+                                 m_el[2].x, m_el[2].y, m_el[2].z);
+        }
         public struct Euler
         {
             public double pitch;
