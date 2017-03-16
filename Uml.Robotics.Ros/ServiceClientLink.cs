@@ -76,6 +76,9 @@ namespace Uml.Robotics.Ros
 
         public virtual void processResponse(string error, bool success)
         {
+#if DEBUG
+            EDB.WriteLine("[ServiceClientLink] processResponse(string error, bool success)");
+#endif
             var msg = new std_msgs.String(error);
             msg.Serialized = msg.Serialize();
             byte[] buf = new byte[msg.Serialized.Length + 1];
@@ -86,11 +89,17 @@ namespace Uml.Robotics.Ros
 
         public virtual void processResponse(IRosMessage msg, bool success)
         {
+#if DEBUG
+            EDB.WriteLine("[ServiceClientLink] processResponse(IRosMessage msg, bool success)");
+#endif
             msg.Serialized = msg.Serialize();
             byte[] buf = new byte[msg.Serialized.Length + 1];
             buf[0] = (byte) (success ? 0x01 : 0x00);
             msg.Serialized.CopyTo(buf, 1);
             connection.write(buf, buf.Length, onResponseWritten, true);
+#if DEBUG
+            EDB.WriteLine("[ServiceClientLink] processResponse FINISHED");
+#endif
         }
 
         public virtual void drop()
