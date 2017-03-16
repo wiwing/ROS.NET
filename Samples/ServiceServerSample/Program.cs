@@ -23,13 +23,13 @@ namespace ServiceServerSample
 
     class Program
     {
-        
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Program>();
         private static bool addition(TwoInts.Request req, ref TwoInts.Response resp)
         {
-            EDB.WriteLine("[ServiceServerSample] addition callback");
+            Logger.LogInformation("[ServiceServerSample] addition callback");
             resp.sum = req.a + req.b;
-            EDB.WriteLine(req);
-            EDB.WriteLine(resp.sum);
+            Logger.LogInformation(req);
+            Logger.LogInformation(resp.sum);
             return true;
         }
         static void Main(string[] args)

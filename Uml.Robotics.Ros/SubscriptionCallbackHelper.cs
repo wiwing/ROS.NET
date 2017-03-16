@@ -4,6 +4,7 @@ using Messages;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
@@ -32,25 +33,26 @@ namespace Uml.Robotics.Ros
 
     public class ISubscriptionCallbackHelper
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ISubscriptionCallbackHelper>();
         public CallbackInterface Callback { protected set; get; }
 
         public MsgTypes type;
 
         protected ISubscriptionCallbackHelper()
         {
-            // EDB.WriteLine("ISubscriptionCallbackHelper: 0 arg constructor");
+            // Logger.LogDebug("ISubscriptionCallbackHelper: 0 arg constructor");
         }
 
         protected ISubscriptionCallbackHelper(CallbackInterface Callback)
         {
-            //EDB.WriteLine("ISubscriptionCallbackHelper: 1 arg constructor");
+            //Logger.LogDebug("ISubscriptionCallbackHelper: 1 arg constructor");
             //throw new NotImplementedException();
             this.Callback = Callback;
         }
 
         public virtual void call(RosMessage parms)
         {
-            // EDB.WriteLine("ISubscriptionCallbackHelper: call");
+            // Logger.LogDebug("ISubscriptionCallbackHelper: call");
             throw new NotImplementedException();
         }
     }

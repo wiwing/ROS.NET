@@ -4,11 +4,13 @@ using Messages;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     public class TransportPublisherLink : PublisherLink, IDisposable
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<TransportPublisherLink>();
         public Connection connection;
         public bool dropping;
         private bool needs_retry;
@@ -38,9 +40,7 @@ namespace Uml.Robotics.Ros
 
         public bool initialize(Connection connection)
         {
-#if DEBUG
-            EDB.WriteLine("Init transport publisher link: " + parent.name);
-#endif
+            Logger.LogDebug("Init transport publisher link: " + parent.name);
             this.connection = connection;
             connection.DroppedEvent += onConnectionDropped;
             if (connection.transport.getRequiresHeader())
@@ -70,15 +70,14 @@ namespace Uml.Robotics.Ros
                 parent.removePublisherLink(this);
             else
             {
-                EDB.WriteLine("TransportPublisherLink met an untimely demise.");
+                Logger.LogDebug("Last publisher link removed");
             }
         }
 
         private void onConnectionDropped(Connection conn, Connection.DropReason reason)
         {
-#if DEBUG
-            EDB.WriteLine("TransportPublisherLink: onConnectionDropped -- " + reason);
-#endif
+            Logger.LogDebug("TransportPublisherLink: onConnectionDropped -- " + reason);
+
             if (dropping || conn != connection)
                 return;
             if (reason == Connection.DropReason.TransportDisconnect)
@@ -98,7 +97,7 @@ namespace Uml.Robotics.Ros
             {
                 if (reason == Connection.DropReason.HeaderError)
                 {
-                    EDB.WriteLine("Error in the Header: " +
+                    Logger.LogError("Error in the Header: " +
                                     (parent != null ? parent.name : "unknown"));
                 }
                 drop();
@@ -154,7 +153,7 @@ namespace Uml.Robotics.Ros
             int lengthLimit = 1000000000;
             if (len > lengthLimit)
             {
-                EDB.WriteLine($"TransportPublisherLink length exceeds limit of {lengthLimit}. Dropping connection");
+                Logger.LogError($"TransportPublisherLink length exceeds limit of {lengthLimit}. Dropping connection");
                 drop();
                 return false;
             }
@@ -180,9 +179,7 @@ namespace Uml.Robotics.Ros
 
         private void onRetryTimer(object o)
         {
-#if DEBUG
-            EDB.WriteLine("TransportPublisherLink: onRetryTimer");
-#endif
+            Logger.LogDebug("TransportPublisherLink: onRetryTimer");
             if (dropping) return;
             if (needs_retry && DateTime.Now.Subtract(next_retry).TotalMilliseconds < 0)
             {

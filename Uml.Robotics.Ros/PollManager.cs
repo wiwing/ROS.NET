@@ -7,11 +7,13 @@ using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
-    public class Poll_Signal : IDisposable
+    public class PollSignal : IDisposable
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<PollSignal>();
         public MethodInfo Method;
         public object Target;
         public delegate void PollSignalFunc();
@@ -69,7 +71,7 @@ namespace Uml.Robotics.Ros
 
         internal static event PollSignalFunc SignalEvent;
 
-        public Poll_Signal(Action psf)
+        public PollSignal(Action psf)
         {
             if (psf != null)
             {
@@ -113,6 +115,7 @@ namespace Uml.Robotics.Ros
 
     public class PollManager
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<PollManager>();
         private static Lazy<PollManager> _instance = new Lazy<PollManager>(LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static PollManager Instance
@@ -123,7 +126,7 @@ namespace Uml.Robotics.Ros
         public PollSet poll_set;
         public bool shutting_down;
         public object signal_mutex = new object();
-        private List<Poll_Signal> signals = new List<Poll_Signal>();
+        private List<PollSignal> signals = new List<PollSignal>();
         public TcpTransport tcpserver_transport;
         private Thread thread;
 
@@ -134,19 +137,17 @@ namespace Uml.Robotics.Ros
 
         public void addPollThreadListener(Action poll)
         {
-#if DEBUG
-            EDB.WriteLine("Adding pollthreadlistener " + poll.Target + ":" + poll.GetMethodInfo().Name);
-#endif
+            Logger.LogDebug("Adding pollthreadlistener " + poll.Target + ":" + poll.GetMethodInfo().Name);
             lock (signal_mutex)
             {
-                signals.Add(new Poll_Signal(poll));
+                signals.Add(new PollSignal(poll));
             }
             signal();
         }
 
         private void signal()
         {
-            Poll_Signal.Signal();
+            PollSignal.Signal();
         }
 
         public void removePollThreadListener(Action poll)
@@ -166,9 +167,7 @@ namespace Uml.Robotics.Ros
                 Thread.Sleep(ROS.WallDuration);
                 if (shutting_down) return;
             }
-#if DEBUG
-            EDB.WriteLine("PollManager thread IS FREE");
-#endif
+            Logger.LogDebug("PollManager thread finished");
         }
 
 
@@ -192,7 +191,7 @@ namespace Uml.Robotics.Ros
                 signals.Clear();
                 if (!thread.Join(2000))
                 {
-                    EDB.WriteLine("PollManager had 2 seconds to drink the coolaid, and didn't. Trying the \"funnel method\".");
+                    Logger.LogWarning("thread.Join timed out.");
                     // AKo: ## fixme .NET Core has no Abort() on Thread obj
                     //try
                     //{

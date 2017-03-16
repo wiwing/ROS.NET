@@ -8,6 +8,7 @@ using Uml.Robotics.XmlRpc;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
@@ -19,6 +20,8 @@ namespace Uml.Robotics.Ros
 
         #endregion
 
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<TopicManager>();
+        
         private static Lazy<TopicManager> _instance = new Lazy<TopicManager>(LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static TopicManager Instance
@@ -157,9 +160,8 @@ namespace Uml.Robotics.Ros
             if (ops.datatype == "")
                 throw new Exception("Advertising on topic [" + ops.topic + "] with an empty datatype");
             if (ops.message_definition == "")
-                EDB.WriteLine
-                    ("Danger, Will Robinson... Advertising on topic [" + ops.topic +
-                     "] with an empty message definition. Some tools (that don't exist in this implementation) may not work correctly");
+                Logger.LogWarning("Advertising on topic [" + ops.topic + 
+                     "] with an empty message definition. Some tools may not work correctly");
             return true;
         }
 
@@ -183,7 +185,7 @@ namespace Uml.Robotics.Ros
                 {
                     if (pub.Md5sum != ops.md5sum)
                     {
-                        EDB.WriteLine
+                        Logger.LogError
                             ("Tried to advertise on topic [{0}] with md5sum [{1}] and datatype [{2}], but the topic is already advertised as md5sum [{3}] and datatype [{4}]",
                                 ops.topic, ops.md5sum,
                                 ops.datatype, pub.Md5sum, pub.DataType);
@@ -244,7 +246,7 @@ namespace Uml.Robotics.Ros
             s.addCallback(ops.helper, ops.md5sum, ops.callback_queue, ops.queue_size, ops.allow_concurrent_callbacks, ops.topic);
             if (!registerSubscriber(s, ops.datatype))
             {
-                EDB.WriteLine("Couldn't register subscriber on topic [{0}]", ops.topic);
+                Logger.LogError("Couldn't register subscriber on topic [{0}]", ops.topic);
                 s.shutdown();
                 return false;
             }
@@ -285,7 +287,7 @@ namespace Uml.Robotics.Ros
                     subscriptions.Remove(sub);
                 }
                 if (!unregisterSubscriber(topic))
-                    EDB.WriteLine("Couldn't unregister subscriber for topic [" + topic + "]");
+                    Logger.LogWarning("Couldn't unregister subscriber for topic [" + topic + "]");
 
                 sub.shutdown();
                 return true;
@@ -408,12 +410,12 @@ namespace Uml.Robotics.Ros
                 XmlRpcValue proto = protos[proto_idx];
                 if (proto.Type != XmlRpcValue.ValueType.TypeArray)
                 {
-                    EDB.WriteLine("requestTopic protocol list was not a list of lists");
+                    Logger.LogError("requestTopic protocol list was not a list of lists");
                     return false;
                 }
                 if (proto[0].Type != XmlRpcValue.ValueType.TypeString)
                 {
-                    EDB.WriteLine(
+                    Logger.LogError(
                         "requestTopic received a protocol list in which a sublist did not start with a string");
                     return false;
                 }
@@ -430,12 +432,12 @@ namespace Uml.Robotics.Ros
                 }
                 if (proto_name == "UDPROS")
                 {
-                    EDB.WriteLine("Ignoring topics with UdpRos as protocol");
+                    Logger.LogWarning("Ignoring topics with UdpRos as protocol");
                 }
                 else
-                    EDB.WriteLine("an unsupported protocol was offered: [{0}]", proto_name);
+                    Logger.LogWarning("An unsupported protocol was offered: [{0}]", proto_name);
             }
-            EDB.WriteLine("No supported protocol was provided");
+            Logger.LogError("No supported protocol was provided");
             return false;
         }
 
@@ -589,26 +591,28 @@ namespace Uml.Robotics.Ros
 
         public bool pubUpdate(string topic, List<string> pubs)
         {
-#if DEBUG
-            EDB.WriteLine("TopicManager is updating publishers for " + topic);
-#endif
-            Subscription sub = null;
-            lock (subs_mutex)
+            using (Logger.BeginScope ($"{ nameof(pubUpdate) }"))
             {
-                if (shutting_down) return false;
-                foreach (Subscription s in subscriptions)
+                Logger.LogDebug("TopicManager is updating publishers for " + topic);
+
+                Subscription sub = null;
+                lock (subs_mutex)
                 {
-                    if (s.name != topic || s.IsDropped)
-                        continue;
-                    sub = s;
-                    break;
+                    if (shutting_down) return false;
+                    foreach (Subscription s in subscriptions)
+                    {
+                        if (s.name != topic || s.IsDropped)
+                            continue;
+                        sub = s;
+                        break;
+                    }
                 }
+                if (sub != null)
+                    return sub.pubUpdate(pubs);
+                Logger.LogInformation("Request for updating publishers of topic " + topic +
+                            ", which has no subscribers.");
+                return false;
             }
-            if (sub != null)
-                return sub.pubUpdate(pubs);
-            EDB.WriteLine("got a request for updating publishers of topic " + topic +
-                          ", but I don't have any subscribers to that topic.");
-            return false;
         }
 
         //public void pubUpdateCallback([In] [Out] IntPtr parms, [In] [Out] IntPtr result)
@@ -623,7 +627,7 @@ namespace Uml.Robotics.Ros
             else
             {
                 const string error = "Unknown error while handling XmlRpc call to pubUpdate";
-                EDB.WriteLine(error);
+                Logger.LogError(error);
                 XmlRpcManager.Instance.responseInt(0, error, 0)(result);
             }
         }
@@ -637,7 +641,7 @@ namespace Uml.Robotics.Ros
             if (!requestTopic(parm[1].Get<string>(), parm[2], ref res))
             {
                 const string error = "Unknown error while handling XmlRpc call to requestTopic";
-                EDB.WriteLine(error);
+                Logger.LogError(error);
                 XmlRpcManager.Instance.responseInt(0, error, 0)(res);
             }
         }

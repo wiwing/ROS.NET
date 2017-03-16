@@ -5,12 +5,14 @@ using Messages;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     internal class Callback<T>
         : CallbackInterface where T : RosMessage, new()
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Callback<T>>();
         private volatile bool callback_state;
 
         public readonly bool allow_concurrent_callbacks;
@@ -108,6 +110,7 @@ namespace Uml.Robotics.Ros
 
     public class CallbackInterface
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<CallbackInterface>();
         private static object uidlock = new object();
         private static UInt64 nextuid;
         private UInt64 uid;
@@ -156,7 +159,7 @@ namespace Uml.Robotics.Ros
             }
             else
             {
-                EDB.WriteLine($"{nameof(Event)} is null");
+                Logger.LogError($"{nameof(Event)} is null");
             }
         }
 

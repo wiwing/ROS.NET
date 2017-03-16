@@ -7,12 +7,16 @@ using Uml.Robotics.XmlRpc;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     public class Subscription
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Subscription>();
+
         private bool _dropped;
+
 
         private List<ICallbackInfo> callbacks = new List<ICallbackInfo>();
         public object callbacks_mutex = new object();
@@ -90,21 +94,21 @@ namespace Uml.Robotics.Ros
         {
             lock (publisher_links_mutex)
             {
-                //EDB.WriteLine("SUB: getInfo with " + publisher_links.Count + " publinks in list");
+                //Logger.LogDebug("SUB: getInfo with " + publisher_links.Count + " publinks in list");
                 foreach (PublisherLink c in publisher_links)
                 {
-                    //EDB.WriteLine("PUB: adding a curr_info to info!");
+                    //Logger.LogDebug("PUB: adding a curr_info to info!");
                     XmlRpcValue curr_info = new XmlRpcValue();
                     curr_info.Set(0, (int) c.ConnectionID);
                     curr_info.Set(1, c.XmlRpc_Uri);
                     curr_info.Set(2, "i");
                     curr_info.Set(3, c.TransportType);
                     curr_info.Set(4, name);
-                    //EDB.Write("PUB curr_info DUMP:\n\t");
+                    //Logger.LogDebug("PUB curr_info DUMP:\n\t");
                     //curr_info.Dump();
                     info.Set(info.Size, curr_info);
                 }
-                //EDB.WriteLine("SUB: outgoing info is of type: " + info.Type + " and has size: " + info.Size);
+                //Logger.LogDebug("SUB: outgoing info is of type: " + info.Type + " and has size: " + info.Size);
             }
         }
 
@@ -172,65 +176,62 @@ namespace Uml.Robotics.Ros
 
         public bool pubUpdate(IEnumerable<string> pubs)
         {
-            lock (shutdown_mutex)
+            using (Logger.BeginScope ($"{ nameof(pubUpdate) }"))
             {
-                if (shutting_down || _dropped)
-                    return false;
-            }
-            bool retval = true;
-#if DEBUG
-#if DUMP
-            EDB.WriteLine("Publisher update for [" + name + "]: " + publisher_links.Aggregate(pubs.Aggregate("", (current, s) => current + (s + ", "))+" already have these connections: ", (current, spc) => current + spc.XmlRpc_Uri));
-#else
-            EDB.WriteLine("Publisher update for [" + name + "]");
-#endif
-#endif
-            List<string> additions = new List<string>();
-            List<PublisherLink> subtractions = new List<PublisherLink>();
-            lock (publisher_links_mutex)
-            {
-                subtractions.AddRange(from spc in publisher_links let found = pubs.Any(up_i => urisEqual(spc.XmlRpc_Uri, up_i)) where !found select spc);
-                foreach (string up_i in pubs)
+                lock (shutdown_mutex)
                 {
-                    bool found = publisher_links.Any(spc => urisEqual(up_i, spc.XmlRpc_Uri));
-                    if (found) continue;
-                    lock (pending_connections_mutex)
+                    if (shutting_down || _dropped)
+                        return false;
+                }
+                bool retval = true;
+
+                Logger.LogDebug("Publisher update for [" + name + "]");
+
+                List<string> additions = new List<string>();
+                List<PublisherLink> subtractions = new List<PublisherLink>();
+                lock (publisher_links_mutex)
+                {
+                    subtractions.AddRange(from spc in publisher_links let found = pubs.Any(up_i => urisEqual(spc.XmlRpc_Uri, up_i)) where !found select spc);
+                    foreach (string up_i in pubs)
                     {
-                        if (pending_connections.Any(pc => urisEqual(up_i, pc.RemoteUri)))
+                        bool found = publisher_links.Any(spc => urisEqual(up_i, spc.XmlRpc_Uri));
+                        if (found) continue;
+                        lock (pending_connections_mutex)
                         {
-                            found = true;
+                            if (pending_connections.Any(pc => urisEqual(up_i, pc.RemoteUri)))
+                            {
+                                found = true;
+                            }
+                            if (!found) additions.Add(up_i);
                         }
-                        if (!found) additions.Add(up_i);
                     }
                 }
-            }
-            foreach (PublisherLink link in subtractions)
-            {
-                if (link.XmlRpc_Uri != XmlRpcManager.Instance.uri)
+                foreach (PublisherLink link in subtractions)
                 {
-#if DEBUG
-                    EDB.WriteLine("Disconnecting from publisher [" + link.CallerID + "] of topic [" + name +
-                                  "] at [" + link.XmlRpc_Uri + "]");
-#endif
-                    link.drop();
+                    if (link.XmlRpc_Uri != XmlRpcManager.Instance.uri)
+                    {
+                        Logger.LogDebug("Disconnecting from publisher [" + link.CallerID + "] of topic [" + name +
+                                    "] at [" + link.XmlRpc_Uri + "]");
+                        link.drop();
+                    }
+                    else
+                    {
+                        Logger.LogWarning("Cannot disconnect from self for topic: " + name);
+                    }
                 }
-                else
-                {
-                    EDB.WriteLine("Cannot disconnect from self for topic: " + name);
-                }
-            }
 
-            foreach (string i in additions)
-            {
-                if (XmlRpcManager.Instance.uri != i)
+                foreach (string i in additions)
                 {
-                    retval &= NegotiateConnection(i);
-                    //EDB.WriteLine("NEGOTIATINGING");
+                    if (XmlRpcManager.Instance.uri != i)
+                    {
+                        retval &= NegotiateConnection(i);
+                        //Logger.LogDebug("NEGOTIATINGING");
+                    }
+                    else
+                        Logger.LogInformation("Skipping myself (" + name + ", " + XmlRpcManager.Instance.uri + ")");
                 }
-                else
-                    EDB.WriteLine("Skipping myself (" + name + ", " + XmlRpcManager.Instance.uri + ")");
+                return retval;
             }
-            return retval;
         }
 
         public bool NegotiateConnection(string xmlrpc_uri)
@@ -246,21 +247,19 @@ namespace Uml.Robotics.Ros
             int peer_port = 0;
             if (!network.splitURI(xmlrpc_uri, ref peer_host, ref peer_port))
             {
-                EDB.WriteLine("Bad xml-rpc URI: [" + xmlrpc_uri + "]");
+                Logger.LogError("Bad xml-rpc URI: [" + xmlrpc_uri + "]");
                 return false;
             }
             XmlRpcClient c = new XmlRpcClient(peer_host, peer_port);
             if (!c.IsConnected || !c.ExecuteNonBlock("requestTopic", Params))
             {
-                EDB.WriteLine("Failed to contact publisher [" + peer_host + ":" + peer_port + "] for topic [" + name +
+                Logger.LogError("Failed to contact publisher [" + peer_host + ":" + peer_port + "] for topic [" + name +
                               "]");
                 c.Dispose();
                 return false;
             }
-#if DEBUG
-            EDB.WriteLine("Began asynchronous xmlrpc connection to http://" + peer_host + ":" + peer_port + "/ for topic [" + name +
-                          "]");
-#endif
+            Logger.LogDebug("Began asynchronous xmlrpc connection to http://" + peer_host + ":" + peer_port + 
+                            "/ for topic [" + name + "]");
             PendingConnection conn = new PendingConnection(c, this, xmlrpc_uri, Params);
             lock (pending_connections_mutex)
             {
@@ -272,89 +271,85 @@ namespace Uml.Robotics.Ros
 
         public void pendingConnectionDone(PendingConnection conn, XmlRpcValue result)
         {
-            //XmlRpcValue result = XmlRpcValue.LookUp(res);
-            lock (shutdown_mutex)
-            {
-                if (shutting_down || _dropped)
-                    return;
-            }
-            XmlRpcValue proto = new XmlRpcValue();
-            if (!XmlRpcManager.Instance.validateXmlrpcResponse("requestTopic", result, proto))
-            {
-                conn.failures++;
-                EDB.WriteLine("Negotiating for " + conn.parent.name + " has failed " + conn.failures + " times");
-                return;
-            }
-            lock (pending_connections_mutex)
-            {
-                pending_connections.Remove(conn);
-            }
-            string peer_host = conn.client.Host;
-            int peer_port = conn.client.Port;
-            string xmlrpc_uri = "http://" + peer_host + ":" + peer_port + "/";
-            if (proto.Size == 0)
-            {
-#if DEBUG
-                EDB.WriteLine("Couldn't agree on any common protocols with [" + xmlrpc_uri + "] for topic [" + name +
-                              "]");
-#endif
-                return;
-            }
-            if (proto.Type != XmlRpcValue.ValueType.TypeArray)
-            {
-                EDB.WriteLine("Available protocol info returned from " + xmlrpc_uri + " is not a list.");
-                return;
-            }
-            string proto_name = proto[0].Get<string>();
-            if (proto_name == "UDPROS")
-            {
-                EDB.WriteLine("Udp is currently not supported. Use TcpRos instead.");
-            }
-            else if (proto_name == "TCPROS")
-            {
-                if (proto.Size != 3 || proto[1].Type != XmlRpcValue.ValueType.TypeString || proto[2].Type != XmlRpcValue.ValueType.TypeInt)
+            using (Logger.BeginScope ($"{ nameof(pendingConnectionDone) }"))
+            {           
+                //XmlRpcValue result = XmlRpcValue.LookUp(res);
+                lock (shutdown_mutex)
                 {
-                    EDB.WriteLine("TcpRos Publisher should implement string, int as parameter");
+                    if (shutting_down || _dropped)
+                        return;
+                }
+                XmlRpcValue proto = new XmlRpcValue();
+                if (!XmlRpcManager.Instance.validateXmlrpcResponse("requestTopic", result, proto))
+                {
+                    conn.failures++;
+                    Logger.LogWarning("Negotiating for " + conn.parent.name + " has failed " + conn.failures + " times");
                     return;
                 }
-                string pub_host = proto[1].Get<string>();
-                int pub_port = proto[2].Get<int>();
-#if DEBUG
-                EDB.WriteLine("Connecting via tcpros to topic [" + name + "] at host [" + pub_host + ":" + pub_port +
-                              "]");
-#endif
-
-                TcpTransport transport = new TcpTransport(PollManager.Instance.poll_set) {_topic = name};
-                if (transport.connect(pub_host, pub_port))
+                lock (pending_connections_mutex)
                 {
-                    Connection connection = new Connection();
-                    TransportPublisherLink pub_link = new TransportPublisherLink(this, xmlrpc_uri);
-
-                    connection.initialize(transport, false, null);
-                    pub_link.initialize(connection);
-
-                    ConnectionManager.Instance.addConnection(connection);
-
-                    lock (publisher_links_mutex)
+                    pending_connections.Remove(conn);
+                }
+                string peer_host = conn.client.Host;
+                int peer_port = conn.client.Port;
+                string xmlrpc_uri = "http://" + peer_host + ":" + peer_port + "/";
+                if (proto.Size == 0)
+                {
+                    Logger.LogDebug("Couldn't agree on any common protocols with [" + xmlrpc_uri + "] for topic [" + name +
+                                "]");
+                    return;
+                }
+                if (proto.Type != XmlRpcValue.ValueType.TypeArray)
+                {
+                    Logger.LogWarning("Available protocol info returned from " + xmlrpc_uri + " is not a list.");
+                    return;
+                }
+                string proto_name = proto[0].Get<string>();
+                if (proto_name == "UDPROS")
+                {
+                    Logger.LogError("Udp is currently not supported. Use TcpRos instead.");
+                }
+                else if (proto_name == "TCPROS")
+                {
+                    if (proto.Size != 3 || proto[1].Type != XmlRpcValue.ValueType.TypeString || proto[2].Type != XmlRpcValue.ValueType.TypeInt)
                     {
-                        addPublisherLink(pub_link);
+                        Logger.LogWarning("TcpRos Publisher should implement string, int as parameter");
+                        return;
                     }
+                    string pub_host = proto[1].Get<string>();
+                    int pub_port = proto[2].Get<int>();
+                    Logger.LogDebug("Connecting via tcpros to topic [" + name + "] at host [" + pub_host + ":" + pub_port +
+                                "]");
 
+                    TcpTransport transport = new TcpTransport(PollManager.Instance.poll_set) {_topic = name};
+                    if (transport.connect(pub_host, pub_port))
+                    {
+                        Connection connection = new Connection();
+                        TransportPublisherLink pub_link = new TransportPublisherLink(this, xmlrpc_uri);
 
-#if DEBUG
-                    EDB.WriteLine("Connected to publisher of topic [" + name + "] at  [" + pub_host + ":" + pub_port +
-                                  "]");
-#endif
+                        connection.initialize(transport, false, null);
+                        pub_link.initialize(connection);
+
+                        ConnectionManager.Instance.addConnection(connection);
+
+                        lock (publisher_links_mutex)
+                        {
+                            addPublisherLink(pub_link);
+                        }
+
+                        Logger.LogDebug("Connected to publisher of topic [" + name + "] at  [" + pub_host + ":" + pub_port +
+                                    "]");
+                    }
+                    else
+                    {
+                        Logger.LogError("Failed to connect to publisher of topic [" + name + "] at  [" + pub_host + ":" +
+                                    pub_port + "]");
+                    }
                 }
                 else
                 {
-                    EDB.WriteLine("Failed to connect to publisher of topic [" + name + "] at  [" + pub_host + ":" +
-                                  pub_port + "]");
+                    Logger.LogError("The XmlRpc Server does not provide a supported protocol.");
                 }
-            }
-            else
-            {
-                EDB.WriteLine("The XmlRpc Server does not provide a supported protocol.");
             }
         }
 
@@ -492,7 +487,7 @@ namespace Uml.Robotics.Ros
             {
                 if (_dropped) return;
 
-                EDB.WriteLine("Creating intraprocess link for topic [{0}]", name);
+                Logger.LogInformation("Creating intraprocess link for topic [{0}]", name);
 
                 LocalPublisherLink pub_link = new LocalPublisherLink(this, XmlRpcManager.Instance.uri);
                 LocalSubscriberLink sub_link = new LocalSubscriberLink(pub);

@@ -2,12 +2,16 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 using Uml.Robotics.XmlRpc;
 
 namespace Uml.Robotics.Ros
 {
     public static class master
     {
+        // cannot use the usubal CreateLogger<master>(); here because this calls is static
+        private static ILogger Logger {get;} = ApplicationLogging.CreateLogger("master");
+            
         public static int port;
         public static string host = "";
         public static string uri = "";
@@ -164,9 +168,9 @@ namespace Uml.Robotics.Ros
                     if (client.IsConnected && !success)
                     {
                         if (response != null && response.asArray != null && response.asArray.Length >= 2)
-                            EDB.WriteLine("Execute failed: return={0}, desc={1}", response[0].asInt, response[1].asString);
+                            Logger.LogError("Execute failed: return={0}, desc={1}", response[0].asInt, response[1].asString);
                         else
-                            EDB.WriteLine("response type == " + (response != null ? response.Type.ToString() : "null"));
+                            Logger.LogError("response type == " + (response != null ? response.Type.ToString() : "null"));
                     }
 
                     // Set success to false when response validation fails
@@ -186,14 +190,14 @@ namespace Uml.Robotics.Ros
 
                     if (!printed)
                     {
-                        EDB.WriteLine("[{0}] Could not connect to master at [{1}:{2}]. {3}", method, master_host,
+                        Logger.LogWarning("[{0}] Could not connect to master at [{1}:{2}]. {3}", method, master_host,
                             master_port, (wait_for_master ? "Retrying for the next "+retryTimeout.TotalSeconds+" seconds..." : ""));
                         printed = true;
                     }
 
                     if (retryTimeout.TotalSeconds > 0 && DateTime.Now.Subtract(startTime) > retryTimeout)
                     {
-                        EDB.WriteLine("[{0}] Timed out trying to connect to the master after [{1}] seconds", method,
+                        Logger.LogError("[{0}] Timed out trying to connect to the master after [{1}] seconds", method,
                             retryTimeout.TotalSeconds);
                         XmlRpcManager.Instance.releaseXMLRPCClient(client);
                         return false;
@@ -209,9 +213,9 @@ namespace Uml.Robotics.Ros
             //catch (Exception e)
             catch (ArgumentNullException e)
             {
-                EDB.WriteLine(e);
+                Logger.LogError(e.ToString());
             }
-            EDB.WriteLine("Master API call: {0} failed!\n\tRequest:\n{1}", method, request);
+            Logger.LogError("Master API call: {0} failed!\n\tRequest:\n{1}", method, request);
             return false;
         }
     }

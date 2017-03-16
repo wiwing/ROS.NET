@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Messages;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
@@ -75,6 +76,7 @@ namespace Uml.Robotics.Ros
 
     public class IServiceClient
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<IServiceClient>();
         internal double constructed =
             (int) Math.Floor(DateTime.Now.Subtract(Process.GetCurrentProcess().StartTime).TotalMilliseconds);
 
@@ -100,17 +102,17 @@ namespace Uml.Robotics.Ros
         {
             if (service_md5sum != md5sum)
             {
-                EDB.WriteLine("Call to service [{0} with md5sum [{1} does not match md5sum when the handle was created([{2}])", service, service_md5sum, md5sum);
+                Logger.LogError("Call to service [{0} with md5sum [{1} does not match md5sum when the handle was created([{2}])", service, service_md5sum, md5sum);
                 return false;
             }
             if (server_link != null && server_link.connection.dropped)
             {
                 if (persistent)
-                    EDB.WriteLine("WARNING: persistent service client's server link has been dropped. trying to reconnect to proceed with this call");
+                    Logger.LogWarning("Persistent service client's server link has been dropped. Trying to reconnect to proceed with this call");
                 server_link = null;
             }
             if (is_shutdown && persistent)
-                EDB.WriteLine("WARNING: persistent service client is self-resurrecting");
+                Logger.LogWarning("Persistent service client is self-resurrecting");
             is_shutdown = false;
             if (persistent && server_link == null || !persistent)
             {

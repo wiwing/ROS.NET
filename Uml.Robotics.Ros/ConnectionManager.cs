@@ -9,11 +9,13 @@ using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     public class ConnectionManager
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ConnectionManager>(); 
         private static Lazy<ConnectionManager> _instance = new Lazy<ConnectionManager>(LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static ConnectionManager Instance
@@ -102,9 +104,7 @@ namespace Uml.Robotics.Ros
             {
                 foreach (Connection c in local_dropped)
                 {
-#if DEBUG
-                    EDB.WriteLine("Removing dropped connection: " + c.CallerID);
-#endif
+                    Logger.LogDebug("Removing dropped connection: " + c.CallerID);
                     connections.Remove(c);
                 }
             }
@@ -154,11 +154,11 @@ namespace Uml.Robotics.Ros
             }
             else
             {
-                EDB.WriteLine("got a connection for a type other than topic or service from [" + conn.RemoteString +
-                              "]. Fail.");
+                Logger.LogWarning("Got a connection for a type other than topic or service from [" + conn.RemoteString +
+                              "].");
                 return false;
             }
-            //EDB.WriteLine("CONNECTED [" + val + "]. WIN.");
+            //Logger.LogDebug("CONNECTED [" + val + "]. WIN.");
             return ret;
         }
 

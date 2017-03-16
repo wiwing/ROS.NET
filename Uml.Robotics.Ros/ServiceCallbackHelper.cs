@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Messages;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
@@ -39,18 +40,19 @@ namespace Uml.Robotics.Ros
 
     public class IServiceCallbackHelper
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<IServiceCallbackHelper>();
         protected ServiceFunction<RosMessage, RosMessage> _callback;
 
         public MsgTypes type;
 
         protected IServiceCallbackHelper()
         {
-            // EDB.WriteLine("ISubscriptionCallbackHelper: 0 arg constructor");
+            // Logger.LogDebug("ISubscriptionCallbackHelper: 0 arg constructor");
         }
 
         protected IServiceCallbackHelper(ServiceFunction<RosMessage, RosMessage> Callback)
         {
-            //EDB.WriteLine("ISubscriptionCallbackHelper: 1 arg constructor");
+            //Logger.LogDebug("ISubscriptionCallbackHelper: 1 arg constructor");
             //throw new NotImplementedException();
             _callback = Callback;
         }
@@ -68,7 +70,7 @@ namespace Uml.Robotics.Ros
 
         public virtual MReq deserialize<MReq, MRes>(ServiceCallbackHelperParams<MReq, MRes> parms) where MReq : RosMessage where MRes : RosMessage
         {
-            //EDB.WriteLine("ISubscriptionCallbackHelper: deserialize");
+            //Logger.LogDebug("ISubscriptionCallbackHelper: deserialize");
             RosMessage msg = ROS.MakeMessage(type);
             assignSubscriptionConnectionHeader(ref msg, parms.connection_header);
             MReq t = (MReq) msg;
@@ -79,7 +81,7 @@ namespace Uml.Robotics.Ros
 
         private void assignSubscriptionConnectionHeader(ref RosMessage msg, IDictionary<string, string> p)
         {
-            // EDB.WriteLine("ISubscriptionCallbackHelper: assignSubscriptionConnectionHeader");
+            // Logger.LogDebug("ISubscriptionCallbackHelper: assignSubscriptionConnectionHeader");
             msg.connection_header = new Dictionary<string, string>(p);
         }
     }

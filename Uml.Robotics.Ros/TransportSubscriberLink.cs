@@ -4,11 +4,13 @@ using System.Linq;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     public class TransportSubscriberLink : SubscriberLink, IDisposable
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<TransportSubscriberLink>();
         public Connection connection;
         private bool header_written;
         private int max_queue;
@@ -35,10 +37,8 @@ namespace Uml.Robotics.Ros
 
         public bool initialize(Connection connection)
         {
-#if DEBUG
             if (parent != null)
-                EDB.WriteLine("Init transport subscriber link: " + parent.Name);
-#endif
+                Logger.LogDebug("Init transport subscriber link: " + parent.Name);
             this.connection = connection;
             connection.DroppedEvent += onConnectionDropped;
             return true;
@@ -49,7 +49,7 @@ namespace Uml.Robotics.Ros
             if (!header.Values.ContainsKey("topic"))
             {
                 string msg = "Header from subscriber did not have the required element: topic";
-                EDB.WriteLine(msg);
+                Logger.LogWarning(msg);
                 connection.sendHeaderError(ref msg);
                 return false;
             }
@@ -60,7 +60,7 @@ namespace Uml.Robotics.Ros
             {
                 string msg = "received a connection for a nonexistent topic [" + name + "] from [" +
                              connection.transport + "] [" + client_callerid + "]";
-                EDB.WriteLine(msg);
+                Logger.LogWarning(msg);
                 connection.sendHeaderError(ref msg);
                 return false;
             }
@@ -68,7 +68,7 @@ namespace Uml.Robotics.Ros
             if (!pt.validateHeader(header, ref error_message))
             {
                 connection.sendHeaderError(ref error_message);
-                EDB.WriteLine(error_message);
+                Logger.LogError(error_message);
                 return false;
             }
             destination_caller_id = client_callerid;
@@ -87,9 +87,7 @@ namespace Uml.Robotics.Ros
             m["latching"] = Convert.ToString(pt.Latch);
             connection.writeHeader(m, onHeaderWritten);
             pt.addSubscriberLink(this);
-#if DEBUG
-            EDB.WriteLine("Finalize transport subscriber link for " + name);
-#endif
+            Logger.LogDebug("Finalize transport subscriber link for " + name);
             return true;
         }
 
@@ -163,7 +161,7 @@ namespace Uml.Robotics.Ros
                 Array.Copy(holder.msg.Serialized, 0, outbuf, 4, holder.msg.Serialized.Length);
                 Array.Copy(BitConverter.GetBytes(holder.msg.Serialized.Length), outbuf, 4);
                 stats.messages_sent++;
-                //EDB.WriteLine("Message backlog = " + (triedtosend - stats.messages_sent));
+                //Logger.LogDebug("Message backlog = " + (triedtosend - stats.messages_sent));
                 stats.bytes_sent += outbuf.Length;
                 stats.message_data_sent += outbuf.Length;
                 connection.write(outbuf, outbuf.Length, onMessageWritten, immediate_write);

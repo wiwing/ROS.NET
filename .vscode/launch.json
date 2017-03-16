@@ -14,11 +14,23 @@
             "internalConsoleOptions": "openOnSessionStart"
         },
         {
-            "name": "Talker .NET Core (console)",
+            "name": "Talker .NET Core (console), debug main",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceRoot}/Talker/bin/Debug/netcoreapp1.1/Talker.dll",
+            "preLaunchTask": "debugMain",
+            "program": "${workspaceRoot}/Samples/Talker/bin/Debug/netcoreapp1.1/Talker.dll",
+            "args": ["__master:=http://rosetta:11311/"],
+            "cwd": "${workspaceRoot}",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "name": "Service Test (console), debug main",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "debugMain",
+            "program": "${workspaceRoot}/Samples/ServiceServerSample/bin/Debug/netcoreapp1.1/ServiceServerSample.dll",
             "args": ["__master:=http://rosetta:11311/"],
             "cwd": "${workspaceRoot}",
             "externalConsole": false,
@@ -29,7 +41,7 @@
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach",
-            "processId": "${command.pickProcess}"
+            "processId": "${command:pickProcess}"
         }
     ]
 }

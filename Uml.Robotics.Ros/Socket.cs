@@ -6,11 +6,13 @@ using System.Linq;
 using n = System.Net;
 using ns = System.Net.Sockets;
 using ROS_Comm.APMWorkaround;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     public class Socket : IDisposable
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Socket>();
         internal ns.Socket realsocket { get; private set; }
         private static List<uint> _freelist = new List<uint>();
         private uint _fakefd;
@@ -28,7 +30,7 @@ namespace Uml.Robotics.Ros
         public Socket(ns.AddressFamily addressFamily, ns.SocketType socketType, ns.ProtocolType protocolType)
             : this(new ns.Socket(addressFamily, socketType, protocolType))
         {
-            //EDB.WriteLine("Making socket w/ FD=" + FD);
+            //Logger.LogDebug("Making socket w/ FD=" + FD);
         }
 
         public bool IsDisposed
@@ -245,7 +247,7 @@ namespace Uml.Robotics.Ros
             }
             catch (ns.SocketException e)
             {
-                EDB.WriteLine(e);
+                Logger.LogError(e.ToString());
                 res = !disposed && sm == ns.SelectMode.SelectError;
             }
             return res;
@@ -337,9 +339,7 @@ namespace Uml.Robotics.Ros
             {
                 if (!disposed && _fakefd != 0)
                 {
-#if DEBUG
-                    EDB.WriteLine("Killing socket w/ FD=" + _fakefd + (attemptedConnectionEndpoint == null ? "" : "\tTO REMOTE HOST\t" + attemptedConnectionEndpoint));
-#endif
+                    Logger.LogDebug("Killing socket w/ FD=" + _fakefd + (attemptedConnectionEndpoint == null ? "" : "\tTo remote host\t" + attemptedConnectionEndpoint));
                     disposed = true;
                     _freelist.Add(_fakefd);
                     _fakefd = 0;

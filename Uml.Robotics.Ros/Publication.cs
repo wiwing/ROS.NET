@@ -7,11 +7,13 @@ using Uml.Robotics.XmlRpc;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     public class Publication : IDisposable
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Publication>();
         public string DataType = "";
         public bool Dropped;
         public bool HasHeader;
@@ -157,7 +159,7 @@ namespace Uml.Robotics.Ros
                 !header.Values.ContainsKey("callerid"))
             {
                 const string msg = "Header from subscriber did not have the required elements: md5sum, topic, callerid";
-                EDB.WriteLine(msg);
+                Logger.LogWarning(msg);
                 error_message = msg;
                 return false;
             }
@@ -166,9 +168,9 @@ namespace Uml.Robotics.Ros
             client_callerid = (string) header.Values["callerid"];
             if (Dropped)
             {
-                string msg = "received a tcpros connection for a nonexistent topic [" + topic + "] from [" +
+                string msg = "Received a tcpros connection for a nonexistent topic [" + topic + "] from [" +
                              client_callerid + "].";
-                EDB.WriteLine(msg);
+                Logger.LogWarning(msg);
                 error_message = msg;
                 return false;
             }
@@ -179,7 +181,7 @@ namespace Uml.Robotics.Ros
                 string msg = "Client [" + client_callerid + "] wants topic [" + topic + "] to hava datatype/md5sum [" +
                              datatype + "/" + md5sum + "], but our version has [" + DataType + "/" + Md5sum +
                              "]. Dropping connection";
-                EDB.WriteLine(msg);
+                Logger.LogWarning(msg);
                 error_message = msg;
                 return false;
             }
@@ -298,7 +300,7 @@ namespace Uml.Robotics.Ros
 
         public void peerConnect(SubscriberLink sub_link)
         {
-            //EDB.WriteLine("PEER CONNECT: ["+sub_link.topic+"]");
+            //Logger.LogDebug("PEER CONNECT: ["+sub_link.topic+"]");
             foreach (SubscriberCallbacks cbs in callbacks)
             {
                 if (cbs.connect != null && cbs.Callback != null)
@@ -311,7 +313,7 @@ namespace Uml.Robotics.Ros
 
         public void peerDisconnect(SubscriberLink sub_link)
         {
-            //EDB.WriteLine("PEER DISCONNECT: [" + sub_link.topic + "]");
+            //Logger.LogDebug("PEER DISCONNECT: [" + sub_link.topic + "]");
             foreach (SubscriberCallbacks cbs in callbacks)
             {
                 if (cbs.disconnect != null && cbs.Callback != null)

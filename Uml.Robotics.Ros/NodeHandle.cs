@@ -5,11 +5,13 @@ using Messages;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     public class NodeHandle : IDisposable
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<NodeHandle>();
         private string Namespace = "", UnresolvedNamespace = "";
         private CallbackQueue _callback;
         private bool _ok = true;
@@ -228,7 +230,7 @@ namespace Uml.Robotics.Ros
                 }
                 return pub;
             }
-            EDB.WriteLine("Advertisement of publisher has failed");
+            Logger.LogError("Advertisement of publisher has failed");
             return null;
         }
 
@@ -486,7 +488,7 @@ namespace Uml.Robotics.Ros
 
         private string resolveName(string name, bool remap, bool novalidate)
         {
-            //EDB.WriteLine("resolveName(" + name + ")");
+            //Logger.LogDebug("resolveName(" + name + ")");
             if (name == "") return Namespace;
             string final = name;
             if (final[0] == '~')

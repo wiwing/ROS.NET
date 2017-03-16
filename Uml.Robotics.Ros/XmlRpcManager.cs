@@ -6,11 +6,13 @@ using Uml.Robotics.XmlRpc;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     public class XmlRpcManager : IDisposable
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<XmlRpcManager>();
         private static Lazy<XmlRpcManager> _instance = new Lazy<XmlRpcManager>(LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static XmlRpcManager Instance
@@ -73,7 +75,7 @@ namespace Uml.Robotics.Ros
                 {
                     foreach (AsyncXmlRpcConnection con in added_connections)
                     {
-                        //EDB.WriteLine("Completed ASYNC XmlRpc connection to: " + ((con as PendingConnection) != null ? ((PendingConnection) con).RemoteUri : "SOMEWHERE OVER THE RAINBOW"));
+                        //Logger.LogDebug("Completed ASYNC XmlRpc connection to: " + ((con as PendingConnection) != null ? ((PendingConnection) con).RemoteUri : "SOMEWHERE OVER THE RAINBOW"));
                         con.addToDispatch(server.Dispatch);
                         connections.Add(con);
                     }
@@ -156,9 +158,7 @@ namespace Uml.Robotics.Ros
 
         private bool validateFailed(string method, string errorfmat, params object[] info)
         {
-#if XMLRPC_DEBUG
-            EDB.WriteLine("XML-RPC Call [{0}] {1} failed validation", method, string.Format(errorfmat, info));
-#endif
+            Logger.LogDebug("XML-RPC Call [{0}] {1} failed validation", method, string.Format(errorfmat, info));
             return false;
         }
 
@@ -333,7 +333,7 @@ namespace Uml.Robotics.Ros
                 uri = "http://" + network.host + ":" + port + "/";
             }
 
-            //EDB.WriteLine("XmlRpc Server IN THE HIZI (" + uri + ") FOR SHIZI");
+            Logger.LogInformation("XmlRpc Server listening at " + uri);
             server_thread = new Thread(serverThreadFunc) { IsBackground = true };
             server_thread.Start();
         }
@@ -373,6 +373,8 @@ namespace Uml.Robotics.Ros
             {
                 removed_connections.Clear();
             }
+
+            Logger.LogDebug("XmlRpc Server shutted down.");
         }
 
         #region Nested type: FunctionInfo
@@ -389,6 +391,7 @@ namespace Uml.Robotics.Ros
 
     public class CachedXmlRpcClient : IDisposable
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<CachedXmlRpcClient>();
         private XmlRpcClient client;
 
         public bool in_use
@@ -431,7 +434,7 @@ namespace Uml.Robotics.Ros
         {
             lock (busyMutex)
             	if (refs != 0)
-                	EDB.WriteLine("warning: XmlRpcClient disposed with "+refs+" refs held");
+                	Logger.LogWarning("XmlRpcClient disposed with "+refs+" refs held");
             lock (client_lock)
             {
                 if (client != null)

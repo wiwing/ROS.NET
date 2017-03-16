@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Messages;
+using Microsoft.Extensions.Logging;
 using Uml.Robotics.XmlRpc;
 using std_msgs = Messages.std_msgs;
 
@@ -13,87 +14,12 @@ using std_msgs = Messages.std_msgs;
 namespace Uml.Robotics.Ros
 {
     /// <summary>
-    ///     Helper class for display and/or other output of debugging/peripheral information
-    /// </summary>
-    public static class EDB
-    {
-        #region Delegates
-
-        /// <summary>
-        ///     This delegate and associated event can be used for logging of all output from EDB to something controlled by the
-        ///     program using ROS_Sharp, such as file, or other
-        /// </summary>
-        public delegate void otheroutput(object o);
-
-        #endregion
-
-        public static event otheroutput OtherOutput;
-
-        private static bool toDebugInstead = false;
-        private static bool toDebugInitialized = false;
-
-        //does the actual writing
-        private static void _writeline(object o)
-        {
-            if (OtherOutput != null)
-                OtherOutput(o);
-
-            if (!toDebugInitialized)
-            {
-                try
-                {
-                    if (Console.CursorVisible)       // throws PlatformNotSupportedException on .NET Core
-                    {
-                        toDebugInstead = false;
-                    }
-                }
-                catch
-                {
-                    toDebugInstead = true;
-                }
-                toDebugInitialized = true;
-            }
-
-#if DEBUG
-            if (toDebugInstead)
-            {
-                Debug.WriteLine(o);
-            }
-            else
-#endif
-                Console.WriteLine(o);
-        }
-
-        /// Writes a string or something to System.Console, and fires an optional OtherOutput event for use in the node
-        /// <summary>
-        ///     Writes a string or something to System.Debug, and fires an optional OtherOutput event for use in the node
-        /// </summary>
-        /// <param name="o"> A string or something to print </param>
-        public static void WriteLine(object o)
-        {
-            _writeline(o);
-        }
-
-        /// Writes a formatted something to System.Console, and fires an optional OtherOutput event for use in the node
-        /// <summary>
-        ///     Writes a formatted something to System.Debug, and fires an optional OtherOutput event for use in the node
-        /// </summary>
-        /// <param name="format">Format string</param>
-        /// <param name="args">Stuff to format</param>
-        public static void WriteLine(string format, params object[] args)
-        {
-            if (args != null && args.Length > 0)
-                _writeline(string.Format(format, args));
-            else
-                _writeline(format);
-        }
-    }
-
-    /// <summary>
     ///     Everything happens here.
     /// </summary>
     public static class ROS
     {
+        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger("ROS");
+
         public static TimerManager timer_manager = new TimerManager();
 
         public static CallbackQueue GlobalCallbackQueue;
@@ -315,21 +241,24 @@ namespace Uml.Robotics.Ros
 
         private static void _rosout(object format, object[] args, RosOutAppender.ROSOUT_LEVEL level, CallerInfo callerInfo)
         {
-            if (format == null)
-                throw new ArgumentNullException(nameof(format));
-
-            string text = (args == null || args.Length == 0) ? format.ToString() : string.Format((string)format, args);
-
-            bool printit = true;
-            if (level == RosOutAppender.ROSOUT_LEVEL.DEBUG)
+            using (Logger.BeginScope ($"{ nameof(_rosout) }"))
             {
-#if !DEBUG
-                printit = false;
-#endif
+                if (format == null)
+                    throw new ArgumentNullException(nameof(format));
+
+                string text = (args == null || args.Length == 0) ? format.ToString() : string.Format((string)format, args);
+
+                bool printit = true;
+                if (level == RosOutAppender.ROSOUT_LEVEL.DEBUG)
+                {
+    #if !DEBUG
+                    printit = false;
+    #endif
+                }
+                if (printit)
+                    Logger.LogDebug(ROSOUT_FMAT, ROSOUT_PREFIX[level], text);
+                RosOutAppender.Instance.Append(text, level, callerInfo);
             }
-            if (printit)
-                EDB.WriteLine(ROSOUT_FMAT, ROSOUT_PREFIX[level], text);
-            RosOutAppender.Instance.Append(text, level, callerInfo);
         }
 
         /// <summary>
@@ -457,8 +386,8 @@ namespace Uml.Robotics.Ros
             if (num_params > 1)
             {
                 string reason = parms[1].Get<string>();
-                EDB.WriteLine("Shutdown request received.");
-                EDB.WriteLine("Reason given for shutdown: [" + reason + "]");
+                Logger.LogInformation("Shutdown request received.");
+                Logger.LogInformation("Reason given for shutdown: [" + reason + "]");
                 shutdown();
             }
             XmlRpcManager.Instance.responseInt(1, "", 0)(r);
@@ -494,7 +423,7 @@ namespace Uml.Robotics.Ros
                 }
                 catch (Exception e)
                 {
-                    EDB.WriteLine(e);
+                    Logger.LogError(e.ToString());
                 }
                 ConnectionManager.Instance.Start();
                 PollManager.Instance.Start();
@@ -537,7 +466,7 @@ namespace Uml.Robotics.Ros
                     return;
                 _shutting_down = true;
 
-                EDB.WriteLine("ROS is shutting down.");
+                Logger.LogInformation("ROS is shutting down.");
             }
 
             if (started)

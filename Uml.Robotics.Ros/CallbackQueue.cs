@@ -6,11 +6,13 @@ using System.Threading;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     public class CallbackQueue : CallbackQueueInterface, IDisposable
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<CallbackQueue>();
         private int Count;
         public List<ICallbackInfo> callbacks = new List<ICallbackInfo>();
         public int calling;
@@ -108,9 +110,7 @@ namespace Uml.Robotics.Ros
                 removeemall(owner_id);
             else
             {
-#if DEBUG
-                EDB.WriteLine("removeByID w/ WRONG THREAD ID");
-#endif
+                Logger.LogDebug("removeByID w/ WRONG THREAD ID");
                 removeemall(owner_id);
             }
         }
@@ -136,9 +136,7 @@ namespace Uml.Robotics.Ros
                 if (wallDuration.Subtract(end.Subtract(begin)).Ticks > 0)
                     Thread.Sleep(wallDuration.Subtract(end.Subtract(begin)));
             }
-#if DEBUG
-            EDB.WriteLine("CallbackQueue thread broke out!");
-#endif
+            Logger.LogDebug("CallbackQueue thread broke out!");
         }
 
         public void Enable()

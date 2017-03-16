@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
@@ -31,6 +32,8 @@ namespace Uml.Robotics.Ros
         }
 
         #endregion
+
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<TcpTransport>();
 
         private const int bytesperlong = 4; // 32 / 8
         private const int bitsperbyte = 8;
@@ -88,7 +91,7 @@ namespace Uml.Robotics.Ros
             }
             else
             {
-                EDB.WriteLine("Null pollset in tcptransport ctor");
+                Logger.LogError("Null pollset in tcptransport ctor");
             }
             this.flags = flags;
         }
@@ -128,7 +131,7 @@ namespace Uml.Robotics.Ros
                 }
                 catch (Exception e)
                 {
-                    EDB.WriteLine(e);
+                    Logger.LogError(e.ToString());
                     close();
                     return false;
                 }
@@ -145,7 +148,7 @@ namespace Uml.Robotics.Ros
             }
             catch (Exception e)
             {
-                EDB.WriteLine(e);
+                Logger.LogError(e.ToString());
             }
         }
 
@@ -239,7 +242,7 @@ namespace Uml.Robotics.Ros
                 if (IPA == null)
                 {
                     close();
-                    EDB.WriteLine("Couldn't resolve host name [{0}]", host);
+                    Logger.LogError("Couldn't resolve host name [{0}]", host);
                     return false;
                 }
             }
@@ -262,7 +265,7 @@ namespace Uml.Robotics.Ros
                             }
                             catch (Exception e)
                             {
-                                EDB.WriteLine(e);
+                                Logger.LogError(e.ToString());
                             }
                 }, null);
             bool completed = false;
@@ -274,7 +277,7 @@ namespace Uml.Robotics.Ros
                     break;
                 if (DateTime.Now.Subtract(connectionAttempted).TotalSeconds >= 3)
                 {
-                    EDB.WriteLine("Trying to connect for " + DateTime.Now.Subtract(connectionAttempted).TotalSeconds + "s\t: " + this);
+                    Logger.LogInformation("Trying to connect for " + DateTime.Now.Subtract(connectionAttempted).TotalSeconds + "s\t: " + this);
                     if (!asyncres.AsyncWaitHandle.WaitOne(100))
                     {
                         sock.Close();
@@ -444,7 +447,7 @@ namespace Uml.Robotics.Ros
                     }
                     catch (Exception e)
                     {
-                        EDB.WriteLine(e);
+                        Logger.LogError(e.ToString());
                         return;
                     }
             }
@@ -483,7 +486,7 @@ namespace Uml.Robotics.Ros
                     return -1;
             }
             SocketError err;
-            //EDB.WriteLine(ByteDumpCondensed(buffer));
+            //Logger.LogDebug(ByteDumpCondensed(buffer));
             int num_bytes = sock.Send(buffer, pos, size, SocketFlags.None, out err);
             if (num_bytes <= 0)
             {
@@ -541,7 +544,7 @@ namespace Uml.Robotics.Ros
                 return null;
             if (args.AcceptSocket == null)
             {
-                EDB.WriteLine("Nothing to accept, return null");
+                Logger.LogError("Nothing to accept, return null");
                 return null;
             }
             Socket acc = new Socket(args.AcceptSocket);
@@ -600,10 +603,10 @@ namespace Uml.Robotics.Ros
                     }
                     catch (Exception e)
                     {
-                        EDB.WriteLine("Failed to get sock options! (error: " + error + ")" + e);
+                        Logger.LogError("Failed to get sock options! (error: " + error + ")" + e);
                     }
                     if (error != 0)
-                        EDB.WriteLine("Socket error = " + error);
+                        Logger.LogError("Socket error = " + error);
                     close();
                 }
             }

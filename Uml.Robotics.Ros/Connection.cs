@@ -5,6 +5,7 @@ using System.Threading;
 using System.Reflection;
 using System.Diagnostics;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
@@ -39,6 +40,8 @@ namespace Uml.Robotics.Ros
         public int write_sent, write_size;
         private object reading = new object();
         private object writing = new object();
+
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Connection>();
 
         /// <summary>
         ///     Returns the ID of the connection
@@ -211,7 +214,7 @@ namespace Uml.Robotics.Ros
                 if (header.Values.ContainsKey("error"))
                 {
                     error_val = (string) header.Values["error"];
-                    EDB.WriteLine("Received error message in header for connection to [{0}]: [{1}]",
+                    Logger.LogInformation("Received error message in header for connection to [{0}]: [{1}]",
                         "TCPROS connection to [" + transport.cached_remote_host + "]", error_val);
                     drop(DropReason.HeaderError);
                     return false;
@@ -277,7 +280,7 @@ namespace Uml.Robotics.Ros
         {
             lock (reading)
             {
-                //EDB.WriteLine("READ - "+transport.poll_set);
+                //Logger.LogDebug("READ - "+transport.poll_set);
                 if (dropped) return;
                 ScopedTimer.Ping();
                 ReadFinishedFunc callback;

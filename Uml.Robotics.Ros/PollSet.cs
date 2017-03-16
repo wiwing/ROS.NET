@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace Uml.Robotics.Ros
 {
-    public class PollSet : Poll_Signal
+    public class PollSet : PollSignal
     {
         private static Dictionary<uint, Socket> socks = new Dictionary<uint, Socket>();
 

@@ -8,11 +8,13 @@ using Uml.Robotics.XmlRpc;
 using m = Messages.std_msgs;
 using gm = Messages.geometry_msgs;
 using nm = Messages.nav_msgs;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     public class ServiceManager
     {
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ServiceManager>();
         private static Lazy<ServiceManager> _instance = new Lazy<ServiceManager>(LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static ServiceManager Instance
@@ -141,7 +143,7 @@ namespace Uml.Robotics.Ros
             {
                 if (isServiceAdvertised(ops.service))
                 {
-                    EDB.WriteLine("Tried to advertise  a service that is already advertised in this node [{0}]", ops.service);
+                    Logger.LogWarning("Tried to advertise  a service that is already advertised in this node [{0}]", ops.service);
                     return false;
                 }
                 if (ops.helper == null)
@@ -248,18 +250,18 @@ namespace Uml.Robotics.Ros
             args.Set(1, name);
             if (!master.execute("lookupService", args, result, payload, false))
             {
-                EDB.WriteLine("lookupService: Service unknown.");
+                Logger.LogWarning("lookupService: Service unknown.");
                 return false;
             }
             string serv_uri = payload.GetString();
             if (serv_uri.Length == 0)
             {
-                EDB.WriteLine("lookupService: Empty server URI returned from master");
+                Logger.LogError("lookupService: Empty server URI returned from master");
                 return false;
             }
             if (!network.splitURI(serv_uri, ref serv_host, ref serv_port))
             {
-                EDB.WriteLine("lookupService: Bad service uri [{0}]", serv_uri);
+                Logger.LogError("lookupService: Bad service uri [{0}]", serv_uri);
                 return false;
             }
             return true;

@@ -19,6 +19,7 @@ namespace Talker
             
             while (ROS.ok)
             {
+                Console.WriteLine("publishing message");
                 ROS.Info()("Publishing a chatter message:    \"Blah blah blah " + count + "\"");
                 String pow = new String("Blah blah blah " + (count++));
 

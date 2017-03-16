@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     public static class this_node
     {
+        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger("this_node");
         public static string Name = "empty";
         public static string Namespace = "";
 
@@ -44,7 +46,7 @@ namespace Uml.Robotics.Ros
             }
             catch (Exception e)
             {
-                EDB.WriteLine(e);
+                Logger.LogError(e.ToString());
             }
             if ((options & (int) InitOption.AnonymousName) == (int) InitOption.AnonymousName && !disable_anon)
             {
