@@ -111,6 +111,7 @@ namespace Uml.Robotics.Ros
             else
             {
                 ROS.Error()("TcpRos header from service server did not have required element: md5sum");
+                EDB.WriteLine("TcpRos header from service server did not have required element: md5sum");
                 return false;
             }
             //TODO check md5sum
@@ -225,6 +226,7 @@ namespace Uml.Robotics.Ros
 
         private bool onRequestWritten(Connection conn)
         {
+            EDB.WriteLine("onRequestWritten(Connection conn)");
             connection.read(5, onResponseOkAndLength);
             return true;
         }
@@ -240,12 +242,14 @@ namespace Uml.Robotics.Ros
                 throw new ArgumentException($"Wrong size {size}", nameof(size));
             }
             if (!success) return false;
+
             byte ok = buf[0];
             int len = BitConverter.ToInt32(buf, 1);
             int lengthLimit = 1000000000;
             if (len > lengthLimit)
             {
                 ROS.Error()($"Message length exceeds limit of {lengthLimit}. Dropping connection.");
+                EDB.WriteLine($"Message length exceeds limit of {lengthLimit}. Dropping connection.");
                 connection.drop(Connection.DropReason.Destructing);
                 return false;
             }
@@ -257,7 +261,10 @@ namespace Uml.Robotics.Ros
                     current_call.success = false;
             }
             if (len > 0)
+            {
+                EDB.WriteLine($"Reading message with length of {len}.");
                 connection.read(len, onResponse);
+            }
             else
             {
                 byte[] f = new byte[0];
@@ -327,6 +334,7 @@ namespace Uml.Robotics.Ros
 
             while (!info.finished)
             {
+                EDB.WriteLine("info.finished_condition.WaitOne();");
                 info.finished_condition.WaitOne();
             }
 
@@ -339,6 +347,7 @@ namespace Uml.Robotics.Ros
             if (!string.IsNullOrEmpty(info.exception))
             {
                 ROS.Error()("Service call failed: service [{0}] responded with an error: {1}", name, info.exception);
+                EDB.WriteLine("Service call failed: service [{0}] responded with an error: {1}", name, info.exception);
             }
             return info.success;
         }
