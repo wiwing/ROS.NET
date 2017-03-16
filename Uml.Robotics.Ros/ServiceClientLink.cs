@@ -24,6 +24,7 @@ namespace Uml.Robotics.Ros
             {
                 string bbq = "Error in TcpRos header. Required elements (md5sum, service, callerid) are missing";
                 ROS.Error()(bbq);
+                EDB.WriteLine(bbq);
                 connection.sendHeaderError(ref bbq);
                 return false;
             }
@@ -34,28 +35,32 @@ namespace Uml.Robotics.Ros
             if (header.Values.ContainsKey("persistent") && ((string) header.Values["persistent"] == "1" || (string) header.Values["persistent"] == "true"))
                 persistent = true;
 
-            ROS.Debug()("Service client [{0}] wants service [{1}] with md5sum [{2}]", client_callerid, service, md5sum);
+            //ROS.Debug()("Service client [{0}] wants service [{1}] with md5sum [{2}]", client_callerid, service, md5sum);
+            EDB.WriteLine($"Service client [{client_callerid}] wants service [{service}] with md5sum [{md5sum}]" );
             IServicePublication isp = ServiceManager.Instance.lookupServicePublication(service);
             if (isp == null)
             {
                 string bbq = string.Format("Received a TcpRos connection for a nonexistent service [{0}]", service);
-                ROS.Error()(bbq);
+                //ROS.Error()(bbq);
+                EDB.WriteLine(bbq);
                 connection.sendHeaderError(ref bbq);
                 return false;
             }
 
             if (isp.md5sum != md5sum && md5sum != "*" && isp.md5sum != "*")
             {
-                string bbq = "Client wants service " + service + " to have md5sum " + md5sum + " but it has " + isp.md5sum + ". Dropping connection";
-                ROS.Error()(bbq);
+                string bbq = "[ERROR] Client wants service " + service + " to have md5sum " + md5sum + " but it has " + isp.md5sum + ". Dropping connection";
+                //ROS.Error()(bbq);
+                EDB.WriteLine(bbq);
                 connection.sendHeaderError(ref bbq);
                 return false;
             }
 
             if (isp.isDropped)
             {
-                string bbq = "Received a TcpRos connection for a nonexistent service [" + service + "]";
-                ROS.Error()(bbq);
+                string bbq = "[ERROR] Received a TcpRos connection for a nonexistent service [" + service + "]";
+                //ROS.Error()(bbq);
+                EDB.WriteLine(bbq);
                 connection.sendHeaderError(ref bbq);
                 return false;
             }
@@ -76,30 +81,23 @@ namespace Uml.Robotics.Ros
 
         public virtual void processResponse(string error, bool success)
         {
-#if DEBUG
-            EDB.WriteLine("[ServiceClientLink] processResponse(string error, bool success)");
-#endif
             var msg = new std_msgs.String(error);
             msg.Serialized = msg.Serialize();
-            byte[] buf = new byte[msg.Serialized.Length + 1];
+            byte[] buf = new byte[msg.Serialized.Length + 4];
             buf[0] = (byte) (success ? 0x01 : 0x00);
-            msg.Serialized.CopyTo(buf, 1);
-            connection.write(buf, buf.Length, onResponseWritten, true);
+            msg.Serialized.CopyTo(buf, 5);
+            Array.Copy(BitConverter.GetBytes(msg.Serialized.Length),0, buf, 1,4);
+            connection.write(buf, buf.Length, onResponseWritten);
         }
 
         public virtual void processResponse(RosMessage msg, bool success)
         {
-#if DEBUG
-            EDB.WriteLine("[ServiceClientLink] processResponse(RosMessage msg, bool success)");
-#endif
             msg.Serialized = msg.Serialize();
-            byte[] buf = new byte[msg.Serialized.Length + 1];
+            byte[] buf = new byte[msg.Serialized.Length + 1 + 4];
             buf[0] = (byte) (success ? 0x01 : 0x00);
-            msg.Serialized.CopyTo(buf, 1);
-            connection.write(buf, buf.Length, onResponseWritten, true);
-#if DEBUG
-            EDB.WriteLine("[ServiceClientLink] processResponse FINISHED");
-#endif
+            msg.Serialized.CopyTo(buf, 5);
+            Array.Copy(BitConverter.GetBytes(msg.Serialized.Length),0, buf, 1,4);
+            connection.write(buf, buf.Length, onResponseWritten);
         }
 
         public virtual void drop()
@@ -131,6 +129,7 @@ namespace Uml.Robotics.Ros
             if (len > lengthLimit)
             {
                 ROS.Error()($"Message length exceeds limit of {lengthLimit}. Dropping connection.");
+                EDB.WriteLine($"Message length exceeds limit of {lengthLimit}. Dropping connection.");
                 connection.drop(Connection.DropReason.Destructing);
                 return false;
             }
