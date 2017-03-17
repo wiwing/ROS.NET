@@ -45,15 +45,17 @@ namespace rosmaster
             
             handler = new Master_API.ROSMasterHandler();
 
+            Console.WriteLine("Register bindings");
             bindings();
-            
+
+            Console.WriteLine($"Creating XmlRpcManager on Port: {0}",_port);
             XmlRpcManager.Instance.Start(_port);
             //Process proc = Process.GetCurrentProcess();
 
             //handler.setParam("master", "/run_id", new XmlRpcValue());
-            
 
-            RosOut.start();
+            Console.WriteLine("RosOut");
+            RosOut.Start();
 
             Console.WriteLine("Master startup complete.");
         }

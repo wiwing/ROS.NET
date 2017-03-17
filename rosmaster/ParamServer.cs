@@ -331,17 +331,17 @@ namespace rosmaster
             public Param(String sigh)
             {
                 jordanString = sigh;
-                //type XmlRpcValue.ValueType.TypeString;
+                type = XmlRpcValue.ValueType.TypeString;
             }
             public Param(int sigh)
             {
                 jordanInt = sigh;
-                //type  XmlRpcValue.ValueType.TypeInt;
+                type = XmlRpcValue.ValueType.TypeInt;
             }
             public Param(double sigh)
             {
                 jordanDouble = sigh;
-                //type  XmlRpcValue.ValueType.TypeDouble;
+                type = XmlRpcValue.ValueType.TypeDouble;
             }
             public Param(string key, Param val)
             {

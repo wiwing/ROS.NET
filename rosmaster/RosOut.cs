@@ -23,12 +23,13 @@ namespace rosmaster
         static Subscriber<Messages.rosgraph_msgs.Log> sub;
         static NodeHandle nh;
 
-        public static void start()
+        public static void Start()
         {
             ROS.Init(new string[0], "rosout");
 
             nh = new NodeHandle();
-            sub = nh.subscribe<Messages.rosgraph_msgs.Log>("/rosout", 10, rosoutCallback);
+            
+            sub = nh.subscribe<Messages.rosgraph_msgs.Log>("/rosout", 10, RosoutCallback);
             pub = nh.advertise<Messages.rosgraph_msgs.Log>("/rosout_agg", 1000, true);
 
             new Thread(() =>
@@ -42,7 +43,7 @@ namespace rosmaster
         }
 
 
-        public static void rosoutCallback(Messages.rosgraph_msgs.Log msg)
+        public static void RosoutCallback(Messages.rosgraph_msgs.Log msg)
         {
             string pfx = "[?]";
             switch (msg.level)

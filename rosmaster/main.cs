@@ -47,7 +47,7 @@ namespace rosmaster
             }
 
             Console.WriteLine("RosMaster initializing...");
-            Console.WriteLine("ROS_MASTER_URI = "+ROS.ROS_MASTER_URI);
+            Console.WriteLine("ROS_MASTER_URI = " + ROS.ROS_MASTER_URI);
             Console.WriteLine("ROS_HOSTNAME = " + ROS.ROS_HOSTNAME);
 
             Master master = new Master();
