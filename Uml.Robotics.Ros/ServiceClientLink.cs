@@ -95,19 +95,19 @@ namespace Uml.Robotics.Ros
             }
             else
             {
-                buf = new byte[msg.Serialized.Length + 1];
+                buf = new byte[1 + 4];
                 buf[0] = (byte) (success ? 0x01 : 0x00);
-                msg.Serialized.CopyTo(buf, 1);
+                Array.Copy(BitConverter.GetBytes(0),0, buf, 1,4);
             }
             connection.write(buf, buf.Length, onResponseWritten);
         }
 
         public virtual void processResponse(RosMessage msg, bool success)
         {
-            msg.Serialized = msg.Serialize();
             byte[] buf;
             if (success)
             {
+                msg.Serialized = msg.Serialize();
                 buf = new byte[msg.Serialized.Length + 1 + 4];
                 buf[0] = (byte) (success ? 0x01 : 0x00);
                 msg.Serialized.CopyTo(buf, 5);
@@ -115,9 +115,9 @@ namespace Uml.Robotics.Ros
             }
             else
             {
-                buf = new byte[msg.Serialized.Length + 1];
+                buf = new byte[1 + 4];
                 buf[0] = (byte) (success ? 0x01 : 0x00);
-                msg.Serialized.CopyTo(buf, 1);
+                Array.Copy(BitConverter.GetBytes(0),0, buf, 1,4);
             }
             connection.write(buf, buf.Length, onResponseWritten);
         }
