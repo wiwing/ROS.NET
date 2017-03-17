@@ -11,7 +11,7 @@ namespace Uml.Robotics.Ros
     {
         // cannot use the usubal CreateLogger<master>(); here because this calls is static
         private static ILogger Logger {get;} = ApplicationLogging.CreateLogger(nameof(master));
-            
+
         public static int port;
         public static string host = "";
         public static string uri = "";
@@ -164,53 +164,62 @@ namespace Uml.Robotics.Ros
 
                     // if the client is connected, execute the RPC call
                     success = client.IsConnected && client.Execute(method, request, response);
-
-                    if (client.IsConnected && !success)
-                    {
-                        if (response != null && response.asArray != null && response.asArray.Length >= 2)
-                            Logger.LogError("Execute failed: return={0}, desc={1}", response[0].asInt, response[1].asString);
-                        else
-                            Logger.LogError("response type == " + (response != null ? response.Type.ToString() : "null"));
-                    }
-
-                    // Set success to false when response validation fails
-                    if (success && !XmlRpcManager.Instance.validateXmlrpcResponse(method, response, payload))
-                        success = false;
+                    XmlRpcManager.Instance.releaseXMLRPCClient(client);
 
                     if (success)
                     {
-                        XmlRpcManager.Instance.releaseXMLRPCClient(client);
-                        return true;
+                        // validateXmlrpcResponse logs error in case of validation error
+                        // So we don't need any logging here.
+                        if (XmlRpcManager.Instance.validateXmlrpcResponse(method, response, payload))
+                            return true;
+                        else
+                            return false;
                     }
-                    if (!wait_for_master)
+                    else
                     {
-                        XmlRpcManager.Instance.releaseXMLRPCClient(client);
-                        return false;
-                    }
+                        if (client.IsConnected)
+                        {
+                            if (response != null && response.asArray != null && response.asArray.Length >= 2)
+                                Logger.LogError("Execute failed: return={0}, desc={1}", response[0].asInt, response[1].asString);
+                            else
+                                Logger.LogError("response type == " + (response != null ? response.Type.ToString() : "null"));
+                        }
+                        else  // no connection to ROS Master
+                        {
+                            if (wait_for_master)
+                            {
+                                if (!printed)
+                                {
+                                    Logger.LogWarning(
+                                        "[{0}] Could not connect to master at [{1}:{2}]. " +
+                                        "Retrying for the next {3} seconds.",
+                                        method, master_host, master_port,
+                                        retryTimeout.TotalSeconds);
+                                    printed = true;
+                                }
 
-                    if (!printed)
-                    {
-                        Logger.LogWarning("[{0}] Could not connect to master at [{1}:{2}]. {3}", method, master_host,
-                            master_port, (wait_for_master ? "Retrying for the next "+retryTimeout.TotalSeconds+" seconds..." : ""));
-                        printed = true;
-                    }
-
-                    if (retryTimeout.TotalSeconds > 0 && DateTime.Now.Subtract(startTime) > retryTimeout)
-                    {
-                        Logger.LogError("[{0}] Timed out trying to connect to the master after [{1}] seconds", method,
-                            retryTimeout.TotalSeconds);
-                        XmlRpcManager.Instance.releaseXMLRPCClient(client);
-                        return false;
+                                // timeout expired, throw exception
+                                if (retryTimeout.TotalSeconds > 0 && DateTime.Now.Subtract(startTime) > retryTimeout)
+                                {
+                                    Logger.LogError("[{0}] Timed out trying to connect to the master [{1}:{2}] after [{1}] seconds",
+                                                    method, master_host, master_port, retryTimeout.TotalSeconds);
+                                    XmlRpcManager.Instance.releaseXMLRPCClient(client);
+                                    throw new RosException(String.Format("Cannot connect to ROS Master at {0}:{1}", master_host, master_port));
+                                }
+                            }
+                            else
+                            {
+                                throw new RosException(String.Format("Cannot connect to ROS Master at {0}:{1}", master_host, master_port));
+                            }
+                        }
                     }
 
                     //recreate the client, thereby causing it to reinitiate its connection (gross, but effective -- should really be done in xmlrpcwin32)
-                    XmlRpcManager.Instance.releaseXMLRPCClient(client);
                     client = null;
                     Thread.Sleep(250);
                     client = XmlRpcManager.Instance.getXMLRPCClient(master_host, master_port, "/");
                 }
             }
-            //catch (Exception e)
             catch (ArgumentNullException e)
             {
                 Logger.LogError(e.ToString());

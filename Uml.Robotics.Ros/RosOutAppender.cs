@@ -64,7 +64,10 @@ namespace Uml.Robotics.Ros
         public void shutdown()
         {
             shutting_down = true;
-            publish_thread.Join();
+            if(started)
+            {
+                publish_thread.Join();
+            }
             if (publisher != null)
             {
                 publisher.shutdown();

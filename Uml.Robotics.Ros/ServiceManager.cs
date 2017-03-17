@@ -79,7 +79,7 @@ namespace Uml.Robotics.Ros
             return null;
         }
 
-        internal ServiceServerLink<M, T> createServiceServerLink<M, T>(string service, bool persistent, string request_md5sum, 
+        internal ServiceServerLink<M, T> createServiceServerLink<M, T>(string service, bool persistent, string request_md5sum,
                                                                        string response_md5sum, IDictionary<string, string> header_values)
             where M : RosMessage, new()
             where T : RosMessage, new()
@@ -157,7 +157,10 @@ namespace Uml.Robotics.Ros
             args.Set(1, ops.service);
             args.Set(2, string.Format("rosrpc://{0}:{1}", network.host, connection_manager.TCPPort));
             args.Set(3, xmlrpc_manager.uri);
-            master.execute("registerService", args, result, payload, true);
+            if (!master.execute("registerService", args, result, payload, true))
+            {
+                throw new RosException("RPC \"registerService\" for service " + ops.service + " failed.");
+            }
             return true;
         }
 
@@ -234,13 +237,24 @@ namespace Uml.Robotics.Ros
             return sp.Any(s => s.name == serv_name && !s.isDropped);
         }
 
-        private void unregisterService(string service)
+        private bool unregisterService(string service)
         {
             XmlRpcValue args = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
             args.Set(0, this_node.Name);
             args.Set(1, service);
             args.Set(2, string.Format("rosrpc://{0}:{1}", network.host, connection_manager.TCPPort));
-            master.execute("unregisterService", args, result, payload, false);
+
+            bool unregisterSuccess = false;
+            try
+            {
+                unregisterSuccess = master.execute("unregisterService", args, result, payload, false);
+            }
+            // Ignore exception during unregister
+            catch (Exception e)
+            {
+                // Logger.LogError(e.Message);
+            }
+            return unregisterSuccess;
         }
 
         internal bool lookupService(string name, ref string serv_host, ref int serv_port)

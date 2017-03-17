@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Threading;
 using Messages.rosgraph_msgs;
+using Microsoft.Extensions.Logging;
 using m = Messages.std_msgs;
 
 namespace Uml.Robotics.Ros
 {
     public class SimTime
     {
+        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger<SimTime>();
         public delegate void SimTimeDelegate(TimeSpan ts);
 
         private static Lazy<SimTime> _instance = new Lazy<SimTime>(LazyThreadSafetyMode.ExecutionAndPublication);
@@ -25,14 +27,21 @@ namespace Uml.Robotics.Ros
         {
             new Thread(() =>
             {
-                while (!ROS.isStarted() && !ROS.shutting_down)
+                try
                 {
-                    Thread.Sleep(100);
+                    while (!ROS.isStarted() && !ROS.shutting_down)
+                    {
+                        Thread.Sleep(100);
+                    }
+                    if (!ROS.shutting_down)
+                    {
+                        nh = new NodeHandle();
+                        simTimeSubscriber = nh.subscribe<Clock>("/clock", 1, SimTimeCallback);
+                    }
                 }
-                nh = new NodeHandle();
-                if (!ROS.shutting_down)
+                catch(Exception e)
                 {
-                    simTimeSubscriber = nh.subscribe<Clock>("/clock", 1, SimTimeCallback);
+                    Logger.LogError("Caught exception: " + e.Message);
                 }
             }).Start();
         }

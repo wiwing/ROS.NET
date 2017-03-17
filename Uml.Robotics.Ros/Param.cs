@@ -83,6 +83,10 @@ namespace Uml.Robotics.Ros
                     if (subscribed_params.Contains(mapped_key))
                         parms.Add(mapped_key, val);
                 }
+                else
+                {
+                    throw new RosException("RPC call setParam for key " + key + " failed. ");
+                }
             }
         }
 
@@ -104,6 +108,10 @@ namespace Uml.Robotics.Ros
                 {
                     if (subscribed_params.Contains(mapped_key))
                         parms.Add(mapped_key, parm);
+                }
+                else
+                {
+                    throw new RosException("RPC call setParam for key " + key + " failed. ");
                 }
             }
         }
@@ -127,6 +135,10 @@ namespace Uml.Robotics.Ros
                     if (subscribed_params.Contains(mapped_key))
                         parms.Add(mapped_key, parm);
                 }
+                else
+                {
+                    throw new RosException("RPC call setParam for key " + key + " failed. ");
+                }
             }
         }
 
@@ -149,6 +161,10 @@ namespace Uml.Robotics.Ros
                     if (subscribed_params.Contains(mapped_key))
                         parms.Add(mapped_key, parm);
                 }
+                else
+                {
+                    throw new RosException("RPC call setParam for key " + key + " failed. ");
+                }
             }
         }
 
@@ -170,6 +186,10 @@ namespace Uml.Robotics.Ros
                 {
                     if (subscribed_params.Contains(mapped_key))
                         parms.Add(mapped_key, parm);
+                }
+                else
+                {
+                    throw new RosException("RPC call setParam for key " + key + " failed. ");
                 }
             }
         }

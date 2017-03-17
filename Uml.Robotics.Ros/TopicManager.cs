@@ -21,7 +21,7 @@ namespace Uml.Robotics.Ros
         #endregion
 
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<TopicManager>();
-        
+
         private static Lazy<TopicManager> _instance = new Lazy<TopicManager>(LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static TopicManager Instance
@@ -160,7 +160,7 @@ namespace Uml.Robotics.Ros
             if (ops.datatype == "")
                 throw new Exception("Advertising on topic [" + ops.topic + "] with an empty datatype");
             if (ops.message_definition == "")
-                Logger.LogWarning("Advertising on topic [" + ops.topic + 
+                Logger.LogWarning("Advertising on topic [" + ops.topic +
                      "] with an empty message definition. Some tools may not work correctly");
             return true;
         }
@@ -221,7 +221,12 @@ namespace Uml.Robotics.Ros
                 result = new XmlRpcValue(),
                 payload = new XmlRpcValue();
 
-            master.execute("registerPublisher", args, result, payload, true);
+            if(!master.execute("registerPublisher", args, result, payload, true))
+            {
+                Logger.LogError("RPC \"registerService\" for service " + ops.topic + " failed.");
+                return false;
+            }
+
             return true;
         }
 
@@ -454,7 +459,10 @@ namespace Uml.Robotics.Ros
             XmlRpcValue result = new XmlRpcValue();
             XmlRpcValue payload = new XmlRpcValue();
             if (!master.execute("registerSubscriber", args, result, payload, true))
+            {
+                Logger.LogError("RPC \"registerSubscriber\" for service " + s.name + " failed.");
                 return false;
+            }
             List<string> pub_uris = new List<string>();
             for (int i = 0; i < payload.Size; i++)
             {
@@ -493,7 +501,20 @@ namespace Uml.Robotics.Ros
             XmlRpcValue args = new XmlRpcValue(this_node.Name, topic, XmlRpcManager.Instance.uri),
                 result = new XmlRpcValue(),
                 payload = new XmlRpcValue();
-            return master.execute("unregisterSubscriber", args, result, payload, false) && result.Valid;
+
+
+            bool unregisterSuccess = false;
+            try
+            {
+                unregisterSuccess = master.execute("unregisterSubscriber", args, result, payload, false) && result.Valid;
+
+            }
+            // Ignore exception during unregister
+            catch (Exception e)
+            {
+                // Logger.LogError(e.Message);
+            }
+            return unregisterSuccess;
         }
 
         public bool unregisterPublisher(string topic)
@@ -501,7 +522,18 @@ namespace Uml.Robotics.Ros
             XmlRpcValue args = new XmlRpcValue(this_node.Name, topic, XmlRpcManager.Instance.uri),
                 result = new XmlRpcValue(),
                 payload = new XmlRpcValue();
-            return master.execute("unregisterPublisher", args, result, payload, false) && result.Valid;
+
+            bool unregisterSuccess = false;
+            try
+            {
+                unregisterSuccess = master.execute("unregisterPublisher", args, result, payload, false) && result.Valid;
+            }
+            // Ignore exception during unregister
+            catch (Exception e)
+            {
+                // Logger.LogError(e.Message);
+            }
+            return unregisterSuccess;
         }
 
         public Publication lookupPublicationWithoutLock(string topic)
