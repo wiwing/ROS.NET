@@ -18,7 +18,7 @@ namespace Uml.Robotics.Ros
     /// </summary>
     public static class ROS
     {
-        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger("ROS");
+        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger(nameof(ROS));
 
         public static TimerManager timer_manager = new TimerManager();
 

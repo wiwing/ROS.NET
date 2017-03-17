@@ -14,7 +14,7 @@ namespace Uml.Robotics.Ros
 
     public static class Param
     {
-        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger("Param");
+        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger(nameof(Param));
         public static Dictionary<string, XmlRpcValue> parms = new Dictionary<string, XmlRpcValue>();
         public static object parms_mutex = new object();
         public static List<string> subscribed_params = new List<string>();
