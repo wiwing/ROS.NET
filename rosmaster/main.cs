@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using Ros_CSharp;
+using System.Diagnostics;
+using Uml.Robotics.Ros;
 
 namespace rosmaster
 {
@@ -25,28 +26,24 @@ namespace rosmaster
             //if wasn't passed in with __master:=_______, then check environment variable
             if (string.IsNullOrEmpty(ROS.ROS_MASTER_URI))
             {
-                IDictionary _vars;
-
                 //check user env first, then machine if user doesn't have uri defined.
-                if ((_vars = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User)).Contains("ROS_MASTER_URI")
-                    || (_vars = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine)).Contains("ROS_MASTER_URI"))
-                    ROS.ROS_MASTER_URI = (string)_vars["ROS_MASTER_URI"];
-                else
+                
+                    ROS.ROS_MASTER_URI = Environment.GetEnvironmentVariable("ROS_MASTER_URI");
+                if (string.IsNullOrEmpty(ROS.ROS_MASTER_URI))
+                {
                     //apparently it's not defined, so take a shot in the dark.
                     ROS.ROS_MASTER_URI = "http://localhost:11311";
+                }
             }
 
             if (string.IsNullOrEmpty(ROS.ROS_HOSTNAME))
             {
-                IDictionary _vars;
-
-                //check user env first, then machine if user doesn't have uri defined.
-                if ((_vars = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User)).Contains("ROS_HOSTNAME")
-                    || (_vars = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine)).Contains("ROS_HOSTNAME"))
-                    ROS.ROS_HOSTNAME = (string)_vars["ROS_HOSTNAME"];
-                else
+                ROS.ROS_HOSTNAME = Environment.GetEnvironmentVariable("ROS_HOSTNAME");
+                if (string.IsNullOrEmpty(ROS.ROS_HOSTNAME))
+                {
                     //apparently it's not defined, so take a shot in the dark.
                     ROS.ROS_HOSTNAME = "localhost";
+                }
             }
 
             Console.WriteLine("RosMaster initializing...");

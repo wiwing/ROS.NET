@@ -5,11 +5,11 @@ VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rosmaster", "rosmaster.csproj", "{778019E9-D445-4B87-81FD-AB3E0AA9E536}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ROS_Comm", "..\ROS_Comm\ROS_Comm.csproj", "{2D1EA725-5602-4865-B768-74F385EB4B8E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uml.Robotics.Ros", "..\Uml.Robotics.Ros\Uml.Robotics.Ros.csproj", "{2D1EA725-5602-4865-B768-74F385EB4B8E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uml.Robotics.XmlRpc", "..\Uml.Robotics.XmlRpc\Uml.Robotics.XmlRpc.csproj", "{2D1EA725-5602-4865-B768-74F385EB4B8E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Messages", "..\Messages\Messages.csproj", "{31F063FF-8A78-4BCC-B6F6-A65CD6C83C95}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XmlRpc_Wrapper.dotnetcore", "..\XmlRpc_Wrapper\XmlRpc_Wrapper.dotnetcore.csproj", "{8EF23959-2DC8-48E4-BB80-189EB9D2EDD6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

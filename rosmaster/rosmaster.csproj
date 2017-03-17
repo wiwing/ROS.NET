@@ -7,8 +7,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Messages\Messages.csproj" />
-    <ProjectReference Include="..\ROS_Comm\ROS_Comm.csproj" />
-    <ProjectReference Include="..\XmlRpc_Wrapper\XmlRpc_Wrapper.dotnetcore.csproj" />
+    <ProjectReference Include="..\Uml.Robotics.Ros\Uml.Robotics.Ros.csproj" />
+    <ProjectReference Include="..\Uml.Robotics.XmlRpc\Uml.Robotics.XmlRpc.csproj" />
   </ItemGroup>
 
 </Project>

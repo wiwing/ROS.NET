@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Uml.Robotics.XmlRpc;
 
 namespace rosmaster
 {
@@ -10,9 +11,9 @@ namespace rosmaster
 
         public int statusCode;
         public String statusMessage;
-        public XmlRpc_Wrapper.XmlRpcValue value;
+        public XmlRpcValue value;
 
-        public ReturnStruct(int _statusCode = 1, String _statusMessage = "", XmlRpc_Wrapper.XmlRpcValue _value = null)
+        public ReturnStruct(int _statusCode = 1, String _statusMessage = "", XmlRpcValue _value = null)
         {
             statusCode = _statusCode;
             statusMessage = _statusMessage;

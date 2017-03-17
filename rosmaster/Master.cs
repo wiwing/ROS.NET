@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using Ros_CSharp;
-using XmlRpcClient = XmlRpc_Wrapper.XmlRpcClient;
-using XmlRpcManager = Ros_CSharp.XmlRpcManager;
-using XmlRpc_Wrapper;
+using Uml.Robotics.XmlRpc;
+using Uml.Robotics.Ros;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 
@@ -32,6 +30,7 @@ namespace rosmaster
             //create handler?
 
 //          Start the ROS Master. 
+
 
             //handler = new rosmaster.Master_API.ROSMasterHandler();
             //master_node = new XmlRpcManager();//roslib.xmlrpc.XmlRpcNode(self.port, handler) 

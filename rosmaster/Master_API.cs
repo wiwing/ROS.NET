@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
-using XmlRpc_Wrapper;
+using Uml.Robotics.XmlRpc;
+using Uml.Robotics.Ros;
 
 namespace rosmaster
 {
@@ -58,10 +59,10 @@ namespace rosmaster
                        XmlRpcValue result = new XmlRpcValue(new XmlRpcValue(), new XmlRpcValue(), new XmlRpcValue(new XmlRpcValue())),
                         payload = new XmlRpcValue();
 
-                 Ros_CSharp.master.host = api.Replace("http://","").Replace("/","").Split(':')[0];
-                 Ros_CSharp.master.port =  int.Parse( api.Replace("http://", "").Replace("/", "").Split(':')[1]);
-                 Ros_CSharp.master.execute("publisherUpdate", args, result, payload, false );
-                
+                 master.host = api.Replace("http://","").Replace("/","").Split(':')[0];
+                 master.port =  int.Parse( api.Replace("http://", "").Replace("/", "").Split(':')[1]);
+                 master.execute("publisherUpdate", args, result, payload, false );
+
                 return new List<string>(new []{"http://ERIC:1337"});
             }
 
@@ -74,9 +75,9 @@ namespace rosmaster
                 XmlRpcValue result = new XmlRpcValue(new XmlRpcValue(), new XmlRpcValue(), new XmlRpcValue(new XmlRpcValue())),
                  payload = new XmlRpcValue();
 
-                Ros_CSharp.master.host = api.Replace("http://", "").Replace("/", "").Split(':')[0];
-                Ros_CSharp.master.port = int.Parse(api.Replace("http://", "").Replace("/", "").Split(':')[1]);
-                Ros_CSharp.master.execute("publisherUpdate", args, result, payload, false);
+                master.host = api.Replace("http://", "").Replace("/", "").Split(':')[0];
+                master.port = int.Parse(api.Replace("http://", "").Replace("/", "").Split(':')[1]);
+                master.execute("publisherUpdate", args, result, payload, false);
             }
 
             public ROSMasterHandler()
@@ -209,12 +210,12 @@ namespace rosmaster
                     //}
                 }
             }
-            public int _notify_param_subscribers(Dictionary<String, Tuple<String, XmlRpc_Wrapper.XmlRpcValue>> updates) 
+            public int _notify_param_subscribers(Dictionary<String, Tuple<String, XmlRpcValue>> updates) 
             { 
                 return 1; 
             }
 
-            public void _param_update_task(String caller_id, String caller_api, String param_key, XmlRpc_Wrapper.XmlRpcValue param_value) 
+            public void _param_update_task(String caller_id, String caller_api, String param_key, XmlRpcValue param_value) 
             { 
 
             }

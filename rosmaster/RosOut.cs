@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Messages.rosgraph_msgs;
-using Ros_CSharp;
-using XmlRpc_Wrapper;
 using Messages;
 using System.Threading;
+using Uml.Robotics.Ros;
 
 namespace rosmaster
 {

@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using XmlRpc_Wrapper;
-
+using Uml.Robotics.XmlRpc;
 
 namespace rosmaster
 {
@@ -98,14 +97,14 @@ namespace rosmaster
                         {
                             if (val[ns].isNotANamespace)
                             {
-                                if (val[ns].type == XmlRpc_Wrapper.XmlRpcValue.ValueType.TypeString)
+                                if (val[ns].type == XmlRpcValue.ValueType.TypeString)
                                     return new XmlRpcValue(val[ns].jordanString);
-                                else if (val[ns].type == XmlRpc_Wrapper.XmlRpcValue.ValueType.TypeInt)
+                                else if (val[ns].type == XmlRpcValue.ValueType.TypeInt)
                                     return new XmlRpcValue(val[ns].jordanInt);
-                                else if (val[ns].type == XmlRpc_Wrapper.XmlRpcValue.ValueType.TypeDouble)
+                                else if (val[ns].type == XmlRpcValue.ValueType.TypeDouble)
                                     return new XmlRpcValue(val[ns].jordanDouble);
                                 else
-                                    throw new Exception("FUCKKKKKKKKKKKKKKKKKKKKKKK");
+                                    throw new Exception("Unknown parameter.");
                             }
                             else
                                 val = val[ns];
@@ -117,7 +116,7 @@ namespace rosmaster
                 return (XmlRpcValue)val.get();
             }
 
-            public void set_param(String key, XmlRpcValue value, Func<Dictionary<String, Tuple<String, XmlRpc_Wrapper.XmlRpcValue>>, int> notify_task = null)
+            public void set_param(String key, XmlRpcValue value, Func<Dictionary<String, Tuple<String, XmlRpcValue>>, int> notify_task = null)
             {
                 
                 if (key == "/") //create root
@@ -150,15 +149,15 @@ namespace rosmaster
                             }
                         }
                     }
-                    if (value.Type == XmlRpc_Wrapper.XmlRpcValue.ValueType.TypeString)
+                    if (value.Type == XmlRpcValue.ValueType.TypeString)
                     {
                         d[value_key] = new Param(value.GetString());
                     }
-                    else if (value.Type == XmlRpc_Wrapper.XmlRpcValue.ValueType.TypeInt)
+                    else if (value.Type == XmlRpcValue.ValueType.TypeInt)
                     {
                         d[value_key] = new Param(value.GetInt());
                     }
-                    else if (value.Type == XmlRpc_Wrapper.XmlRpcValue.ValueType.TypeDouble)
+                    else if (value.Type == XmlRpcValue.ValueType.TypeDouble)
                     {
                         d[value_key] = new Param(value.GetDouble());
                     }
@@ -218,7 +217,7 @@ namespace rosmaster
             /// <param name="key">Parameter key</param>
             /// <param name="notify_task">Function to call with subscirber updates. Updates are in the form 
             /// [(subscribers, param_key, param_Value)*] The empty dictionary represents an unset parameter</param>
-            public void delete_param(String key, Func<Dictionary<String, Tuple<String, XmlRpc_Wrapper.XmlRpcValue>>, int> notify_task = null)
+            public void delete_param(String key, Func<Dictionary<String, Tuple<String, XmlRpcValue>>, int> notify_task = null)
             {
                 if (key == "/")
                     throw new Exception("CANNOT DELETE ROOT OF NODE.");
@@ -287,18 +286,18 @@ namespace rosmaster
             }
 
             //private string _value;
-            public XmlRpc_Wrapper.XmlRpcValue _value = null;
-            public XmlRpc_Wrapper.XmlRpcValue.ValueType type;
+            public XmlRpcValue _value = null;
+            public XmlRpcValue.ValueType type;
             
             public string getString()
             {
                 if (type == null)
                     return null;
-                if (type == XmlRpc_Wrapper.XmlRpcValue.ValueType.TypeString)
+                if (type == XmlRpcValue.ValueType.TypeString)
                     return jordanString;
-                else if (type == XmlRpc_Wrapper.XmlRpcValue.ValueType.TypeInt)
+                else if (type == XmlRpcValue.ValueType.TypeInt)
                     return _value.ToString();
-                else if (type == XmlRpc_Wrapper.XmlRpcValue.ValueType.TypeDouble)
+                else if (type == XmlRpcValue.ValueType.TypeDouble)
                     return _value.ToString();
 
                 return null;
@@ -324,7 +323,7 @@ namespace rosmaster
             {
 
             }
-            public Param(XmlRpc_Wrapper.XmlRpcValue val)
+            public Param(XmlRpcValue val)
             {
                 _value = val;
             }
@@ -332,17 +331,17 @@ namespace rosmaster
             public Param(String sigh)
             {
                 jordanString = sigh;
-                type = XmlRpc_Wrapper.XmlRpcValue.ValueType.TypeString;
+                //type XmlRpcValue.ValueType.TypeString;
             }
             public Param(int sigh)
             {
                 jordanInt = sigh;
-                type = XmlRpc_Wrapper.XmlRpcValue.ValueType.TypeInt;
+                //type  XmlRpcValue.ValueType.TypeInt;
             }
             public Param(double sigh)
             {
                 jordanDouble = sigh;
-                type = XmlRpc_Wrapper.XmlRpcValue.ValueType.TypeDouble;
+                //type  XmlRpcValue.ValueType.TypeDouble;
             }
             public Param(string key, Param val)
             {

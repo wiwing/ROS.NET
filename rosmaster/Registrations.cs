@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Uml.Robotics.XmlRpc;
 
 namespace rosmaster
 {
@@ -190,7 +191,7 @@ namespace rosmaster
                 {
                     msg = String.Format("[{0}] is not a provider of [{1}]",caller_id,key);
                     val = 0;
-                    return new ReturnStruct(1, msg, new XmlRpc_Wrapper.XmlRpcValue(val));
+                    return new ReturnStruct(1, msg, new XmlRpcValue(val));
                 }
                 List<String> tmplist = new List<string>();
                 tmplist.Add(caller_id);
@@ -199,7 +200,7 @@ namespace rosmaster
                 {
                     msg = String.Format("[{0}] is no longer the current service api handle for [{1}]", service_api, key);
                     val = 0;
-                    return new ReturnStruct(1, msg, new XmlRpc_Wrapper.XmlRpcValue(val));
+                    return new ReturnStruct(1, msg, new XmlRpcValue(val));
                 }
                 else
                 {
@@ -208,7 +209,7 @@ namespace rosmaster
                 }
                 msg = String.Format("Unregistered [{0}] as provider of [{1}]", caller_id, key);
                 val = 1;
-                return new ReturnStruct(1, msg, new XmlRpc_Wrapper.XmlRpcValue(val));
+                return new ReturnStruct(1, msg, new XmlRpcValue(val));
             }else if(type == Registrations.SERVICE)
             {
                 throw new Exception("service_api must be specified for Registrations.SERVICE");
@@ -230,12 +231,12 @@ namespace rosmaster
                             map.Remove(key);
                         msg = String.Format("Unregistered [{0}] as provider of [{1}]", caller_id, key);
                         val = 1;
-                        return new ReturnStruct(1, msg, new XmlRpc_Wrapper.XmlRpcValue(val));
+                        return new ReturnStruct(1, msg, new XmlRpcValue(val));
                     }
                 }
                 msg = String.Format("[{0}] is not a known provider of [{1}]", caller_id, key);
                 val = 0;
-                return new ReturnStruct(1, msg, new XmlRpc_Wrapper.XmlRpcValue(val));
+                return new ReturnStruct(1, msg, new XmlRpcValue(val));
             }
 
         }
@@ -369,9 +370,9 @@ namespace rosmaster
             }
             else
             {
-                ret = new ReturnStruct(0, String.Format("[{0}] is not a registered node",caller_id), new XmlRpc_Wrapper.XmlRpcValue(1));
+                ret = new ReturnStruct(0, String.Format("[{0}] is not a registered node",caller_id), new XmlRpcValue(1));
             }
-            return ret; // new ReturnStruct(code, msg, new XmlRpc_Wrapper.XmlRpcValue(ret));
+            return ret; // new ReturnStruct(code, msg, new XmlRpcValue(ret));
         }
 
         public void register_service(String service, String caller_id, String caller_api, String service_api)
