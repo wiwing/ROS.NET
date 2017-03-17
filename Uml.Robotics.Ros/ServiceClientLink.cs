@@ -83,26 +83,43 @@ namespace Uml.Robotics.Ros
 
         public virtual void processResponse(string error, bool success)
         {
-            Logger.LogDebug("[ServiceClientLink] processResponse(string error, bool success)");
             var msg = new std_msgs.String(error);
             msg.Serialized = msg.Serialize();
-            byte[] buf = new byte[msg.Serialized.Length + 4];
-            buf[0] = (byte) (success ? 0x01 : 0x00);
-            msg.Serialized.CopyTo(buf, 5);
-            Array.Copy(BitConverter.GetBytes(msg.Serialized.Length),0, buf, 1,4);
+            byte[] buf;
+            if (success)
+            {
+                buf = new byte[msg.Serialized.Length + 1 + 4];
+                buf[0] = (byte) (success ? 0x01 : 0x00);
+                msg.Serialized.CopyTo(buf, 5);
+                Array.Copy(BitConverter.GetBytes(msg.Serialized.Length),0, buf, 1,4);
+            }
+            else
+            {
+                buf = new byte[msg.Serialized.Length + 1];
+                buf[0] = (byte) (success ? 0x01 : 0x00);
+                msg.Serialized.CopyTo(buf, 1);
+            }
             connection.write(buf, buf.Length, onResponseWritten);
         }
 
         public virtual void processResponse(RosMessage msg, bool success)
         {
-            Logger.LogDebug("[ServiceClientLink] processResponse(RosMessage msg, bool success)");
             msg.Serialized = msg.Serialize();
-            byte[] buf = new byte[msg.Serialized.Length + 1 + 4];
-            buf[0] = (byte) (success ? 0x01 : 0x00);
-            msg.Serialized.CopyTo(buf, 5);
-            Array.Copy(BitConverter.GetBytes(msg.Serialized.Length),0, buf, 1,4);
+            byte[] buf;
+            if (success)
+            {
+                buf = new byte[msg.Serialized.Length + 1 + 4];
+                buf[0] = (byte) (success ? 0x01 : 0x00);
+                msg.Serialized.CopyTo(buf, 5);
+                Array.Copy(BitConverter.GetBytes(msg.Serialized.Length),0, buf, 1,4);
+            }
+            else
+            {
+                buf = new byte[msg.Serialized.Length + 1];
+                buf[0] = (byte) (success ? 0x01 : 0x00);
+                msg.Serialized.CopyTo(buf, 1);
+            }
             connection.write(buf, buf.Length, onResponseWritten);
-            Logger.LogDebug("[ServiceClientLink] processResponse FINISHED");
         }
 
         public virtual void drop()
