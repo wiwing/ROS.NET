@@ -10,8 +10,8 @@ namespace Uml.Robotics.Ros
 
         public static bool splitURI(string uri, ref string host, ref int port)
         {
-            if (uri == null)
-                throw new ArgumentNullException(nameof(uri));
+            if (String.IsNullOrEmpty(uri))
+                return false;//throw new ArgumentNullException(nameof(uri));
             if (uri.Substring(0, 7) == "http://")
                 host = uri.Substring(7);
             else if (uri.Substring(0, 9) == "rosrpc://")
