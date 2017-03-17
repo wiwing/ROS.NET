@@ -29,6 +29,7 @@ namespace Uml.Robotics.Ros.Transforms
         {
             nh = new NodeHandle();
             nh.subscribe<tfMessage>("/tf", 0, Update);
+            nh.subscribe<tfMessage>("/tf_static", 0, Update);
         }
 
         public Transformer(bool interpolating = true, ulong ct = (ulong) DEFAULT_CACHE_TIME)
@@ -484,7 +485,7 @@ namespace Uml.Robotics.Ros.Transforms
             TimeSpan? ts = null;
             if (pollingSleepDuration != null)
                 ts = ROS.GetTime(pollingSleepDuration);
-            return waitForTransform(target_frame, source_frame, time, 
+            return waitForTransform(target_frame, source_frame, time,
                 ROS.GetTime(timeout),
                 ref error_msg, ts);
         }
