@@ -27,7 +27,7 @@ namespace YAMLParser
 
                 byte[] req = Encoding.ASCII.GetBytes(hashablereq);
                 byte[] res = Encoding.ASCII.GetBytes(hashableres);
-                
+
                 var md5 = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.MD5);
                 md5.AppendData(req);
                 md5.AppendData(res);
@@ -54,6 +54,13 @@ namespace YAMLParser
             }
             return md5memo[m.Name];
         }
+
+
+        public static string Sum(ActionFile actionFile)
+        {
+            throw new NotImplementedException();
+        }
+
 
         private static string PrepareToHash(MsgsFile irm)
         {
