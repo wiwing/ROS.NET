@@ -264,18 +264,18 @@ namespace Uml.Robotics.Ros
             args.Set(1, name);
             if (!master.execute("lookupService", args, result, payload, false))
             {
-                Logger.LogWarning("lookupService: Service unknown.");
+                Logger.LogWarning("Service [{0}]: Not available at ROS master", name);
                 return false;
             }
             string serv_uri = payload.GetString();
             if (serv_uri.Length == 0)
             {
-                Logger.LogError("lookupService: Empty server URI returned from master");
+                Logger.LogError("Service [{0}]: Empty server URI returned from master", name);
                 return false;
             }
             if (!network.splitURI(serv_uri, ref serv_host, ref serv_port))
             {
-                Logger.LogError("lookupService: Bad service uri [{0}]", serv_uri);
+                Logger.LogError("Service [{0}]: Bad service uri [{0}]", name, serv_uri);
                 return false;
             }
             return true;

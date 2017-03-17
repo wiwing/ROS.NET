@@ -18,7 +18,7 @@ namespace Uml.Robotics.Ros
     /// </summary>
     public static class ROS
     {
-        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger(nameof(ROS));
+        private static ILogger Logger { get; set;} = ApplicationLogging.CreateLogger(nameof(ROS));
 
         public static TimerManager timer_manager = new TimerManager();
 
@@ -267,6 +267,21 @@ namespace Uml.Robotics.Ros
         public static void WaitForMaster()
         {
             master.retryTimeout = TimeSpan.FromTicks(0);
+        }
+
+        /// <summary>
+        ///     Set the logging factory for ROS.NET
+        /// </summary>
+        /// <param name="factory"> The logging factory to use for logging </param>
+        public static void SetLoggerFactory(ILoggerFactory factory)
+        {
+            ApplicationLogging.LoggerFactory = factory;
+            // recreate logger to make sure the new log settings form the factory are used
+            Logger = ApplicationLogging.CreateLogger(nameof(ROS));
+            if (initialized)
+            {
+                Logger.LogWarning("Logging should be configured before initializing the ROS system.");
+            }
         }
 
         /// <summary>
