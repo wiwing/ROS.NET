@@ -10,7 +10,7 @@ namespace Uml.Robotics.Ros
     public static class master
     {
         // cannot use the usubal CreateLogger<master>(); here because this calls is static
-        private static ILogger Logger {get;} = ApplicationLogging.CreateLogger("master");
+        private static ILogger Logger {get;} = ApplicationLogging.CreateLogger(nameof(master));
             
         public static int port;
         public static string host = "";

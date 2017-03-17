@@ -7,7 +7,7 @@ namespace Uml.Robotics.Ros
 {
     public static class this_node
     {
-        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger("this_node");
+        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger(nameof(this_node));
         public static string Name = "empty";
         public static string Namespace = "";
 
