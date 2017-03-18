@@ -1,3 +1,7 @@
+## Experimental Fork of ROS.NET for .NET Core 1.1 maintained by Xamla
+
+This fork is a modified version of ROS.NET that builds and runs on Windows and Linux with .NET Core SDK installed. Beside of changes required to compile the solution for .NET core the project was completely restructured (e.g. folder structure, assembly names). A couple of bugs were fixed and offenive exception messagess and comments of the original implementation wre replaced by more serious versions.
+
 ## .NET Core 1.1 Build Instructions
 
 1. `cd YAMLParser`
@@ -8,6 +12,8 @@
 5. `dotnet restore Uml.Robotics.Ros.sln`
 6. `dotnet build Uml.Robotics.Ros.sln` (build should succeed now)
 
+
+##  ==== Original Readme text ======
 
 ![ROS.NET](https://github.com/uml-robotics/ROS.NET/raw/master/Logo.png)
 
