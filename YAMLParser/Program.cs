@@ -112,8 +112,9 @@ namespace YAMLParser
             {
                 System.Threading.Thread.Sleep(1);
             }*/
-            var actionFileParser = new ActionFileParser(actionFileLocations);
-            var actionFiles = actionFileParser.GenerateRosMessageClasses();
+            /*var actionFileParser = new ActionFileParser(actionFileLocations);
+            var actionFiles = actionFileParser.GenerateRosMessageClasses();*/
+            var actionFiles = new List<ActionFile>();
 
             if (paths.Count + pathssrv.Count > 0)
             {
