@@ -5,7 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using FauxMessages;
-
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 
 namespace YAMLParser
 {
@@ -18,9 +19,19 @@ namespace YAMLParser
         public static string name = "Messages";
         public static string outputdir = "Messages";
         private static string configuration = "Debug"; //Debug, Release, etc.
+        private static ILogger Logger { get; set; }
 
         private static void Main(string[] args)
         {
+            var loggerFactory = new LoggerFactory();
+            loggerFactory.AddProvider(
+                new ConsoleLoggerProvider(
+                    (string text, LogLevel logLevel) => { return logLevel >= LogLevel.Debug; }, true)
+            );
+            ApplicationLogging.LoggerFactory = loggerFactory;
+            Logger = ApplicationLogging.CreateLogger("Program");
+
+
             string solutiondir;
             bool interactive = false; //wait for ENTER press when complete
             int firstarg = 0;
@@ -66,12 +77,13 @@ namespace YAMLParser
             outputdir = Path.Combine(solutiondir, outputdir);
             var paths = new List<MsgFileLocation>();
             var pathssrv = new List<MsgFileLocation>();
+            var actionFileLocations = new List<MsgFileLocation>();
             Console.WriteLine("Generatinc C# classes for ROS Messages...\n");
             for (int i = firstarg; i < args.Length; i++)
             {
                 string d = new DirectoryInfo(Path.GetFullPath(args[i])).FullName;
                 Console.WriteLine("Looking in " + d);
-                MsgFileLocator.findMessages(paths, pathssrv, d);
+                MsgFileLocator.findMessages(paths, pathssrv, actionFileLocations, d);
             }
 
             // first pass: create all msg files (and register them in static resolver dictionary)
@@ -94,10 +106,19 @@ namespace YAMLParser
                 srv.ParseAndResolveTypes();
             }
 
+
+            /*System.Console.WriteLine($"Process ID: {System.Diagnostics.Process.GetCurrentProcess().Id}");
+            while (!System.Diagnostics.Debugger.IsAttached)
+            {
+                System.Threading.Thread.Sleep(1);
+            }*/
+            var actionFileParser = new ActionFileParser(actionFileLocations);
+            var actionFiles = actionFileParser.GenerateRosMessageClasses();
+
             if (paths.Count + pathssrv.Count > 0)
             {
                 MakeTempDir();
-                GenerateFiles(msgsFiles, srvFiles);
+                GenerateFiles(msgsFiles, srvFiles, actionFiles);
                 GenerateProject(msgsFiles, srvFiles);
                 BuildProject();
             }
@@ -179,10 +200,11 @@ namespace YAMLParser
             }
         }
 
-        public static void GenerateFiles(List<MsgsFile> files, List<SrvsFile> srvfiles)
+        public static void GenerateFiles(List<MsgsFile> files, List<SrvsFile> srvfiles, List<ActionFile> actionFiles)
         {
             List<MsgsFile> mresolved = new List<MsgsFile>();
             List<SrvsFile> sresolved = new List<SrvsFile>();
+            List<ActionFile> actionFilesResolved = new List<ActionFile>();
             while (files.Except(mresolved).Any())
             {
                 Debug.WriteLine("MSG: Running for " + files.Count + "/" + mresolved.Count + "\n" + files.Except(mresolved).Aggregate("\t", (o, n) => "" + o + "\n\t" + n.Name));
@@ -231,6 +253,32 @@ namespace YAMLParser
                     Debug.WriteLine("SRV: Rerunning sums for remaining " + srvfiles.Except(sresolved).Count() + " definitions");
                 }
             }
+            while (actionFiles.Except(actionFilesResolved).Any())
+            {
+                Debug.WriteLine("SRV: Running for " + actionFiles.Count + "/" + actionFilesResolved.Count + "\n" + actionFiles.Except(actionFilesResolved).Aggregate("\t", (o, n) => "" + o + "\n\t" + n.Name));
+                foreach (ActionFile actionFile in actionFiles.Except(actionFilesResolved))
+                {
+                    string md5 = null;
+                    string typename = null;
+                    actionFile.GoalMessage.Stuff.ForEach(a => actionFile.GoalMessage.resolve(a));
+                    actionFile.ResultMessage.Stuff.ForEach(a => actionFile.ResultMessage.resolve(a));
+                    actionFile.FeedbackMessage.Stuff.ForEach(a => actionFile.FeedbackMessage.resolve(a));
+                    md5 = MD5.Sum(actionFile);
+                    typename = actionFile.Name;
+                    if (md5 != null && !md5.StartsWith("$") && !md5.EndsWith("MYMD5SUM"))
+                    {
+                        actionFilesResolved.Add(actionFile);
+                    }
+                    else
+                    {
+                        Logger.LogDebug("Waiting for children of " + typename + " to have sums");
+                    }
+                }
+                if (actionFiles.Except(actionFilesResolved).Any())
+                {
+                    Logger.LogDebug("ACTION: Rerunning sums for remaining " + actionFiles.Except(actionFilesResolved).Count() + " definitions");
+                }
+            }
             foreach (MsgsFile file in files)
             {
                 file.Write(outputdir);
@@ -238,6 +286,10 @@ namespace YAMLParser
             foreach (SrvsFile file in srvfiles)
             {
                 file.Write(outputdir);
+            }
+            foreach (ActionFile actionFile in actionFiles)
+            {
+                actionFile.Write(outputdir);
             }
             File.WriteAllText(Path.Combine(outputdir, "MessageTypes.cs"), ToString().Replace("FauxMessages", "Messages"));
         }

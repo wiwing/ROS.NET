@@ -31,7 +31,7 @@ namespace Uml.Robotics.Ros.Tests
 
         [Fact]
         public void Should_AddThreeTransforms()
-        {
+        {               
             tf.Transform a2b = new tf.Transform(
                 new tf.Quaternion(),
                 new tf.Vector3(0.0, 0.0, 1.0),//1.0, 0.0, 0.5),

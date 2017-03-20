@@ -5,7 +5,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using FauxMessages;
-
+using Microsoft.Extensions.Logging;
 
 namespace YAMLParser
 {
@@ -13,6 +13,7 @@ namespace YAMLParser
     {
         public static Dictionary<string, string> md5memo = new Dictionary<string, string>();
         public static Dictionary<string, string> srvmd5memo = new Dictionary<string, string>();
+        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger("MD5");
 
         public static string Sum(SrvsFile m)
         {
@@ -58,7 +59,35 @@ namespace YAMLParser
 
         public static string Sum(ActionFile actionFile)
         {
-            throw new NotImplementedException();
+            if (!srvmd5memo.ContainsKey(actionFile.Name))
+            {
+                Sum(actionFile.GoalMessage);
+                Sum(actionFile.ResultMessage);
+                Sum(actionFile.FeedbackMessage);
+                string hashableGoal = PrepareToHash(actionFile.GoalMessage);
+                string hashableResult = PrepareToHash(actionFile.ResultMessage);
+                string hashableFeedback = PrepareToHash(actionFile.FeedbackMessage);
+                if (hashableGoal == null || hashableResult == null || hashableFeedback == null)
+                    return null;
+
+                byte[] goal = Encoding.ASCII.GetBytes(hashableGoal);
+                byte[] result = Encoding.ASCII.GetBytes(hashableResult);
+                byte[] feedback = Encoding.ASCII.GetBytes(hashableFeedback);
+
+                var md5 = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.MD5);
+                md5.AppendData(goal);
+                md5.AppendData(result);
+                md5.AppendData(feedback);
+                var hash = md5.GetHashAndReset();
+
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < hash.Length; i++)
+                {
+                    sb.AppendFormat("{0:x2}", hash[i]);
+                }
+                srvmd5memo.Add(actionFile.Name, sb.ToString());
+            }
+            return srvmd5memo[actionFile.Name];
         }
 
 
@@ -105,13 +134,13 @@ namespace YAMLParser
                 }
                 if (ms == null)
                 {
-                    Debug.WriteLine("NEEDS ANOTHER PASS: " + irm.Name + " B/C OF " + irm.Stuff[i].Type);
+                    Logger.LogDebug("NEEDS ANOTHER PASS: " + irm.Name + " B/C OF " + irm.Stuff[i].Type);
                     return null;
                 }
                 string sum = MD5.Sum(ms);
                 if (sum == null)
                 {
-                    Debug.WriteLine("STILL NEEDS ANOTHER PASS: " + irm.Name + " B/C OF " + irm.Stuff[i].Type);
+                    Logger.LogDebug("STILL NEEDS ANOTHER PASS: " + irm.Name + " B/C OF " + irm.Stuff[i].Type);
                     return null;
                 }
                 Regex findCurrentFieldType = new Regex("\\b" + fields[i].Type + "\\b");

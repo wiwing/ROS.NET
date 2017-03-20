@@ -84,11 +84,12 @@ namespace YAMLParser
         /// <param name="m"></param>
         /// <param name="s"></param>
         /// <param name="path"></param>
-        private static void explode(List<MsgFileLocation> m, List<MsgFileLocation> s, string path)
+        private static void explode(List<MsgFileLocation> m, List<MsgFileLocation> s, List<MsgFileLocation> actionFiles, string path)
         {
             var msgfiles = Directory.GetFiles(path, "*.msg", SearchOption.AllDirectories).Select(p => new MsgFileLocation(p, path)).ToArray();
             var srvfiles = Directory.GetFiles(path, "*.srv", SearchOption.AllDirectories).Select(p => new MsgFileLocation(p, path)).ToArray();
-            
+            var allActionFiles = Directory.GetFiles(path, "*.action", SearchOption.AllDirectories).Select(p => new MsgFileLocation(p, path)).ToArray();
+
             int mb4 = m.Count, sb4=s.Count;
             foreach (var nm in msgfiles)
             {
@@ -100,10 +101,18 @@ namespace YAMLParser
                 if (!s.Contains(ns))
                     s.Add(ns);
             }
+            foreach (var actionFile in allActionFiles)
+            {
+                if (!actionFiles.Contains(actionFile))
+                {
+                    actionFiles.Add(actionFile);
+                }
+            }
             Console.WriteLine("Skipped " + (msgfiles.Length - (m.Count - mb4)) + " duplicate msgs and " + (srvfiles.Length - (s.Count - sb4)) + " duplicate srvs");
         }
 
-        public static void findMessages(List<MsgFileLocation> msgs, List<MsgFileLocation> srvs, params string[] args)
+        public static void findMessages(List<MsgFileLocation> msgs, List<MsgFileLocation> srvs, List<MsgFileLocation> actionFiles,
+            params string[] args)
         {
             //solution directory (where the reference to msg_gen is) is passed -- or assumed to be in a file in the same directory as the executable (which would be the case when msg_gen is directly run in the debugger
             if (args.Length == 0)
@@ -113,7 +122,7 @@ namespace YAMLParser
             }
             foreach (string arg in args)
             {
-                explode(msgs, srvs, new DirectoryInfo(arg).FullName);
+                explode(msgs, srvs, actionFiles, new DirectoryInfo(arg).FullName);
             }
         }
     }

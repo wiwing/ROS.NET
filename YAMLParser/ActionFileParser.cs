@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace YAMLParser
@@ -9,7 +10,7 @@ namespace YAMLParser
     public class ActionFileParser
     {
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ActionFileParser>();
-        List<MsgFileLocation> actionFileLocations;
+        private List<MsgFileLocation> actionFileLocations;
 
 
         public ActionFileParser(List<MsgFileLocation> actionFileLocations)
@@ -18,9 +19,11 @@ namespace YAMLParser
         }
 
 
-        public void GenerateRosMessageClasses()
+        public List<ActionFile> GenerateRosMessageClasses()
         {
             var actionMessages = GenerateMessageFiles();
+
+            return actionMessages;
         }
 
 
@@ -35,13 +38,16 @@ namespace YAMLParser
             }
 
             // Resolve type dependencies between message files
-            foreach(var messageFile in result)
+            Logger.LogInformation($"Start parsing action files");
+            foreach (var messageFile in result)
             {
-                Logger.LogInformation($"Parse message file {messageFile.Name}");
+                Logger.LogInformation($"Parse action file: {messageFile.Name}");
                 messageFile.ParseAndResolveTypes();
             }
+            Logger.LogInformation($"Parsing of action files completed");
 
             return result;
         }
+
     }
 }

@@ -22,6 +22,10 @@ namespace YAMLParser
                 }
                 return _loggerFactory;
             }
+            set
+            {
+                _loggerFactory = value;
+            }
         }
 
         public static ILogger CreateLogger<T>() =>
