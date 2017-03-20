@@ -68,10 +68,9 @@ namespace Uml.Robotics.Ros.Transforms
                 euler_out2.yaw = 0;
 
                 // From difference of angles formula
-                double delta = Math.Atan2(m_el[2].y, m_el[2].z); // implementation in tf2
                 if (m_el[2].x < 0) //gimbal locked down
                 {
-                    //double delta = Math.Atan2(m_el[0].y, m_el[0].z); // implementation in tf
+                    double delta = Math.Atan2(m_el[0].y, m_el[0].z);
                     euler_out.pitch = Math.PI / 2.0d;
                     euler_out2.pitch = Math.PI / 2.0d;
                     euler_out.roll = delta;
@@ -79,7 +78,7 @@ namespace Uml.Robotics.Ros.Transforms
                 }
                 else // gimbal locked up
                 {
-                    //double delta = Math.Atan2(-m_el[0].y, -m_el[0].z); // implementation in tf
+                    double delta = Math.Atan2(-m_el[0].y, -m_el[0].z);
                     euler_out.pitch = -Math.PI / 2.0d;
                     euler_out2.pitch = -Math.PI / 2.0d;
                     euler_out.roll = delta;
