@@ -80,14 +80,25 @@ $GOAL_EXTRACONSTRUCTOR
             $GOAL_RANDOMIZATIONCODE
         }
 
-        public override bool Equals(RosMessage other)
+        public override bool Equals(RosMessage message)
         {
-            if (____other == null)
+            if (message == null)
+			{
 				return false;
+			}
             bool ret = true;
+			$GOAL_CLASS other;
+			try
+			{
+				other = ($GOAL_CLASS)message;
+			}
+			catch
+			{
+				return false;
+			}
+
             $GOAL_EQUALITYCODE
-            // for each SingleType st:
-            //    ret &= {st.Name} == other.{st.Name};
+
             return ret;
         }
     }
@@ -162,14 +173,24 @@ $RESULT_EXTRACONSTRUCTOR
             $RESULT_RANDOMIZATIONCODE
         }
 
-        public override bool Equals(RosMessage other)
+        public override bool Equals(RosMessage message)
         {
-            if (____other == null)
+            if (message == null)
+			{
 				return false;
+			}
             bool ret = true;
+			$RESULT_CLASS other;
+			try {
+				other = ($RESULT_CLASS)message;
+			}
+			catch
+			{
+				return false;
+			}
+
             $RESULT_EQUALITYCODE
-            // for each SingleType st:
-            //    ret &= {st.Name} == other.{st.Name};
+
             return ret;
         }
     }
@@ -244,14 +265,25 @@ $FEEDBACK_EXTRACONSTRUCTOR
             $FEEDBACK_RANDOMIZATIONCODE
         }
 
-        public override bool Equals(RosMessage other)
+        public override bool Equals(RosMessage message)
         {
-            if (____other == null)
+            if (message == null)
+			{
 				return false;
+			}
             bool ret = true;
+			$FEEDBACK_CLASS other;
+			try
+			{
+				other = ($FEEDBACK_CLASS)message;
+			}
+			catch
+			{
+				return false;
+			}
+
             $FEEDBACK_EQUALITYCODE
-            // for each SingleType st:
-            //    ret &= {st.Name} == other.{st.Name};
+
             return ret;
         }
     }

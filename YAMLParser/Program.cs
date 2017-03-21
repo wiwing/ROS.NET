@@ -14,6 +14,7 @@ namespace YAMLParser
     {
         public static List<MsgsFile> msgsFiles = new List<MsgsFile>();
         public static List<SrvsFile> srvFiles = new List<SrvsFile>();
+        public static List<ActionFile> actionFiles = new List<ActionFile>();
         public static string backhalf;
         public static string fronthalf;
         public static string name = "Messages";
@@ -30,6 +31,12 @@ namespace YAMLParser
             );
             ApplicationLogging.LoggerFactory = loggerFactory;
             Logger = ApplicationLogging.CreateLogger("Program");
+
+            /*System.Console.WriteLine($"Process ID: {System.Diagnostics.Process.GetCurrentProcess().Id}");
+            while (!System.Diagnostics.Debugger.IsAttached)
+            {
+                System.Threading.Thread.Sleep(1);
+            }*/
 
 
             string solutiondir;
@@ -91,6 +98,8 @@ namespace YAMLParser
             {
                 msgsFiles.Add(new MsgsFile(path));
             }
+            Logger.LogDebug($"Added {msgsFiles.Count} message files");
+
             foreach (MsgFileLocation path in pathssrv)
             {
                 srvFiles.Add(new SrvsFile(path));
@@ -106,15 +115,9 @@ namespace YAMLParser
                 srv.ParseAndResolveTypes();
             }
 
-
-            /*System.Console.WriteLine($"Process ID: {System.Diagnostics.Process.GetCurrentProcess().Id}");
-            while (!System.Diagnostics.Debugger.IsAttached)
-            {
-                System.Threading.Thread.Sleep(1);
-            }*/
-            /*var actionFileParser = new ActionFileParser(actionFileLocations);
-            var actionFiles = actionFileParser.GenerateRosMessageClasses();*/
-            var actionFiles = new List<ActionFile>();
+            var actionFileParser = new ActionFileParser(actionFileLocations);
+            actionFiles = actionFileParser.GenerateRosMessageClasses();
+            //var actionFiles = new List<ActionFile>();
 
             if (paths.Count + pathssrv.Count > 0)
             {
@@ -396,6 +399,12 @@ namespace YAMLParser
                 {
                     everything.Add(sf.Request);
                     everything.Add(sf.Response);
+                }
+                foreach (ActionFile actionFile in actionFiles)
+                {
+                    everything.Add(actionFile.GoalMessage);
+                    everything.Add(actionFile.ResultMessage);
+                    everything.Add(actionFile.FeedbackMessage);
                 }
                 fronthalf += "\n\tpublic enum MsgTypes\n\t{";
                 fronthalf += "\n\t\tUnknown,";

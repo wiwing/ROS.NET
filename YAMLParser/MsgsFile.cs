@@ -253,6 +253,72 @@ namespace FauxMessages
             return GUTS;
         }
 
+        public string GenerateProperties()
+        {
+            if (memoizedcontent == null)
+            {
+                memoizedcontent = "";
+                for (int i = 0; i < Stuff.Count; i++)
+                {
+                    SingleType thisthing = Stuff[i];
+                    if (thisthing.Type == "Header")
+                    {
+                        HasHeader = true;
+                    }
+                    /*else if (classname == "String")
+                    {
+                        thisthing.input = thisthing.input.Replace("String", "string");
+                        thisthing.Type = thisthing.Type.Replace("String", "string");
+                        thisthing.output = thisthing.output.Replace("String", "string");
+                    }*/
+                    else if (classname == "Time")
+                    {
+                        thisthing.input = thisthing.input.Replace("Time", "TimeData");
+                        thisthing.Type = thisthing.Type.Replace("Time", "TimeData");
+                        thisthing.output = thisthing.output.Replace("Time", "TimeData");
+                    }
+                    else if (classname == "Duration")
+                    {
+                        thisthing.input = thisthing.input.Replace("Duration", "TimeData");
+                        thisthing.Type = thisthing.Type.Replace("Duration", "TimeData");
+                        thisthing.output = thisthing.output.Replace("Duration", "TimeData");
+                    }
+                    meta |= thisthing.meta;
+                    memoizedcontent += "\t" + thisthing.output + "\n";
+                }
+                /*if (classname.ToLower() == "string")
+                {
+                    memoizedcontent +=
+                        "\n\n\t\t\t\t\tpublic String(string s){ data = s; }\n\t\t\t\t\tpublic String(){ data = \"\"; }\n\n";
+                }
+                else*/
+                if (classname == "Time")
+                {
+                    memoizedcontent +=
+                        "\n\n\t\t\t\t\tpublic Time(uint s, uint ns) : this(new TimeData{ sec=s, nsec = ns}){}\n\t\t\t\t\tpublic Time(TimeData s){ data = s; }\n\t\t\t\t\tpublic Time() : this(0,0){}\n\n";
+                }
+                else if (classname == "Duration")
+                {
+                    memoizedcontent +=
+                        "\n\n\t\t\t\t\tpublic Duration(uint s, uint ns) : this(new TimeData{ sec=s, nsec = ns}){}\n\t\t\t\t\tpublic Duration(TimeData s){ data = s; }\n\t\t\t\t\tpublic Duration() : this(0,0){}\n\n";
+                }
+                while (memoizedcontent.Contains("DataData"))
+                    memoizedcontent = memoizedcontent.Replace("DataData", "Data");
+            }
+            string ns = Namespace.Replace("Messages.", "");
+            if (ns == "Messages")
+                ns = "";
+            GeneratedDictHelper = "";
+            foreach (SingleType S in Stuff)
+            {
+                Resolve(this, S);
+                GeneratedDictHelper += MessageFieldHelper.Generate(S);
+            }
+            GUTS = fronthalf + memoizedcontent + "\n" +
+                   backhalf;
+            return GUTS;
+        }
+
         public string GenFields()
         {
             string ret = "\n\t\t\t\t";

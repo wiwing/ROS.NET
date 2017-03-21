@@ -1,10 +1,10 @@
 # The trajectory to execute
-moveit_msgs/RobotTrajectory trajectory
+RobotTrajectory trajectory
 
 ---
 
 # Error code - encodes the overall reason for failure
-moveit_msgs/MoveItErrorCodes error_code
+MoveItErrorCodes error_code
 
 ---
 

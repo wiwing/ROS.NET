@@ -51,14 +51,20 @@ namespace FauxMessages
             // Treat goal, result and feedback like three message files, each with a partial definition and additional information
             // tagged on to the classname
             goalMessage = new MsgsFile(new MsgFileLocation(filename.Path.Replace(".action", ".msg"), filename.searchroot),
-                false, parsedAction.GoalParamters, "\t"
+                false, parsedAction.GoalParamters
             );
+            goalMessage.classname += "Goal";
+            goalMessage.Name += "Goal";
             resultMessage = new MsgsFile(new MsgFileLocation(filename.Path.Replace(".action", ".msg"), filename.searchroot),
-                false, parsedAction.ResultParameters, "\t"
+                false, parsedAction.ResultParameters
             );
+            resultMessage.classname += "Result";
+            resultMessage.Name += "Result";
             feedbackMessage = new MsgsFile(new MsgFileLocation(filename.Path.Replace(".action", ".msg"), filename.searchroot),
-                false, parsedAction.FeedbackParameters, "\t"
+                false, parsedAction.FeedbackParameters
             );
+            feedbackMessage.classname += "Feedback";
+            feedbackMessage.Name += "Feedback";
         }
 
 
@@ -79,7 +85,7 @@ namespace FauxMessages
                 Directory.CreateDirectory(outdir);
             string contents = GetString();
             if (contents != null)
-                File.WriteAllText(Path.Combine(outdir, MsgFileLocation.basename + ".cs"),
+                File.WriteAllText(Path.Combine(outdir, MsgFileLocation.basename + "ActionMessages.cs"),
                     contents.Replace("FauxMessages", "Messages")
                 );
         }
@@ -137,9 +143,9 @@ namespace FauxMessages
                 }
             }
 
-            messageTemplate = goalFrontHalf + goalMessage.GetSrvHalf() + goalBackHalf +
-                resultMessage.GetSrvHalf() + resultBackHalf +
-                feedbackMessage.GetSrvHalf() + feedbackBackHalf;
+            messageTemplate = goalFrontHalf + goalMessage.GenerateProperties() + goalBackHalf +
+                resultMessage.GenerateProperties() + resultBackHalf +
+                feedbackMessage.GenerateProperties() + feedbackBackHalf;
 
             /***********************************/
             /*       CODE BLOCK DUMP           */
@@ -147,7 +153,7 @@ namespace FauxMessages
 
             #region definitions
 
-            for (int i = 0; i < linesOfActionFile.Count; i++)
+            /*for (int i = 0; i < linesOfActionFile.Count; i++)
             {
                 while (linesOfActionFile[i].Contains("\t"))
                     linesOfActionFile[i] = linesOfActionFile[i].Replace("\t", " ");
@@ -198,7 +204,7 @@ namespace FauxMessages
             string actionDefinitionString = actionDefinition.ToString().Trim();
             string goalDefinitionString = goalDefinition.ToString().Trim();
             string resultDefinitionString = resultDefinition.ToString().Trim();
-            string feedbackDefinitionString = feedbackDefinition.ToString().Trim();
+            string feedbackDefinitionString = feedbackDefinition.ToString().Trim();*/
 
             #endregion
 
@@ -218,7 +224,7 @@ namespace FauxMessages
             messageTemplate = messageTemplate.Replace("$GOAL_CLASS", goalClassName);
             messageTemplate = messageTemplate.Replace("$GOAL_ISMETA", meta.ToString().ToLower());
             messageTemplate = messageTemplate.Replace("$GOAL_MSGTYPE", "MsgTypes." + fileNamespace.Replace("Messages.", "") + "__" + goalClassName);
-            messageTemplate = messageTemplate.Replace("$GOAL_MESSAGEDEFINITION", "@\"" + goalDefinitionString + "\"");
+            messageTemplate = messageTemplate.Replace("$GOAL_MESSAGEDEFINITION", "@\"" + goalMessage.Definition + "\"");
             messageTemplate = messageTemplate.Replace("$GOAL_HASHEADER", goalMessage.HasHeader.ToString().ToLower());
             messageTemplate = messageTemplate.Replace("$GOAL_FIELDS", goalDict.Length > 5 ? "{{" + goalDict + "}}" : "()");
             messageTemplate = messageTemplate.Replace("$GOAL_NULLCONSTBODY", "");
@@ -233,7 +239,7 @@ namespace FauxMessages
             messageTemplate = messageTemplate.Replace("$RESULT_CLASS", resultClassName);
             messageTemplate = messageTemplate.Replace("$RESULT_ISMETA", resultMessage.meta.ToString().ToLower());
             messageTemplate = messageTemplate.Replace("$RESULT_MSGTYPE", "MsgTypes." + fileNamespace.Replace("Messages.", "") + "__" + resultClassName);
-            messageTemplate = messageTemplate.Replace("$RESULT_MESSAGEDEFINITION", "@\"" + resultDefinitionString + "\"");
+            messageTemplate = messageTemplate.Replace("$RESULT_MESSAGEDEFINITION", "@\"" + resultMessage.Definition + "\"");
             messageTemplate = messageTemplate.Replace("$RESULT_HASHEADER", resultMessage.HasHeader.ToString().ToLower());
             messageTemplate = messageTemplate.Replace("$RESULT_FIELDS", resultDict.Length > 5 ? "{{" + resultDict + "}}" : "()");
             messageTemplate = messageTemplate.Replace("$RESULT_NULLCONSTBODY", "");
@@ -248,7 +254,7 @@ namespace FauxMessages
             messageTemplate = messageTemplate.Replace("$FEEDBACK_CLASS", feedbackClassName);
             messageTemplate = messageTemplate.Replace("$FEEDBACK_ISMETA", feedbackMessage.meta.ToString().ToLower());
             messageTemplate = messageTemplate.Replace("$FEEDBACK_MSGTYPE", "MsgTypes." + fileNamespace.Replace("Messages.", "") + "__" + feedbackClassName);
-            messageTemplate = messageTemplate.Replace("$FEEDBACK_MESSAGEDEFINITION", "@\"" + feedbackDefinitionString + "\"");
+            messageTemplate = messageTemplate.Replace("$FEEDBACK_MESSAGEDEFINITION", "@\"" + feedbackMessage.Definition + "\"");
             messageTemplate = messageTemplate.Replace("$FEEDBACK_HASHEADER", feedbackMessage.HasHeader.ToString().ToLower());
             messageTemplate = messageTemplate.Replace("$FEEDBACK_FIELDS", feedbackDict.Length > 5 ? "{{" + feedbackDict + "}}" : "()");
             messageTemplate = messageTemplate.Replace("$FEEDBACK_NULLCONSTBODY", "");

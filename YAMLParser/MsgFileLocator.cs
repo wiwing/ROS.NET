@@ -13,7 +13,8 @@ namespace YAMLParser
             "msg",
             "srv",
             "msgs",
-            "srvs"
+            "srvs",
+            "action"
         };
 
         /// <summary>
