@@ -127,6 +127,40 @@ namespace FauxMessages
                 resolver[Package][classname].Add(new ResolvedMsg { OtherType = Namespace + "." + classname, Definer = this });
         }
 
+
+        /// <summary>
+        /// Create a non SRV MsgsFile from a list of strings. Use suffix to prepend a string to the classname.
+        /// </summary>
+        public MsgsFile (MsgFileLocation filename, List<string> lines, string suffix)
+        {
+            if (filename == null)
+            {
+                throw new ArgumentNullException(nameof(filename));
+            }
+
+            this.msgfilelocation = filename;
+
+            if (resolver == null)
+                resolver = new Dictionary<string, Dictionary<string, List<ResolvedMsg>>>();
+
+            classname = filename.basename + suffix;
+            Package = filename.package;
+
+            //Parse for the Namespace
+            Namespace += "." + filename.package;
+            Name = filename.package + "." + classname;
+            Namespace = Namespace.Trim('.');
+
+            if (!resolver.Keys.Contains(Package))
+                resolver.Add(Package, new Dictionary<string, List<ResolvedMsg>>());
+            if (!resolver[Package].ContainsKey(classname))
+                resolver[Package].Add(classname, new List<ResolvedMsg> { new ResolvedMsg { OtherType = Namespace + "." + classname, Definer = this } });
+            else
+                resolver[Package][classname].Add(new ResolvedMsg { OtherType = Namespace + "." + classname, Definer = this });
+
+            this.lines = lines.Where(s => s.Trim().Length > 0).ToList();
+        }
+
         public void ParseAndResolveTypes()
         {
             def = new List<string>();

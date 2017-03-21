@@ -403,8 +403,11 @@ namespace YAMLParser
                 foreach (ActionFile actionFile in actionFiles)
                 {
                     everything.Add(actionFile.GoalMessage);
+                    everything.Add(actionFile.GoalActionMessage);
                     everything.Add(actionFile.ResultMessage);
+                    everything.Add(actionFile.ResultActionMessage);
                     everything.Add(actionFile.FeedbackMessage);
+                    everything.Add(actionFile.FeedbackActionMessage);
                 }
                 fronthalf += "\n\tpublic enum MsgTypes\n\t{";
                 fronthalf += "\n\t\tUnknown,";

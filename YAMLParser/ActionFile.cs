@@ -10,69 +10,43 @@ namespace FauxMessages
 {
     public class ActionFile
     {
-        public string Name { get; }
-        public MsgsFile GoalMessage { get { return goalMessage; } }
-        public MsgsFile ResultMessage { get { return resultMessage; } }
-        public MsgsFile FeedbackMessage { get { return feedbackMessage; } }
+        public string Name { get; private set; }
+        public MsgsFile GoalMessage { get; private set; }
+        public MsgsFile ResultMessage { get; private set; }
+        public MsgsFile FeedbackMessage { get; private set; }
+        public MsgsFile GoalActionMessage { get; private set; }
+        public MsgsFile ResultActionMessage { get; private set; }
+        public MsgsFile FeedbackActionMessage { get; private set; }
 
-        private string generatedDictHelper;
-        private bool hasHeader;
         private string fileNamespace = "Messages";
-        private MsgsFile goalMessage;
-        private MsgsFile resultMessage;
-        private MsgsFile feedbackMessage;
         private List<SingleType> stuff = new List<SingleType>();
-        private string backHalf;
         private string className;
-        private string dimensions;
-        private string frontHalf;
         private MsgFileLocation MsgFileLocation;
-        private string messageTemplate;
-        private bool meta;
         private List<string> linesOfActionFile = new List<string>();
-        private string memoizedcontent;
-        private string goalBackHalf;
-        private string goalFrontHalf;
-        private string resultBackHalf;
-        private string feedbackBackHalf;
 
 
         public ActionFile(MsgFileLocation filename)
         {
-            MsgFileLocation = filename;
             // Read in action file
             string[] lines = File.ReadAllLines(filename.Path);
-            className = filename.basename;
-            fileNamespace += "." + filename.package;
-            Name = filename.package + "." + filename.basename;
+            InitializeActionFile(filename, lines);
+        }
 
-            var parsedAction = ParseActionFile(lines);
 
-            // Treat goal, result and feedback like three message files, each with a partial definition and additional information
-            // tagged on to the classname
-            goalMessage = new MsgsFile(new MsgFileLocation(filename.Path.Replace(".action", ".msg"), filename.searchroot),
-                false, parsedAction.GoalParamters
-            );
-            goalMessage.classname += "Goal";
-            goalMessage.Name += "Goal";
-            resultMessage = new MsgsFile(new MsgFileLocation(filename.Path.Replace(".action", ".msg"), filename.searchroot),
-                false, parsedAction.ResultParameters
-            );
-            resultMessage.classname += "Result";
-            resultMessage.Name += "Result";
-            feedbackMessage = new MsgsFile(new MsgFileLocation(filename.Path.Replace(".action", ".msg"), filename.searchroot),
-                false, parsedAction.FeedbackParameters
-            );
-            feedbackMessage.classname += "Feedback";
-            feedbackMessage.Name += "Feedback";
+        public ActionFile(MsgFileLocation filename, string[] lines)
+        {
+            InitializeActionFile(filename, lines);
         }
 
 
         public void ParseAndResolveTypes()
         {
-            goalMessage.ParseAndResolveTypes();
-            resultMessage.ParseAndResolveTypes();
-            feedbackMessage.ParseAndResolveTypes();
+            GoalMessage.ParseAndResolveTypes();
+            GoalActionMessage.ParseAndResolveTypes();
+            ResultMessage.ParseAndResolveTypes();
+            ResultActionMessage.ParseAndResolveTypes();
+            FeedbackMessage.ParseAndResolveTypes();
+            FeedbackActionMessage.ParseAndResolveTypes();
         }
 
 
@@ -83,7 +57,7 @@ namespace FauxMessages
                 outdir = Path.Combine(outdir, chunks[i]);
             if (!Directory.Exists(outdir))
                 Directory.CreateDirectory(outdir);
-            string contents = GetString();
+            string contents = GenerateActionMessages();
             if (contents != null)
                 File.WriteAllText(Path.Combine(outdir, MsgFileLocation.basename + "ActionMessages.cs"),
                     contents.Replace("FauxMessages", "Messages")
@@ -91,251 +65,126 @@ namespace FauxMessages
         }
 
 
-        public string GetString()
+        /// <summary>
+        /// Loads the template for a single message and replaces all the $placeholders with appropriate content
+        /// </summary>
+        public string GenerateMessageFromTemplate(MsgsFile message)
         {
-            if (goalFrontHalf == null)
+            string template = Templates.ActionMessageTemplate;
+            var properties = message.GenerateProperties();
+            template = template.Replace("$CLASS_NAME", message.classname);
+            template = template.Replace("$$PROPERTIES", properties);
+            template = template.Replace("$ISMETA", message.meta.ToString().ToLower());
+            template = template.Replace("$MSGTYPE", "MsgTypes." + fileNamespace.Replace("Messages.", "") + "__" + message.classname);
+            template = template.Replace("$MESSAGEDEFINITION", "@\"" + message.Definition + "\"");
+            template = template.Replace("$HASHEADER", message.HasHeader.ToString().ToLower());
+            template = template.Replace("$NULLCONSTBODY", "");
+            template = template.Replace("$EXTRACONSTRUCTOR", "");
+
+            template = template.Replace("$MD5SUM", MD5.Sum(message));
+
+            string deserializationCode = "";
+            string serializationCode = "";
+            string randomizationCode = "";
+            string equalizationCode = "";
+            for (int i = 0; i < message.Stuff.Count; i++)
             {
-                goalFrontHalf = "";
-                goalBackHalf = "";
-                string[] lines = Templates.ActionPlaceHolder.Split('\n');
-                int section = 0;
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    //read until you find public class request... do everything once.
-                    //then, do it again response
-                    if (lines[i].Contains("$$ENTRY_POINT_GOAL"))
-                    {
-                        section++;
-                        continue;
-                    }
-                    if (lines[i].Contains("namespace"))
-                    {
-                        goalFrontHalf +=
-                          "\nusing Messages.std_msgs;\nusing String=System.String;\nusing Messages.geometry_msgs;\n\n"; //\nusing Messages.roscsharp;
-                        goalFrontHalf += "namespace " + fileNamespace + "\n";
-                        continue;
-                    }
-                    if (lines[i].Contains("$$ENTRY_POINT_RESULT"))
-                    {
-                        section++;
-                        continue;
-                    }
-                    if (lines[i].Contains("$$ENTRY_POINT_FEEDBACK"))
-                    {
-                        section++;
-                        continue;
-                    }
-                    switch (section)
-                    {
-                        case 0:
-                            goalFrontHalf += lines[i] + "\n";
-                            break;
-                        case 1:
-                            goalBackHalf += lines[i] + "\n";
-                            break;
-                        case 2:
-                            resultBackHalf += lines[i] + "\n";
-                            break;
-                        case 3:
-                            feedbackBackHalf += lines[i] + "\n";
-                            break;
-                    }
-                }
+                deserializationCode += message.GenerateDeserializationCode(message.Stuff[i], 1);
+                serializationCode += message.GenerateSerializationCode(message.Stuff[i], 1);
+                randomizationCode += message.GenerateRandomizationCode(message.Stuff[i], 1);
+                equalizationCode += message.GenerateEqualityCode(message.Stuff[i], 1);
             }
 
-            messageTemplate = goalFrontHalf + goalMessage.GenerateProperties() + goalBackHalf +
-                resultMessage.GenerateProperties() + resultBackHalf +
-                feedbackMessage.GenerateProperties() + feedbackBackHalf;
+            template = template.Replace("$SERIALIZATIONCODE", serializationCode);
+            template = template.Replace("$DESERIALIZATIONCODE", deserializationCode);
+            template = template.Replace("$RANDOMIZATIONCODE", randomizationCode);
+            template = template.Replace("$EQUALITYCODE", equalizationCode);
 
-            /***********************************/
-            /*       CODE BLOCK DUMP           */
-            /***********************************/
-
-            #region definitions
-
-            /*for (int i = 0; i < linesOfActionFile.Count; i++)
-            {
-                while (linesOfActionFile[i].Contains("\t"))
-                    linesOfActionFile[i] = linesOfActionFile[i].Replace("\t", " ");
-                while (linesOfActionFile[i].Contains("\n\n"))
-                    linesOfActionFile[i] = linesOfActionFile[i].Replace("\n\n", "\n");
-                linesOfActionFile[i] = linesOfActionFile[i].Replace('\t', ' ');
-                while (linesOfActionFile[i].Contains("  "))
-                    linesOfActionFile[i] = linesOfActionFile[i].Replace("  ", " ");
-                linesOfActionFile[i] = linesOfActionFile[i].Replace(" = ", "=");
-                linesOfActionFile[i] = linesOfActionFile[i].Replace("\"", "\"\"");
-            }
-
-            StringBuilder actionDefinition = new StringBuilder();
-            StringBuilder goalDefinition = new StringBuilder();
-            StringBuilder resultDefinition = new StringBuilder();
-            StringBuilder feedbackDefinition = new StringBuilder();
-            int foundDelimeter = 0;
-            foreach (string s in linesOfActionFile)
-            {
-                if (s == "---")
-                {
-                    //only put this string in md, because the subclass defs don't contain it
-                    actionDefinition.AppendLine(s);
-
-                    //we've hit the middle... move from the request to the response by making responsedefinition not null.
-                    foundDelimeter += 1;
-                    continue;
-                }
-
-                //add every line to MessageDefinition for whole service
-                actionDefinition.AppendLine(s);
-
-                //before we hit ---, add lines to request Definition. Otherwise, add them to response.
-                if (foundDelimeter == 0)
-                {
-                    goalDefinition.AppendLine(s);
-                }
-                else if (foundDelimeter == 1)
-                {
-                    resultDefinition.AppendLine(s);
-                } else if (foundDelimeter == 2)
-                {
-                    feedbackDefinition.AppendLine(s);
-                }
-
-            }
-
-            string actionDefinitionString = actionDefinition.ToString().Trim();
-            string goalDefinitionString = goalDefinition.ToString().Trim();
-            string resultDefinitionString = resultDefinition.ToString().Trim();
-            string feedbackDefinitionString = feedbackDefinition.ToString().Trim();*/
-
-            #endregion
-
-            #region THE SERVICE
-
-            //messageTemplate = messageTemplate.Replace("$WHATAMI", className);
-            //messageTemplate = messageTemplate.Replace("$MYSRVTYPE", "SrvTypes." + fileNamespace.Replace("Messages.", "") + "__" + className);
-            //messageTemplate = messageTemplate.Replace("$MYSERVICEDEFINITION", "@\"" + actionDefinitionString + "\"");
-
-            #endregion
-
-            #region REPLACE GOAL PLACEHOLDERS
-
-            string goalDict = goalMessage.GenFields();
-            meta = goalMessage.meta;
-            string goalClassName = className + "Goal";
-            messageTemplate = messageTemplate.Replace("$GOAL_CLASS", goalClassName);
-            messageTemplate = messageTemplate.Replace("$GOAL_ISMETA", meta.ToString().ToLower());
-            messageTemplate = messageTemplate.Replace("$GOAL_MSGTYPE", "MsgTypes." + fileNamespace.Replace("Messages.", "") + "__" + goalClassName);
-            messageTemplate = messageTemplate.Replace("$GOAL_MESSAGEDEFINITION", "@\"" + goalMessage.Definition + "\"");
-            messageTemplate = messageTemplate.Replace("$GOAL_HASHEADER", goalMessage.HasHeader.ToString().ToLower());
-            messageTemplate = messageTemplate.Replace("$GOAL_FIELDS", goalDict.Length > 5 ? "{{" + goalDict + "}}" : "()");
-            messageTemplate = messageTemplate.Replace("$GOAL_NULLCONSTBODY", "");
-            messageTemplate = messageTemplate.Replace("$GOAL_EXTRACONSTRUCTOR", "");
-
-            #endregion
-
-            #region REPLACE RESULT PLACEHOLDERS
-
-            string resultDict = resultMessage.GenFields();
-            string resultClassName = className + "Result";
-            messageTemplate = messageTemplate.Replace("$RESULT_CLASS", resultClassName);
-            messageTemplate = messageTemplate.Replace("$RESULT_ISMETA", resultMessage.meta.ToString().ToLower());
-            messageTemplate = messageTemplate.Replace("$RESULT_MSGTYPE", "MsgTypes." + fileNamespace.Replace("Messages.", "") + "__" + resultClassName);
-            messageTemplate = messageTemplate.Replace("$RESULT_MESSAGEDEFINITION", "@\"" + resultMessage.Definition + "\"");
-            messageTemplate = messageTemplate.Replace("$RESULT_HASHEADER", resultMessage.HasHeader.ToString().ToLower());
-            messageTemplate = messageTemplate.Replace("$RESULT_FIELDS", resultDict.Length > 5 ? "{{" + resultDict + "}}" : "()");
-            messageTemplate = messageTemplate.Replace("$RESULT_NULLCONSTBODY", "");
-            messageTemplate = messageTemplate.Replace("$RESULT_EXTRACONSTRUCTOR", "");
-
-            #endregion
-
-            #region REPLACE FEEDBACK PLACEHOLDERS
-
-            string feedbackDict = resultMessage.GenFields();
-            string feedbackClassName = className + "Feedback";
-            messageTemplate = messageTemplate.Replace("$FEEDBACK_CLASS", feedbackClassName);
-            messageTemplate = messageTemplate.Replace("$FEEDBACK_ISMETA", feedbackMessage.meta.ToString().ToLower());
-            messageTemplate = messageTemplate.Replace("$FEEDBACK_MSGTYPE", "MsgTypes." + fileNamespace.Replace("Messages.", "") + "__" + feedbackClassName);
-            messageTemplate = messageTemplate.Replace("$FEEDBACK_MESSAGEDEFINITION", "@\"" + feedbackMessage.Definition + "\"");
-            messageTemplate = messageTemplate.Replace("$FEEDBACK_HASHEADER", feedbackMessage.HasHeader.ToString().ToLower());
-            messageTemplate = messageTemplate.Replace("$FEEDBACK_FIELDS", feedbackDict.Length > 5 ? "{{" + feedbackDict + "}}" : "()");
-            messageTemplate = messageTemplate.Replace("$FEEDBACK_NULLCONSTBODY", "");
-            messageTemplate = messageTemplate.Replace("$FEEDBACK_EXTRACONSTRUCTOR", "");
-
-            #endregion
-
-            #region MD5
-
-            messageTemplate = messageTemplate.Replace("$GOAL_MD5SUM", MD5.Sum(goalMessage));
-            messageTemplate = messageTemplate.Replace("$RESULT_MD5SUM", MD5.Sum(resultMessage));
-            messageTemplate = messageTemplate.Replace("$FEEDBACK_MD5SUM", MD5.Sum(feedbackMessage));
-
-            #endregion
-
-            string goalDeserializationCode = "";
-            string goalSerializationCode = "";
-            string goalRandomizationCode = "";
-            string goalEqualizationCode = "";
-            string resultDeserializationCode = "";
-            string resultSerializationCode = "";
-            string resultRandomizationCode = "";
-            string resultEqualizationCode = "";
-            string feedbackDeserializationCode = "";
-            string feedbackSerializationCode = "";
-            string feedbackRandomizationCode = "";
-            string feedbackEqualizationCode = "";
-
-            for (int i = 0; i < goalMessage.Stuff.Count; i++)
-            {
-                goalDeserializationCode += goalMessage.GenerateDeserializationCode(goalMessage.Stuff[i], 1);
-                goalSerializationCode += goalMessage.GenerateSerializationCode(goalMessage.Stuff[i], 1);
-                goalRandomizationCode += goalMessage.GenerateRandomizationCode(goalMessage.Stuff[i], 1);
-                goalEqualizationCode += goalMessage.GenerateEqualityCode(goalMessage.Stuff[i], 1);
-            }
-            for (int i = 0; i < resultMessage.Stuff.Count; i++)
-            {
-                resultDeserializationCode += resultMessage.GenerateDeserializationCode(resultMessage.Stuff[i], 1);
-                resultSerializationCode += resultMessage.GenerateSerializationCode(resultMessage.Stuff[i], 1);
-                resultRandomizationCode += resultMessage.GenerateRandomizationCode(resultMessage.Stuff[i], 1);
-                resultEqualizationCode += resultMessage.GenerateEqualityCode(resultMessage.Stuff[i], 1);
-            }
-            for (int i = 0; i < feedbackMessage.Stuff.Count; i++)
-            {
-                feedbackDeserializationCode += feedbackMessage.GenerateDeserializationCode(feedbackMessage.Stuff[i], 1);
-                feedbackSerializationCode += feedbackMessage.GenerateSerializationCode(feedbackMessage.Stuff[i], 1);
-                feedbackRandomizationCode += feedbackMessage.GenerateRandomizationCode(feedbackMessage.Stuff[i], 1);
-                feedbackEqualizationCode += feedbackMessage.GenerateEqualityCode(feedbackMessage.Stuff[i], 1);
-            }
-
-            messageTemplate = messageTemplate.Replace("$GOAL_SERIALIZATIONCODE", goalSerializationCode);
-            messageTemplate = messageTemplate.Replace("$GOAL_DESERIALIZATIONCODE", goalDeserializationCode);
-            messageTemplate = messageTemplate.Replace("$GOAL_RANDOMIZATIONCODE", goalRandomizationCode);
-            messageTemplate = messageTemplate.Replace("$GOAL_EQUALITYCODE", goalEqualizationCode);
-            messageTemplate = messageTemplate.Replace("$RESULT_SERIALIZATIONCODE", resultSerializationCode);
-            messageTemplate = messageTemplate.Replace("$RESULT_DESERIALIZATIONCODE", resultDeserializationCode);
-            messageTemplate = messageTemplate.Replace("$RESULT_RANDOMIZATIONCODE", resultRandomizationCode);
-            messageTemplate = messageTemplate.Replace("$RESULT_EQUALITYCODE", resultEqualizationCode);
-            messageTemplate = messageTemplate.Replace("$FEEDBACK_SERIALIZATIONCODE", feedbackSerializationCode);
-            messageTemplate = messageTemplate.Replace("$FEEDBACK_DESERIALIZATIONCODE", feedbackDeserializationCode);
-            messageTemplate = messageTemplate.Replace("$FEEDBACK_RANDOMIZATIONCODE", feedbackRandomizationCode);
-            messageTemplate = messageTemplate.Replace("$FEEDBACK_EQUALITYCODE", feedbackEqualizationCode);
-
-            /*string md5 = MD5.Sum(this);
-            if (md5 == null)
-                return null;*/
-            //messageTemplate = messageTemplate.Replace("$MYSRVMD5SUM", "");
-
-
-
-            /********END BLOCK**********/
-            return messageTemplate;
+            return template;
         }
 
 
-        private (List<string> GoalParamters, List<string> ResultParameters, List<string> FeedbackParameters) ParseActionFile
-            (string[] lines)
+        /// <summary>
+        /// Loads the template for the action message class, which holds all six action messages and inserts the code for each
+        /// message class.
+        /// </summary>
+        /// <returns></returns>
+        public string GenerateActionMessages()
+        {
+            var template = Templates.ActionMessagesPlaceHolder;
+            template = template.Replace("$NAMESPACE", GoalMessage.Package);
+            var messages = new List<MsgsFile> { GoalMessage, GoalActionMessage, ResultMessage, ResultActionMessage,
+                FeedbackMessage, FeedbackActionMessage
+            };
+            var placeHolders = new List<string> { "$GOAL_MESSAGE", "$ACTION_GOAL_MESSAGE", "$RESULT_MESSAGE",
+                "$ACTION_RESULT_MESSAGE", "$FEEDBACK_MESSAGE", "$ACTION_FEEDBACK_MESSAGE"
+            };
+
+            for (int i = 0; i < messages.Count; i++)
+            {
+                var generatedCode = GenerateMessageFromTemplate(messages[i]);
+                template = template.Replace(placeHolders[i], generatedCode);
+            }
+
+            return template;
+        }
+
+
+        /// <summary>
+        /// Wrapper to create a MsgsFile
+        /// </summary>
+        private MsgsFile CreateMessageFile(MsgFileLocation messageLocation, List<string> parameters, string suffix)
+        {
+            var result = new MsgsFile(new MsgFileLocation(
+                messageLocation.Path, messageLocation.searchroot),
+                parameters,
+                suffix
+            );
+
+            return result;
+        }
+
+
+        private void InitializeActionFile(MsgFileLocation filename, string[] lines)
+        {
+            MsgFileLocation = filename;
+            Name = filename.package + "." + filename.basename;
+            className = filename.basename;
+            fileNamespace += "." + filename.package;
+
+            var parsedAction = ParseActionFile(lines);
+
+            // Goal Messages
+            GoalMessage = CreateMessageFile(filename, parsedAction.GoalParameters, "Goal");
+            GoalActionMessage = CreateMessageFile(filename, parsedAction.GoalActionParameters, "ActionGoal");
+
+
+            // Result Messages
+            ResultMessage = CreateMessageFile(filename, parsedAction.ResultParameters, "Result");
+            ResultActionMessage = CreateMessageFile(filename, parsedAction.ResultActionParameters, "ActionResult");
+
+            // Feedback Messages
+            FeedbackMessage = CreateMessageFile(filename, parsedAction.FeedbackParameters, "Feedback");
+            FeedbackActionMessage = CreateMessageFile(filename, parsedAction.FeedbackActionParameters, "ActionFeedback");
+        }
+
+
+        /// <summary>
+        /// Extracts and generates the parameters for the six messages that are needed to use the actionlib, i.e. Goal,
+        /// ActionGoal, Result, ActionResult, Feedback, ActionFeedback. The Action parameters are the ones that are generated.
+        /// </summary>
+        /// <param name="lines">The content of the .action file</param>
+        /// <returns>A ValueTuple with the parameters in a different field</returns>
+        private (List<string> GoalParameters, List<string> ResultParameters, List<string> FeedbackParameters,
+            List<string> GoalActionParameters, List<string> ResultActionParameters, List<string> FeedbackActionParameters)
+            ParseActionFile (string[] lines)
         {
             var goalParameters = new List<string>();
             var resultParameters = new List<string>();
             var feedbackParameters = new List<string>();
+            var goalActionParameters = new List<string>();
+            var resultActionParameters = new List<string>();
+            var feedbackActionParameters = new List<string>();
 
             linesOfActionFile = new List<string>();
             int foundDelimeters = 0;
@@ -359,41 +208,39 @@ namespace FauxMessages
                 if (lines[lineNumber].Contains("---"))
                 {
                     foundDelimeters += 1;
-                    continue;
                 }
 
                 if (foundDelimeters == 0)
                 {
-                    if (goalParameters.Count == 0)
+                    if (goalActionParameters.Count == 0)
                     {
-                        goalParameters.Add("Header header");
-                        goalParameters.Add("actionlib_msgs/GoalID goal_id");
+                        goalActionParameters.Add("Header header");
+                        goalActionParameters.Add("actionlib_msgs/GoalID goal_id");
+                        goalActionParameters.Add($"{Name.Replace(".", "/")}Goal goal");
                     }
-                    if (!lines[lineNumber].Contains("Header"))
-                    {
-                        goalParameters.Add(lines[lineNumber]);
-                    }
+
+                    goalParameters.Add(lines[lineNumber]);
                 }
                 else if (foundDelimeters == 1)
                 {
-                    if (resultParameters.Count == 0)
+                    if (resultActionParameters.Count == 0)
                     {
-                        resultParameters.Add("Header header");
-                        resultParameters.Add("actionlib_msgs/GoalStatus status");
-                    }
-                    if (!lines[lineNumber].Contains("Header"))
+                        resultActionParameters.Add("Header header");
+                        resultActionParameters.Add("actionlib_msgs/GoalStatus status");
+                        resultActionParameters.Add($"{Name.Replace(".", "/")}Result result");
+                    } else
                     {
                         resultParameters.Add(lines[lineNumber]);
                     }
                 }
                 else if (foundDelimeters == 2)
                 {
-                    if (feedbackParameters.Count == 0)
+                    if (feedbackActionParameters.Count == 0)
                     {
-                        feedbackParameters.Add("Header header");
-                        feedbackParameters.Add("actionlib_msgs/GoalStatus status");
-                    }
-                    if (!lines[lineNumber].Contains("Header"))
+                        feedbackActionParameters.Add("Header header");
+                        feedbackActionParameters.Add("actionlib_msgs/GoalStatus status");
+                        feedbackActionParameters.Add($"{Name.Replace(".", "/")}Feedback feedback");
+                    } else
                     {
                         feedbackParameters.Add(lines[lineNumber]);
                     }
@@ -403,7 +250,8 @@ namespace FauxMessages
                 }
             }
 
-            return (goalParameters, resultParameters, feedbackParameters);
+            return (goalParameters, resultParameters, feedbackParameters, goalActionParameters, resultActionParameters,
+                feedbackActionParameters);
         }
     }
 }
