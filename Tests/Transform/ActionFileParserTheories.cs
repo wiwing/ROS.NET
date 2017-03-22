@@ -165,9 +165,9 @@ string error_string
 ---
 Header header
 string[] joint_names
-trajectory_msgs / JointTrajectoryPoint desired
-trajectory_msgs / JointTrajectoryPoint actual
-trajectory_msgs / JointTrajectoryPoint error";
+trajectory_msgs/JointTrajectoryPoint desired
+trajectory_msgs/JointTrajectoryPoint actual
+trajectory_msgs/JointTrajectoryPoint error";
 
                 var followJointTrajectoryLines = followJointTrajectoryContent.Split('\n');
                 var followJointTrajectoryMd5 = new Dictionary<string, string> {
@@ -183,9 +183,10 @@ trajectory_msgs / JointTrajectoryPoint error";
 
                 return new[]
                 {
-                    new object[] { singleJointPosition, singleJointPositionLines, singleJointPositionMd5 }
-                    // currently not working, because JointTrajectoryPoint.msg cannot be resolved, for some reason
-                    //, new object[] { followJointTrajectory, followJointTrajectoryLines, followJointTrajectoryMd5 }
+                    // Action File with empty result
+                    new object[] { singleJointPosition, singleJointPositionLines, singleJointPositionMd5 },
+                    // Complete Action File
+                    new object[] { followJointTrajectory, followJointTrajectoryLines, followJointTrajectoryMd5 }
                 };
             }
         }
