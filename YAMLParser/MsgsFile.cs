@@ -34,6 +34,7 @@ namespace FauxMessages
         public bool HasHeader;
         public string Name;
         public string Namespace = "Messages";
+        public ActionMessageType ActionMessageType { get; set; } = ActionMessageType.NoAction;
         public List<SingleType> Stuff = new List<SingleType>();
         public string backhalf;
         public string classname;
@@ -955,5 +956,14 @@ namespace FauxMessages
             else
                 File.WriteAllText(Path.Combine(outdir, localcn + ".cs"), contents.Replace("FauxMessages", "Messages"));
         }
+    }
+
+
+    public enum ActionMessageType
+    {
+        NoAction,
+        Goal,
+        Result,
+        Feedback
     }
 }

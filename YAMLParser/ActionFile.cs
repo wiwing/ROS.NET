@@ -68,7 +68,7 @@ namespace FauxMessages
         /// <summary>
         /// Loads the template for a single message and replaces all the $placeholders with appropriate content
         /// </summary>
-        public string GenerateMessageFromTemplate(MsgsFile message)
+        public string GenerateMessageFromTemplate(MsgsFile message, MsgsFile childMessage)
         {
             string template = Templates.ActionMessageTemplate;
             var properties = message.GenerateProperties();
@@ -82,6 +82,14 @@ namespace FauxMessages
             template = template.Replace("$EXTRACONSTRUCTOR", "");
 
             template = template.Replace("$MD5SUM", MD5.Sum(message));
+
+            // Add Action related interface implementations, if this is a ActionMessage (e.g. add implemetation for IActionGoal)
+            var actionInterfaces = new List<string> {"", ", IActionGoal", ", IActionResult", ", IActionFeedback" };
+            template = template.Replace("$ACTION_INTERFACE", actionInterfaces[(int)message.ActionMessageType]);
+            var actionCast = childMessage != null ? $"({childMessage.Name})" : "";
+            template = template.Replace("$ACTION_PROPERTY",
+                actionInterfaceImplementations[(int)message.ActionMessageType].Replace("$ACTION_CAST", actionCast)
+            );
 
             string deserializationCode = "";
             string serializationCode = "";
@@ -113,17 +121,20 @@ namespace FauxMessages
         {
             var template = Templates.ActionMessagesPlaceHolder;
             template = template.Replace("$NAMESPACE", GoalMessage.Package);
-            var messages = new List<MsgsFile> { GoalMessage, GoalActionMessage, ResultMessage, ResultActionMessage,
-                FeedbackMessage, FeedbackActionMessage
-            };
-            var placeHolders = new List<string> { "$GOAL_MESSAGE", "$ACTION_GOAL_MESSAGE", "$RESULT_MESSAGE",
-                "$ACTION_RESULT_MESSAGE", "$FEEDBACK_MESSAGE", "$ACTION_FEEDBACK_MESSAGE"
+
+            var messages = new List<MessageTemplateInfo>
+            {
+                new MessageTemplateInfo(GoalActionMessage, GoalMessage, "$ACTION_GOAL_MESSAGE", "$GOAL_MESSAGE"),
+                new MessageTemplateInfo(ResultActionMessage, ResultMessage, "$ACTION_RESULT_MESSAGE", "$RESULT_MESSAGE"),
+                new MessageTemplateInfo(FeedbackActionMessage, FeedbackMessage, "$ACTION_FEEDBACK_MESSAGE", "$FEEDBACK_MESSAGE")
             };
 
-            for (int i = 0; i < messages.Count; i++)
+            foreach (var messagePair in messages)
             {
-                var generatedCode = GenerateMessageFromTemplate(messages[i]);
-                template = template.Replace(placeHolders[i], generatedCode);
+                var generatedCode = GenerateMessageFromTemplate(messagePair.InnerMessage, null);
+                template = template.Replace(messagePair.InnerMessagePlaceHolder, generatedCode);
+                generatedCode = GenerateMessageFromTemplate(messagePair.OuterMessage, messagePair.InnerMessage);
+                template = template.Replace(messagePair.OuterMessagePlaceHoder, generatedCode);
             }
 
             return template;
@@ -157,15 +168,18 @@ namespace FauxMessages
             // Goal Messages
             GoalMessage = CreateMessageFile(filename, parsedAction.GoalParameters, "Goal");
             GoalActionMessage = CreateMessageFile(filename, parsedAction.GoalActionParameters, "ActionGoal");
+            GoalActionMessage.ActionMessageType = ActionMessageType.Goal;
 
 
             // Result Messages
             ResultMessage = CreateMessageFile(filename, parsedAction.ResultParameters, "Result");
             ResultActionMessage = CreateMessageFile(filename, parsedAction.ResultActionParameters, "ActionResult");
+            ResultActionMessage.ActionMessageType = ActionMessageType.Result;
 
             // Feedback Messages
             FeedbackMessage = CreateMessageFile(filename, parsedAction.FeedbackParameters, "Feedback");
             FeedbackActionMessage = CreateMessageFile(filename, parsedAction.FeedbackActionParameters, "ActionFeedback");
+            FeedbackActionMessage.ActionMessageType = ActionMessageType.Feedback;
         }
 
 
@@ -210,15 +224,17 @@ namespace FauxMessages
                     foundDelimeters += 1;
                 }
 
+                if (goalActionParameters.Count == 0)
+                {
+                    // Check always if the goal action header has been set, because in the case of an empty goal, the delimeter
+                    // would jump over the this header
+                    goalActionParameters.Add("Header header");
+                    goalActionParameters.Add("actionlib_msgs/GoalID goal_id");
+                    goalActionParameters.Add($"{Name.Replace(".", "/")}Goal goal");
+                }
+
                 if (foundDelimeters == 0)
                 {
-                    if (goalActionParameters.Count == 0)
-                    {
-                        goalActionParameters.Add("Header header");
-                        goalActionParameters.Add("actionlib_msgs/GoalID goal_id");
-                        goalActionParameters.Add($"{Name.Replace(".", "/")}Goal goal");
-                    }
-
                     goalParameters.Add(lines[lineNumber]);
                 }
                 else if (foundDelimeters == 1)
@@ -252,6 +268,43 @@ namespace FauxMessages
 
             return (goalParameters, resultParameters, feedbackParameters, goalActionParameters, resultActionParameters,
                 feedbackActionParameters);
+        }
+
+
+        private readonly List<string> actionInterfaceImplementations = new List<string>
+        {
+            // No Action Message
+            "",
+            // Goal Action Message
+            "public Messages.std_msgs.Header Header { get { return header; } set { header = value; } }" + "\n" +
+            "public Messages.actionlib_msgs.GoalID GoalId { get { return goal_id; } set { goal_id = value; } }" + "\n" +
+            "public RosMessage Goal { get { return goal; } set { goal = $ACTION_CAST value; } }" + "\n",
+            // Result Action Message
+            "public Messages.std_msgs.Header Header { get { return header; } set { header = value; } }" + "\n" +
+            "public Messages.actionlib_msgs.GoalStatus GoalStatus { get { return status; } set { status = value; } }" + "\n" +
+            "public RosMessage Result { get { return result; } set { result = $ACTION_CAST value; } }",
+            // Feedback Action Message
+            "public Messages.std_msgs.Header Header { get { return header; } set { header = value; } }" + "\n" +
+            "public Messages.actionlib_msgs.GoalStatus GoalStatus { get { return status; } set { status = value; } }" + "\n" +
+            "public RosMessage Feedback { get { return feedback; } set { feedback = $ACTION_CAST value; } }"
+        };
+    }
+
+
+    class MessageTemplateInfo
+    {
+        public MsgsFile OuterMessage { get; }
+        public MsgsFile InnerMessage { get; }
+        public string OuterMessagePlaceHoder { get; }
+        public string InnerMessagePlaceHolder { get; }
+
+        public MessageTemplateInfo(MsgsFile OuterMessage, MsgsFile InnerMessage, string OuterMessagePlaceHoder,
+            string InnerMessagePlaceHolder)
+        {
+            this.OuterMessage = OuterMessage;
+            this.InnerMessage = InnerMessage;
+            this.OuterMessagePlaceHoder = OuterMessagePlaceHoder;
+            this.InnerMessagePlaceHolder = InnerMessagePlaceHolder;
         }
     }
 }

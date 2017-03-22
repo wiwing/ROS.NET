@@ -1,4 +1,4 @@
-    public class $CLASS_NAME : RosMessage
+    public class $CLASS_NAME : RosMessage $ACTION_INTERFACE
     {
         $$PROPERTIES
 
@@ -8,6 +8,7 @@
         public override string MessageDefinition() { return $MESSAGEDEFINITION; }
         public override MsgTypes msgtype() { return $MSGTYPE; }
         public override bool IsServiceComponent() { return false; }
+		$ACTION_PROPERTY
 
         public $CLASS_NAME()
         {

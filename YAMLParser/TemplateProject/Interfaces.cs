@@ -42,11 +42,11 @@ namespace Messages
                             constructors.Add(msg.msgtype(), T => Activator.CreateInstance(_typeregistry[T]) as RosMessage);
                     }
                 }
-                
+
                 return constructors[t].Invoke(t);
             }
         }
-        
+
         public virtual string MD5Sum() { return ""; }
         public virtual bool HasHeader() { return false; }
         public virtual bool IsMetaType() { return false; }
@@ -55,37 +55,37 @@ namespace Messages
         public virtual MsgTypes msgtype() { return MsgTypes.Unknown; }
         public virtual bool IsServiceComponent() { return false; }
         public IDictionary<string, string> connection_header;
-        
+
         public RosMessage()
         {
         }
-        
+
         public RosMessage(byte[] SERIALIZEDSTUFF)
         {
             Deserialize(SERIALIZEDSTUFF);
         }
-        
+
         public RosMessage(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
-        
+
         public void Deserialize(byte[] SERIALIZEDSTUFF)
         {
             int start = 0;
             Deserialize(SERIALIZEDSTUFF, ref start);
         }
-        
+
         public virtual void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
             throw new NotImplementedException();
         }
-        
+
         public byte[] Serialize()
         {
             return Serialize(false);
         }
-        
+
         public virtual byte[] Serialize(bool partofsomethingelse)
         {
             throw new NotImplementedException();
@@ -107,7 +107,7 @@ namespace Messages
         }
 
         [System.Diagnostics.DebuggerStepThrough]
-        
+
         public override int GetHashCode()
         {
             return base.GetHashCode();
@@ -115,32 +115,32 @@ namespace Messages
     }
 
     public delegate RosMessage RosServiceDelegate(RosMessage request);
-    
+
     public class RosService
     {
         public virtual string MD5Sum() { return ""; }
-        
+
         public virtual string ServiceDefinition() { return ""; }
-        
+
         public virtual SrvTypes srvtype() { return SrvTypes.Unknown; }
-        
+
         public MsgTypes msgtype_req
         {
             get { return RequestMessage.msgtype(); }
         }
-        
+
         public MsgTypes msgtype_res
         {
             get { return ResponseMessage.msgtype(); }
         }
-        
+
         public RosMessage RequestMessage, ResponseMessage;
-        
+
         protected RosMessage GeneralInvoke(RosServiceDelegate invocation, RosMessage m)
         {
             return invocation.Invoke(m);
         }
-        
+
         public RosService()
         {
         }
@@ -209,5 +209,29 @@ namespace Messages
         {
             return (sec == timer.sec && nsec == timer.nsec);
         }
+    }
+
+
+    public interface IActionGoal
+    {
+        Messages.std_msgs.Header Header { get; set; }
+        Messages.actionlib_msgs.GoalID GoalId { get; set; }
+        RosMessage Goal { get; set; }
+    }
+
+
+    public interface IActionResult
+    {
+        Messages.std_msgs.Header Header { get; set; }
+        Messages.actionlib_msgs.GoalStatus GoalStatus { get; set; }
+        RosMessage Result { get; set; }
+    }
+
+
+    public interface IActionFeedback
+    {
+        Messages.std_msgs.Header Header { get; set; }
+        Messages.actionlib_msgs.GoalStatus GoalStatus { get; set; }
+        RosMessage Feedback { get; set; }
     }
 }
