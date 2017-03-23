@@ -16,9 +16,11 @@ namespace Uml.Robotics.Ros.ActionLib
         where TFeedback : RosMessage, IActionFeedback, new()
     {
         public int QueueSize { get; set; } = 50;
-        public TimeSpan StatusListTimeout { get; set; } = new TimeSpan(0, 0, 5);
-        public double StatusFrequencySeconds { get; set; } = 5;
+        public TimeSpan StatusListTimeout { get; private set; } = new TimeSpan(0, 0, 5);
+        public double StatusFrequencySeconds { get; private set; } = 5;
 
+        private readonly string ACTIONLIB_STATUS_FREQUENCY = "actionlib_status_frequency";
+        private readonly string STATUS_LIST_TIMEOUT = "status_list_timeout";
         private bool started;
         private Dictionary<string, ServerGoalHandle<TGoal, TResult, TFeedback>> goalHandles;
         private NodeHandle nodeHandle;
@@ -97,11 +99,27 @@ namespace Uml.Robotics.Ros.ActionLib
             feedbackPublisher = nodeHandle.advertise<TFeedback>("feedback", QueueSize);
             goalStatusPublisher = nodeHandle.advertise<GoalStatusArray>("status", QueueSize);
 
+            // Read the frequency with which to publish status from the parameter server
+            // If not specified locally explicitly, use search param to find actionlib_status_frequency
+            double statusFrequency = 0;
+            bool success = Param.get(ACTIONLIB_STATUS_FREQUENCY, ref statusFrequency);
+            if (success)
+            {
+                StatusFrequencySeconds = statusFrequency;
+            }
+
+            double statusListTimeout = 0;
+            success = Param.get(STATUS_LIST_TIMEOUT, ref statusListTimeout);
+            if (success)
+            {
+                var split = SplitSeconds(statusListTimeout);
+                StatusListTimeout = new TimeSpan(0, 0, split.seconds, split.milliseconds);
+            }
+
             if (StatusFrequencySeconds > 0)
             {
-                int seconds = (int)StatusFrequencySeconds;
-                int milliseconds = (int)((StatusFrequencySeconds - seconds) * 1000);
-                statusInterval = new TimeSpan(0, 0, seconds, milliseconds);
+                var split = SplitSeconds(StatusFrequencySeconds);
+                statusInterval = new TimeSpan(0, 0, split.seconds, split.milliseconds);
                 nextStatusPublishTime = DateTime.Now + statusInterval;
                 spinCallbackId = (ulong)(DateTime.Now.Ticks + (new Random()).Next());
                 ROS.GlobalCallbackQueue.addCallback(new CallbackInterface(SpinCallback), spinCallbackId);
@@ -265,6 +283,15 @@ namespace Uml.Robotics.Ros.ActionLib
                 PublishStatus();
                 nextStatusPublishTime = DateTime.Now + statusInterval;
             }
+        }
+
+
+        private (int seconds, int milliseconds) SplitSeconds(double exactSeconds)
+        {
+            int seconds = (int)exactSeconds;
+            int milliseconds = (int)((exactSeconds - seconds) * 1000);
+
+            return (seconds, milliseconds);
         }
     }
 }
