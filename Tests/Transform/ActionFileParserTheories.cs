@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using FauxMessages;
 
+
 namespace Uml.Robotics.Ros.Tests
 {
 
@@ -190,5 +191,6 @@ trajectory_msgs/JointTrajectoryPoint error";
                 };
             }
         }
+
     }
 }

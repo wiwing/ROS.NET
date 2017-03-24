@@ -7,7 +7,7 @@ using Messages.actionlib_msgs;
 
 namespace Uml.Robotics.Ros.ActionLib.Interfaces
 {
-    interface IActionServer<TGoal, TResult, TFeedback>
+    public interface IActionServer<TGoal, TResult, TFeedback>
         where TGoal : InnerActionMessage, new()
         where TResult : InnerActionMessage, new()
         where TFeedback : InnerActionMessage, new()

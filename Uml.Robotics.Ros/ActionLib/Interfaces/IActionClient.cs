@@ -12,9 +12,8 @@ namespace Uml.Robotics.Ros.ActionLib
         where TResult : InnerActionMessage, new()
         where TFeedback : InnerActionMessage, new()
     {
-        void PublishCancel(GoalID goalId);
-        void PublishGoal(GoalActionMessage<TGoal> goal);
-        void TransistionToState(IActionClient<TGoal, TResult, TFeedback> actionClient,
-            ClientGoalHandle<TGoal, TResult, TFeedback> goalHandle, CommunicationState state);
+        Publisher<GoalActionMessage<TGoal>> GoalPublisher { get; }
+        Publisher<GoalID> CancelPublisher { get; }
+        void TransitionToState(ClientGoalHandle<TGoal, TResult, TFeedback> goalHandle, CommunicationState state);
     }
 }

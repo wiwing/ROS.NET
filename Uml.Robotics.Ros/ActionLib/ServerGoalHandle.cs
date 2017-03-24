@@ -11,7 +11,7 @@ using Uml.Robotics.Ros.ActionLib.Interfaces;
 
 namespace Uml.Robotics.Ros.ActionLib
 {
-    class ServerGoalHandle<TGoal, TResult, TFeedback>
+    public class ServerGoalHandle<TGoal, TResult, TFeedback>
         where TGoal : InnerActionMessage, new()
         where TResult : InnerActionMessage, new()
         where TFeedback : InnerActionMessage, new()

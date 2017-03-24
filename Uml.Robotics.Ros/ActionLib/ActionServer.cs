@@ -10,7 +10,7 @@ using Messages;
 
 namespace Uml.Robotics.Ros.ActionLib
 {
-    class ActionServer<TGoal, TResult, TFeedback> : IActionServer<TGoal, TResult, TFeedback>
+    public class ActionServer<TGoal, TResult, TFeedback> : IActionServer<TGoal, TResult, TFeedback>
         where TGoal : InnerActionMessage, new()
         where TResult : InnerActionMessage, new()
         where TFeedback : InnerActionMessage, new()

@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using String = Messages.std_msgs.String;
+using System.Security.Cryptography;
 using uint8 = System.Byte;
 
 namespace Messages
@@ -293,6 +294,24 @@ namespace Messages
 
             return result;
         }
+
+
+        protected string CalcMd5(string hashText)
+        {
+            string md5sum;
+            using (var md5 = MD5.Create())
+            {
+                var md5Hash = md5.ComputeHash(Encoding.ASCII.GetBytes(hashText));
+                StringBuilder hashBuilder = new StringBuilder();
+                for (int i = 0; i < md5Hash.Length; i++)
+                {
+                    hashBuilder.Append(md5Hash[i].ToString("x2"));
+                }
+                md5sum = hashBuilder.ToString();
+            }
+
+            return md5sum;
+        }
     }
 
 
@@ -325,6 +344,29 @@ namespace Messages
             Header = new Messages.std_msgs.Header(serializedMessage, ref currentIndex);
             GoalId = new Messages.actionlib_msgs.GoalID(serializedMessage, ref currentIndex);
             Goal = (TGoal)Activator.CreateInstance(typeof(TGoal), serializedMessage, currentIndex);
+        }
+
+
+        public override string MessageDefinition()
+        {
+            string definition = "Header header\nactionlib_msgs/GoalID goal_id\n";
+            definition += typeof(TGoal).ToString().Replace("Messages.", "").Replace(".", "/");
+            definition += " goal";
+
+            return definition;
+        }
+
+
+        public override string MD5Sum()
+        {
+            var messageDefinition = new List<string>();
+            messageDefinition.Add((new Messages.std_msgs.Header()).MD5Sum() + " header");
+            messageDefinition.Add((new Messages.actionlib_msgs.GoalID()).MD5Sum() + " goal_id");
+            messageDefinition.Add((new TGoal()).MD5Sum() + " goal");
+
+            var hashText = string.Join("\n", messageDefinition);
+            var md5sum = CalcMd5(hashText);
+            return md5sum;
         }
 
 
@@ -371,6 +413,24 @@ namespace Messages
 
             return result;
         }
+
+
+        private string CalcMd5(string hashText)
+        {
+            string md5sum;
+            using (var md5 = MD5.Create())
+            {
+                var md5Hash = md5.ComputeHash(Encoding.ASCII.GetBytes(hashText));
+                StringBuilder hashBuilder = new StringBuilder();
+                for (int i = 0; i < md5Hash.Length; i++)
+                {
+                    hashBuilder.Append(md5Hash[i].ToString("x2"));
+                }
+                md5sum = hashBuilder.ToString();
+            }
+
+            return md5sum;
+        }
     }
 
 
@@ -397,6 +457,20 @@ namespace Messages
         public bool Equals(ResultActionMessage<TResult> message)
         {
             return base.Equals(message);
+        }
+
+
+        public override string MD5Sum()
+        {
+            var messageDefinition = new List<string>();
+            messageDefinition.Add((new Messages.std_msgs.Header()).MD5Sum() + " header");
+            messageDefinition.Add((new Messages.actionlib_msgs.GoalStatus()).MD5Sum() + " status");
+            messageDefinition.Add((new TResult()).MD5Sum() + " result");
+
+            var hashText = string.Join("\n", messageDefinition);
+            Console.WriteLine(hashText);
+            var md5sum = CalcMd5(hashText);
+            return md5sum;
         }
     }
 
@@ -425,6 +499,22 @@ namespace Messages
         {
             return base.Equals(message);
         }
+
+
+        public override string MD5Sum()
+        {
+            var messageDefinition = new List<string>();
+            messageDefinition.Add((new Messages.std_msgs.Header()).MD5Sum() + " header");
+            messageDefinition.Add((new Messages.actionlib_msgs.GoalStatus()).MD5Sum() + " status");
+            messageDefinition.Add((new TFeedback()).MD5Sum() + " feedback");
+
+            var hashText = string.Join("\n", messageDefinition);
+            Console.WriteLine(hashText);
+            var md5sum = CalcMd5(hashText);
+            return md5sum;
+        }
     }
+
+
 
 }
