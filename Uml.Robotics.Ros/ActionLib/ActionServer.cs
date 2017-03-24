@@ -11,9 +11,9 @@ using Messages;
 namespace Uml.Robotics.Ros.ActionLib
 {
     class ActionServer<TGoal, TResult, TFeedback> : IActionServer<TGoal, TResult, TFeedback>
-        where TGoal : RosMessage, IActionGoal, new()
-        where TResult : RosMessage, IActionResult, new()
-        where TFeedback : RosMessage, IActionFeedback, new()
+        where TGoal : InnerActionMessage, new()
+        where TResult : InnerActionMessage, new()
+        where TFeedback : InnerActionMessage, new()
     {
         public int QueueSize { get; set; } = 50;
         public TimeSpan StatusListTimeout { get; private set; } = new TimeSpan(0, 0, 5);
@@ -27,10 +27,10 @@ namespace Uml.Robotics.Ros.ActionLib
         private DateTime lastCancel;
         private Action<ServerGoalHandle<TGoal, TResult, TFeedback>> goalCallback;
         private Action<ServerGoalHandle<TGoal, TResult, TFeedback>> cancelCallback;
-        private Publisher<TResult> resultPublisher;
-        private Publisher<TFeedback> feedbackPublisher;
+        private Publisher<ResultActionMessage<TResult>> resultPublisher;
+        private Publisher<FeedbackActionMessage<TFeedback>> feedbackPublisher;
         private Publisher<GoalStatusArray> goalStatusPublisher;
-        private Subscriber<TGoal> goalSubscriber;
+        private Subscriber<GoalActionMessage<TGoal>> goalSubscriber;
         private Subscriber<GoalID> cancelSubscriber;
         private TimeSpan statusInterval;
         private DateTime nextStatusPublishTime;
@@ -95,8 +95,8 @@ namespace Uml.Robotics.Ros.ActionLib
             }
 
             // Emmitting topics
-            resultPublisher = nodeHandle.advertise<TResult>("result", QueueSize);
-            feedbackPublisher = nodeHandle.advertise<TFeedback>("feedback", QueueSize);
+            resultPublisher = nodeHandle.advertise<ResultActionMessage<TResult>>("result", QueueSize);
+            feedbackPublisher = nodeHandle.advertise<FeedbackActionMessage<TFeedback>>("feedback", QueueSize);
             goalStatusPublisher = nodeHandle.advertise<GoalStatusArray>("status", QueueSize);
 
             // Read the frequency with which to publish status from the parameter server
@@ -126,7 +126,7 @@ namespace Uml.Robotics.Ros.ActionLib
             }
 
             // Message consumers
-            goalSubscriber = nodeHandle.subscribe<TGoal>("goal", (uint)QueueSize, GoalCallback);
+            goalSubscriber = nodeHandle.subscribe<GoalActionMessage<TGoal>>("goal", (uint)QueueSize, GoalCallback);
             cancelSubscriber = nodeHandle.subscribe<GoalID>("cancel", (uint)QueueSize, CancelCallback);
 
             started = true;
@@ -136,7 +136,7 @@ namespace Uml.Robotics.Ros.ActionLib
 
         public void PublishFeedback(GoalStatus goalStatus, TFeedback feedback)
         {
-            var newFeedback = new TFeedback();
+            var newFeedback = new FeedbackActionMessage<TFeedback>();
             newFeedback.Header.stamp = ROS.GetTime();
             newFeedback.GoalStatus = goalStatus;
             newFeedback.Feedback = feedback;
@@ -149,12 +149,12 @@ namespace Uml.Robotics.Ros.ActionLib
 
         public void PublishResult(GoalStatus goalStatus, TResult result)
         {
-            var newResult = new TResult();
+            var newResult = new ResultActionMessage<TResult>();
             newResult.Header.stamp = ROS.GetTime();
             newResult.GoalStatus = goalStatus;
             if (result != null)
             {
-                newResult.Result = result.Result;
+                newResult.Result = result;
             }
             ROS.Debug()("actionlib", $"Publishing result for goal with id: {goalStatus.goal_id.id} and stamp: " +
                 $"{new DateTimeOffset(ROS.GetTime(goalStatus.goal_id.stamp)).ToUnixTimeSeconds()}"
@@ -238,14 +238,14 @@ namespace Uml.Robotics.Ros.ActionLib
         }
 
 
-        private void GoalCallback(TGoal goal)
+        private void GoalCallback(GoalActionMessage<TGoal> goalAction)
         {
             if (!started)
             {
                 return;
             }
 
-            GoalID goalId = goal.GoalId;
+            GoalID goalId = goalAction.GoalId;
 
             ROS.Debug()("actionlib", "The action server has received a new goal request");
             ServerGoalHandle<TGoal, TResult, TFeedback> observedGoalHandle = null;
@@ -268,7 +268,7 @@ namespace Uml.Robotics.Ros.ActionLib
                 GoalStatus goalStatus = new GoalStatus();
                 goalStatus.status = GoalStatus.PENDING;
                 var newGoalHandle = new ServerGoalHandle<TGoal, TResult, TFeedback>(this, goalId,
-                    goalStatus, goal
+                    goalStatus, goalAction.Goal
                 );
                 goalHandles[goalId.id] = newGoalHandle;
                 goalCallback?.Invoke(newGoalHandle);

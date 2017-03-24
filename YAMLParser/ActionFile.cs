@@ -68,9 +68,8 @@ namespace FauxMessages
         /// <summary>
         /// Loads the template for a single message and replaces all the $placeholders with appropriate content
         /// </summary>
-        public string GenerateMessageFromTemplate(MsgsFile message, MsgsFile childMessage)
+        public string GenerateMessageFromTemplate(string template, MsgsFile message, MsgsFile childMessage)
         {
-            string template = Templates.ActionMessageTemplate;
             var properties = message.GenerateProperties();
             template = template.Replace("$CLASS_NAME", message.classname);
             template = template.Replace("$$PROPERTIES", properties);
@@ -83,13 +82,15 @@ namespace FauxMessages
 
             template = template.Replace("$MD5SUM", MD5.Sum(message));
 
-            // Add Action related interface implementations, if this is a ActionMessage (e.g. add implemetation for IActionGoal)
-            var actionInterfaces = new List<string> {"", ", IActionGoal", ", IActionResult", ", IActionFeedback" };
-            template = template.Replace("$ACTION_INTERFACE", actionInterfaces[(int)message.ActionMessageType]);
-            var actionCast = childMessage != null ? $"({childMessage.Name})" : "";
-            template = template.Replace("$ACTION_PROPERTY",
-                actionInterfaceImplementations[(int)message.ActionMessageType].Replace("$ACTION_CAST", actionCast)
-            );
+            // Set the base class of the message
+            var actionClasses = new List<string> { "InnerActionMessage",
+                "GoalActionMessage<$ACTION_GENERIC>",
+                "ResultActionMessage<$ACTION_GENERIC>",
+                "FeedbackActionMessage<$ACTION_GENERIC>"
+            };
+            var actionClass = actionClasses[(int)message.ActionMessageType];
+            actionClass = actionClass.Replace("$ACTION_GENERIC", childMessage != null ? childMessage.Name : "");
+            template = template.Replace("$ACTION_CLASS", actionClass);
 
             string deserializationCode = "";
             string serializationCode = "";
@@ -131,9 +132,11 @@ namespace FauxMessages
 
             foreach (var messagePair in messages)
             {
-                var generatedCode = GenerateMessageFromTemplate(messagePair.InnerMessage, null);
+                var generatedCode = GenerateMessageFromTemplate(Templates.InnerMessageTemplate, messagePair.InnerMessage, null);
                 template = template.Replace(messagePair.InnerMessagePlaceHolder, generatedCode);
-                generatedCode = GenerateMessageFromTemplate(messagePair.OuterMessage, messagePair.InnerMessage);
+                generatedCode = GenerateMessageFromTemplate(Templates.ActionMessageTemplate, messagePair.OuterMessage,
+                    messagePair.InnerMessage
+                );
                 template = template.Replace(messagePair.OuterMessagePlaceHoder, generatedCode);
             }
 
@@ -277,16 +280,13 @@ namespace FauxMessages
             "",
             // Goal Action Message
             "public Messages.std_msgs.Header Header { get { return header; } set { header = value; } }" + "\n" +
-            "public Messages.actionlib_msgs.GoalID GoalId { get { return goal_id; } set { goal_id = value; } }" + "\n" +
-            "public RosMessage Goal { get { return goal; } set { goal = $ACTION_CAST value; } }" + "\n",
+            "public Messages.actionlib_msgs.GoalID GoalId { get { return goal_id; } set { goal_id = value; } }",
             // Result Action Message
             "public Messages.std_msgs.Header Header { get { return header; } set { header = value; } }" + "\n" +
-            "public Messages.actionlib_msgs.GoalStatus GoalStatus { get { return status; } set { status = value; } }" + "\n" +
-            "public RosMessage Result { get { return result; } set { result = $ACTION_CAST value; } }",
+            "public Messages.actionlib_msgs.GoalStatus GoalStatus { get { return status; } set { status = value; } }",
             // Feedback Action Message
             "public Messages.std_msgs.Header Header { get { return header; } set { header = value; } }" + "\n" +
-            "public Messages.actionlib_msgs.GoalStatus GoalStatus { get { return status; } set { status = value; } }" + "\n" +
-            "public RosMessage Feedback { get { return feedback; } set { feedback = $ACTION_CAST value; } }"
+            "public Messages.actionlib_msgs.GoalStatus GoalStatus { get { return status; } set { status = value; } }",
         };
     }
 

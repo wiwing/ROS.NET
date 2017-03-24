@@ -23,7 +23,7 @@ namespace Messages
                 if (constructors.ContainsKey(t))
                     return constructors[t].Invoke(t);
 
-                Type thistype = typeof (RosMessage);
+                Type thistype = typeof(RosMessage);
                 foreach (Type othertype in thistype.GetTypeInfo().Assembly.GetTypes())
                 {
                     if (thistype == othertype || !othertype.GetTypeInfo().IsSubclassOf(thistype))
@@ -160,7 +160,7 @@ namespace Messages
             {
                 if (constructors.ContainsKey(t))
                     return constructors[t].Invoke(t);
-                Type thistype = typeof (RosService);
+                Type thistype = typeof(RosService);
                 foreach (Type othertype in thistype.GetTypeInfo().Assembly.GetTypes())
                 {
                     if (thistype == othertype || !othertype.GetTypeInfo().IsSubclassOf(thistype))
@@ -177,8 +177,8 @@ namespace Messages
                             _typeregistry.Add(srv.srvtype(), srv.GetType());
                         if (!constructors.ContainsKey(srv.srvtype()))
                             constructors.Add(srv.srvtype(), T => Activator.CreateInstance(_typeregistry[T]) as RosService);
-                        srv.RequestMessage = RosMessage.generate((MsgTypes) Enum.Parse(typeof (MsgTypes), srv.srvtype() + "__Request"));
-                        srv.ResponseMessage = RosMessage.generate((MsgTypes) Enum.Parse(typeof (MsgTypes), srv.srvtype() + "__Response"));
+                        srv.RequestMessage = RosMessage.generate((MsgTypes)Enum.Parse(typeof(MsgTypes), srv.srvtype() + "__Request"));
+                        srv.ResponseMessage = RosMessage.generate((MsgTypes)Enum.Parse(typeof(MsgTypes), srv.srvtype() + "__Response"));
                     }
                 }
 
@@ -212,26 +212,219 @@ namespace Messages
     }
 
 
-    public interface IActionGoal
+    public class InnerActionMessage : RosMessage
     {
-        Messages.std_msgs.Header Header { get; set; }
-        Messages.actionlib_msgs.GoalID GoalId { get; set; }
-        RosMessage Goal { get; set; }
+
     }
 
 
-    public interface IActionResult
+    public class WrappedFeedbackMessage<T>: RosMessage where T : InnerActionMessage, new()
     {
-        Messages.std_msgs.Header Header { get; set; }
-        Messages.actionlib_msgs.GoalStatus GoalStatus { get; set; }
-        RosMessage Result { get; set; }
+        public Messages.std_msgs.Header Header { get; set; }
+        public Messages.actionlib_msgs.GoalStatus GoalStatus { get; set; }
+        protected T Content { get; set; }
+
+
+        public WrappedFeedbackMessage() : base()
+        {
+        }
+
+
+        public WrappedFeedbackMessage(byte[] serializedMessage)
+        {
+            Deserialize(serializedMessage);
+        }
+
+
+        public WrappedFeedbackMessage(byte[] serializedMessage, ref int currentIndex)
+        {
+            Deserialize(serializedMessage, ref currentIndex);
+        }
+
+
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
+        {
+            Header = new Messages.std_msgs.Header(serializedMessage, ref currentIndex);
+            GoalStatus = new Messages.actionlib_msgs.GoalStatus(serializedMessage, ref currentIndex);
+            Content = (T)Activator.CreateInstance(typeof(T), serializedMessage, currentIndex);
+        }
+
+
+        public override byte[] Serialize(bool partofsomethingelse)
+        {
+            List<byte[]> pieces = new List<byte[]>();
+
+            if (Header == null)
+                Header = new Messages.std_msgs.Header();
+            pieces.Add(Header.Serialize(true));
+
+            if (GoalStatus == null)
+                GoalStatus = new Messages.actionlib_msgs.GoalStatus();
+            pieces.Add(GoalStatus.Serialize(true));
+
+            if (Content == null)
+                Content = new T();
+            pieces.Add(Content.Serialize(true));
+
+            // combine every array in pieces into one array and return it
+            int __a_b__f = pieces.Sum((__a_b__c) => __a_b__c.Length);
+            int __a_b__e = 0;
+            byte[] __a_b__d = new byte[__a_b__f];
+            foreach (var __p__ in pieces)
+            {
+                Array.Copy(__p__, 0, __a_b__d, __a_b__e, __p__.Length);
+                __a_b__e += __p__.Length;
+            }
+            return __a_b__d;
+        }
+
+
+        public bool Equals(WrappedFeedbackMessage<T> message)
+        {
+            if (message == null)
+            {
+                return false;
+            }
+
+            bool result = true;
+            result &= Header.Equals(message.Header);
+            result &= GoalStatus.Equals(message.GoalStatus);
+            result &= Content.Equals(message.Content);
+
+            return result;
+        }
     }
 
 
-    public interface IActionFeedback
+    public class GoalActionMessage<TGoal> : RosMessage where TGoal : InnerActionMessage, new()
     {
-        Messages.std_msgs.Header Header { get; set; }
-        Messages.actionlib_msgs.GoalStatus GoalStatus { get; set; }
-        RosMessage Feedback { get; set; }
+        public Messages.std_msgs.Header Header { get; set; }
+        public Messages.actionlib_msgs.GoalID GoalId { get; set; }
+        public TGoal Goal { get; set; }
+
+
+        public GoalActionMessage() : base()
+        {
+        }
+
+
+        public GoalActionMessage(byte[] serializedMessage)
+        {
+            Deserialize(serializedMessage);
+        }
+
+
+        public GoalActionMessage(byte[] serializedMessage, ref int currentIndex)
+        {
+            Deserialize(serializedMessage, ref currentIndex);
+        }
+
+
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
+        {
+            Header = new Messages.std_msgs.Header(serializedMessage, ref currentIndex);
+            GoalId = new Messages.actionlib_msgs.GoalID(serializedMessage, ref currentIndex);
+            Goal = (TGoal)Activator.CreateInstance(typeof(TGoal), serializedMessage, currentIndex);
+        }
+
+
+        public override byte[] Serialize(bool partofsomethingelse)
+        {
+            List<byte[]> pieces = new List<byte[]>();
+
+            if (Header == null)
+                Header = new Messages.std_msgs.Header();
+            pieces.Add(Header.Serialize(true));
+
+            if (GoalId == null)
+                GoalId = new Messages.actionlib_msgs.GoalID();
+            pieces.Add(GoalId.Serialize(true));
+
+            if (Goal == null)
+                Goal = new TGoal();
+            pieces.Add(Goal.Serialize(true));
+
+            // combine every array in pieces into one array and return it
+            int __a_b__f = pieces.Sum((__a_b__c) => __a_b__c.Length);
+            int __a_b__e = 0;
+            byte[] __a_b__d = new byte[__a_b__f];
+            foreach (var __p__ in pieces)
+            {
+                Array.Copy(__p__, 0, __a_b__d, __a_b__e, __p__.Length);
+                __a_b__e += __p__.Length;
+            }
+            return __a_b__d;
+        }
+
+
+        public bool Equals(GoalActionMessage<TGoal> message)
+        {
+            if (message == null)
+            {
+                return false;
+            }
+
+            bool result = true;
+            result &= Header.Equals(message.Header);
+            result &= GoalId.Equals(message.GoalId);
+            result &= Goal.Equals(message.Goal);
+
+            return result;
+        }
     }
+
+
+    public class ResultActionMessage<TResult> : WrappedFeedbackMessage<TResult> where TResult : InnerActionMessage, new()
+    {
+        public TResult Result { get { return Content; } set { Content = value; } }
+
+
+        public ResultActionMessage() : base()
+        {
+        }
+
+
+        public ResultActionMessage(byte[] serializedMessage) : base(serializedMessage)
+        {
+        }
+
+
+        public ResultActionMessage(byte[] serializedMessage, ref int currentIndex) : base(serializedMessage, ref currentIndex)
+        {
+        }
+
+
+        public bool Equals(ResultActionMessage<TResult> message)
+        {
+            return base.Equals(message);
+        }
+    }
+
+
+    public class FeedbackActionMessage<TFeedback> : WrappedFeedbackMessage<TFeedback> where TFeedback : InnerActionMessage, new()
+    {
+        public TFeedback Feedback { get { return base.Content; } set { base.Content = value; } }
+
+
+        public FeedbackActionMessage() : base()
+        {
+        }
+
+
+        public FeedbackActionMessage(byte[] serializedMessage) : base(serializedMessage)
+        {
+        }
+
+
+        public FeedbackActionMessage(byte[] serializedMessage, ref int currentIndex) : base(serializedMessage, ref currentIndex)
+        {
+        }
+
+
+        public bool Equals(FeedbackActionMessage<TFeedback> message)
+        {
+            return base.Equals(message);
+        }
+    }
+
 }

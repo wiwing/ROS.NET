@@ -7,23 +7,23 @@ using Messages.actionlib_msgs;
 
 namespace Uml.Robotics.Ros.ActionLib
 {
-    class ActionClient<TGoal, TResult, TFeedback, TGoalAction, TResultAction, TFeedbackAction>
-        where TGoalAction : RosMessage, IActionGoal, new()
-        where TResultAction : RosMessage, IActionResult, new()
-        where TFeedbackAction : RosMessage, IActionFeedback, new()
+    class ActionClient<TGoal, TResult, TFeedback>
+        where TGoal : InnerActionMessage, new()
+        where TResult : InnerActionMessage, new()
+        where TFeedback : InnerActionMessage, new()
     {
         public string Name { get; private set; }
         public int QueueSize { get; set; } = 50;
 
         private NodeHandle nodeHandle;
         private bool statusReceived;
-        private List<TGoalAction> goals;
+        private List<TGoal> goals;
         private Dictionary<string, int> goalSubscriberCount;
         private Dictionary<string, int> cancelSubscriberCount;
         private Subscriber<GoalStatusArray> statusSubscriber;
-        private Subscriber<TFeedbackAction> feedbackSubscriber;
-        private Subscriber<TResultAction> resultSubscriber;
-        private Publisher<TGoalAction> goalPublisher;
+        private Subscriber<FeedbackActionMessage<TFeedback>> feedbackSubscriber;
+        private Subscriber<ResultActionMessage<TResult>> resultSubscriber;
+        private Publisher<GoalActionMessage<TGoal>> goalPublisher;
         private Publisher<GoalID> cancelPublisher;
         private int nextGoalId = 0; // Shared amon all clients
 
@@ -33,23 +33,25 @@ namespace Uml.Robotics.Ros.ActionLib
             this.Name = name;
             this.nodeHandle = new NodeHandle(parentNodeHandle, name);
             this.statusReceived = false;
-            this.goals = new List<TGoalAction>();
+            this.goals = new List<TGoal>();
             this.goalSubscriberCount = new Dictionary<string, int>();
             this.cancelSubscriberCount = new Dictionary<string, int>();
 
             statusSubscriber = nodeHandle.subscribe<GoalStatusArray>("status", (uint)QueueSize, OnStatusMessage);
-            feedbackSubscriber = nodeHandle.subscribe<TFeedbackAction>("status", (uint)QueueSize, OnFeedbackMessage);
-            resultSubscriber = nodeHandle.subscribe<TResultAction>("status", (uint)QueueSize, OnResultMessage);
+            feedbackSubscriber = nodeHandle.subscribe<FeedbackActionMessage<TFeedback>>("status", (uint)QueueSize, OnFeedbackMessage);
+            resultSubscriber = nodeHandle.subscribe<ResultActionMessage<TResult>>("status", (uint)QueueSize, OnResultMessage);
 
-            goalPublisher = nodeHandle.advertise<TGoalAction>("goal", QueueSize, OnGoalConnectCallback, OnGoalDisconnectCallback);
+            goalPublisher = nodeHandle.advertise<GoalActionMessage<TGoal>>("goal", QueueSize, OnGoalConnectCallback,
+                OnGoalDisconnectCallback
+            );
             cancelPublisher = nodeHandle.advertise<GoalID>("cancel", QueueSize, OnCancelConnectCallback,
                 OnCancelDisconnectCallback);
         }
 
 
-        public void SendGoal(TGoal goal, Action<ClientGoalHandle<TResult, TGoalAction, TFeedbackAction>> OnTransistionCallback)
+        public void SendGoal(TGoal goal, Action<ClientGoalHandle<TGoal, TResult, TFeedback>> OnTransistionCallback)
         {
-            var goalAction = new TGoalAction();
+            var goalAction = new GoalActionMessage<TGoal>();
 
         }
 
@@ -89,7 +91,7 @@ namespace Uml.Robotics.Ros.ActionLib
         }
 
 
-        private void OnFeedbackMessage(TFeedbackAction feedback)
+        private void OnFeedbackMessage(FeedbackActionMessage<TFeedback> feedback)
         {
             throw new NotImplementedException();
         }
@@ -130,7 +132,7 @@ namespace Uml.Robotics.Ros.ActionLib
         }
 
 
-        private void OnResultMessage(TResultAction result)
+        private void OnResultMessage(ResultActionMessage<TResult> result)
         {
             throw new NotImplementedException();
         }

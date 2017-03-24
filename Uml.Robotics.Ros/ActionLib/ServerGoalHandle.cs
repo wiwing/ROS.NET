@@ -12,9 +12,9 @@ using Uml.Robotics.Ros.ActionLib.Interfaces;
 namespace Uml.Robotics.Ros.ActionLib
 {
     class ServerGoalHandle<TGoal, TResult, TFeedback>
-        where TGoal : RosMessage, IActionGoal, new()
-        where TResult : RosMessage, IActionResult, new()
-        where TFeedback : RosMessage, IActionFeedback, new()
+        where TGoal : InnerActionMessage, new()
+        where TResult : InnerActionMessage, new()
+        where TFeedback : InnerActionMessage, new()
     {
         public GoalStatus GoalStatus { get; private set; }
         public GoalID GoalId { get; private set; }

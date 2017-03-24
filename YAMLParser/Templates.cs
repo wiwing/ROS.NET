@@ -13,6 +13,7 @@ namespace YAMLParser
             Templates.SrvPlaceHolder = File.ReadAllText(Path.Combine(templateProjectPath, "SrvPlaceHolder._cs"));
             Templates.ActionMessagesPlaceHolder = File.ReadAllText(Path.Combine(templateProjectPath, "ActionMessagesPlaceHolder._cs"));
             Templates.ActionMessageTemplate = File.ReadAllText(Path.Combine(templateProjectPath, "ActionMessageTemplate._cs"));
+            Templates.InnerMessageTemplate = File.ReadAllText(Path.Combine(templateProjectPath, "InnerMessageTemplate._cs"));
         }
 
         internal static string Interfaces { get; set; }
@@ -22,5 +23,6 @@ namespace YAMLParser
         internal static string ActionPlaceHolder { get; set; }
         internal static string ActionMessagesPlaceHolder { get; set; }
         internal static string ActionMessageTemplate { get; set; }
+        internal static string InnerMessageTemplate { get; set; }
     }
 }
