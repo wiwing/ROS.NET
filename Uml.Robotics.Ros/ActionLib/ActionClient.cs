@@ -95,6 +95,7 @@ namespace Uml.Robotics.Ros.ActionLib
 
             // Prepaer Goal Message
             var goalAction = new GoalActionMessage<TGoal>();
+            goalAction.Header = new Messages.std_msgs.Header();
             goalAction.Header.stamp = ROS.GetTime();
             goalAction.GoalId = goalId;
             goalAction.Goal = goal;

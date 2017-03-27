@@ -39,9 +39,6 @@ namespace Uml.Robotics.Ros.IntegrationTests
             Console.WriteLine("Start Server");
             actionServer.Start();
 
-            Console.WriteLine("Start Client");
-            actionServer.Start();
-
             bool goalRegistered = false;
             actionServer.RegisterGoalCallback((goalHandle) =>
             {
@@ -50,7 +47,7 @@ namespace Uml.Robotics.Ros.IntegrationTests
             });
 
             Console.WriteLine("Wait for client and server to negotiate connection");
-            bool started = actionClient.WaitForActionServerToStart(new TimeSpan(0, 0, 10));
+            bool started = actionClient.WaitForActionServerToStart(new TimeSpan(0, 0, 20));
             Assert.Equal(true, started);
 
             var goal = new FollowJointTrajectoryGoal();

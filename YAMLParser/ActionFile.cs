@@ -134,10 +134,10 @@ namespace FauxMessages
             {
                 var generatedCode = GenerateMessageFromTemplate(Templates.InnerMessageTemplate, messagePair.InnerMessage, null);
                 template = template.Replace(messagePair.InnerMessagePlaceHolder, generatedCode);
-                generatedCode = GenerateMessageFromTemplate(Templates.ActionMessageTemplate, messagePair.OuterMessage,
+                /*generatedCode = GenerateMessageFromTemplate(Templates.ActionMessageTemplate, messagePair.OuterMessage,
                     messagePair.InnerMessage
                 );
-                template = template.Replace(messagePair.OuterMessagePlaceHoder, generatedCode);
+                template = template.Replace(messagePair.OuterMessagePlaceHoder, generatedCode);*/
             }
 
             return template;

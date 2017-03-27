@@ -22,38 +22,78 @@ namespace Messages
             lock (constructors)
             {
                 if (constructors.ContainsKey(t))
-                    return constructors[t].Invoke(t);
-
-                Type thistype = typeof(RosMessage);
-                foreach (Type othertype in thistype.GetTypeInfo().Assembly.GetTypes())
                 {
-                    if (thistype == othertype || !othertype.GetTypeInfo().IsSubclassOf(thistype))
+                    return constructors[t].Invoke(t);
+                }
+                else
+                {
+                    throw new ArgumentException($"Could not find a RosMessage for {t}", nameof(t));
+                }
+            }
+        }
+
+
+        public static void ParseAssemblyAndRegisterRosMessages(Assembly assembly)
+        {
+            foreach (Type othertype in assembly.GetTypes())
+            {
+                var messageInfo = othertype.GetTypeInfo();
+                if (othertype == typeof(RosMessage) || !messageInfo.IsSubclassOf(typeof(RosMessage)) || othertype == typeof(InnerActionMessage))
+                {
+                    continue;
+                }
+
+                var goalAttribute = messageInfo.GetCustomAttribute<ActionGoalMessageAttribute>();
+                var resultAttribute = messageInfo.GetCustomAttribute<ActionResultMessageAttribute>();
+                var feedbackAttribute = messageInfo.GetCustomAttribute<ActionFeedbackMessageAttribute>();
+                var ignoreAttribute = messageInfo.GetCustomAttribute<IgnoreRosMessageAttribute>();
+                RosMessage message;
+                if ((goalAttribute != null) || (resultAttribute != null) || (feedbackAttribute != null) || (ignoreAttribute != null))
+                {
+                    Type actionType;
+                    if (goalAttribute != null)
+                    {
+                        actionType = typeof(GoalActionMessage<>);
+                    }
+                    else if (resultAttribute != null)
+                    {
+                        actionType = typeof(ResultActionMessage<>);
+                    }
+                    else if (feedbackAttribute != null)
+                    {
+                        actionType = typeof(FeedbackActionMessage<>);
+                    }
+                    else if (ignoreAttribute != null)
                     {
                         continue;
                     }
-
-                    var othertypeInfo = othertype.GetTypeInfo();
-                    if (othertype == typeof(InnerActionMessage) || othertypeInfo.ContainsGenericParameters)
+                    else
                     {
-                        continue;
+                        throw new InvalidOperationException($"Could create Action Message for {othertype}");
                     }
-
-                    RosMessage msg = Activator.CreateInstance(othertype) as RosMessage;
-                    if (msg != null)
+                    Type[] innerType = { othertype };
+                    var goalMessageType = actionType.MakeGenericType(innerType);
+                    message = (Activator.CreateInstance(goalMessageType)) as RosMessage;
+                }
+                else
+                {
+                    message = Activator.CreateInstance(othertype) as RosMessage;
+                    if ((message != null) && (message.MessageType == "xamla/unkown"))
                     {
-                        if (msg.MessageType == "xamla/unkown")
-                        {
-                            throw new Exception("Invalid message type. Message type field (msgtype) was not initialized correctly.");
-                        }
-                        if (!_typeregistry.ContainsKey(msg.MessageType))
-                            _typeregistry.Add(msg.MessageType, msg.GetType());
-                        if (!constructors.ContainsKey(msg.MessageType))
-                            constructors.Add(msg.MessageType, T => Activator.CreateInstance(_typeregistry[T]) as RosMessage);
+                        throw new Exception("Invalid message type. Message type field (msgtype) was not initialized correctly.");
                     }
                 }
 
-                return constructors[t].Invoke(t);
+                if (!_typeregistry.ContainsKey(message.MessageType))
+                {
+                    _typeregistry.Add(message.MessageType, message.GetType());
+                }
+                if (!constructors.ContainsKey(message.MessageType))
+                {
+                    constructors.Add(message.MessageType, T => Activator.CreateInstance(_typeregistry[T]) as RosMessage);
+                }
             }
+            var test = 1;
         }
 
         public virtual string MD5Sum() { return ""; }
@@ -221,12 +261,13 @@ namespace Messages
     }
 
 
+    [IgnoreRosMessage]
     public class InnerActionMessage : RosMessage
     {
 
     }
 
-
+    [IgnoreRosMessage]
     public class WrappedFeedbackMessage<T>: RosMessage where T : InnerActionMessage, new()
     {
         public Messages.std_msgs.Header Header { get; set; }
@@ -323,6 +364,7 @@ namespace Messages
     }
 
 
+    [IgnoreRosMessage]
     public class GoalActionMessage<TGoal> : RosMessage where TGoal : InnerActionMessage, new()
     {
         public Messages.std_msgs.Header Header { get; set; }
@@ -451,6 +493,7 @@ namespace Messages
     }
 
 
+    [IgnoreRosMessage]
     public class ResultActionMessage<TResult> : WrappedFeedbackMessage<TResult> where TResult : InnerActionMessage, new()
     {
         public TResult Result { get { return Content; } set { Content = value; } }
@@ -508,6 +551,7 @@ namespace Messages
     }
 
 
+    [IgnoreRosMessage]
     public class FeedbackActionMessage<TFeedback> : WrappedFeedbackMessage<TFeedback> where TFeedback : InnerActionMessage, new()
     {
         public TFeedback Feedback { get { return base.Content; } set { base.Content = value; } }
@@ -566,5 +610,26 @@ namespace Messages
     }
 
 
+    public class ActionGoalMessageAttribute : Attribute
+    {
 
+    }
+
+
+    public class ActionResultMessageAttribute : Attribute
+    {
+
+    }
+
+
+    public class ActionFeedbackMessageAttribute : Attribute
+    {
+
+    }
+
+
+    public class IgnoreRosMessageAttribute : Attribute
+    {
+
+    }
 }

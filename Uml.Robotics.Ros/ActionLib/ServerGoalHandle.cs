@@ -29,6 +29,8 @@ namespace Uml.Robotics.Ros.ActionLib
             TGoal goal)
         {
             this.actionServer = actionServer;
+            GoalStatus = goalStatus;
+            GoalId = goalId;
             GoalStatus.goal_id = goalId;
 
             if ((goalId.stamp == null) || (ROS.GetTime(goalId.stamp) == new DateTime(1970, 1, 1, 0, 0, 0)))
