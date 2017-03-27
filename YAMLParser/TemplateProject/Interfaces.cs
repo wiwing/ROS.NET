@@ -32,11 +32,19 @@ namespace Messages
                         continue;
                     }
 
+                    var othertypeInfo = othertype.GetTypeInfo();
+                    if (othertype == typeof(InnerActionMessage) || othertypeInfo.ContainsGenericParameters)
+                    {
+                        continue;
+                    }
+
                     RosMessage msg = Activator.CreateInstance(othertype) as RosMessage;
                     if (msg != null)
                     {
                         if (msg.msgtype() == MsgTypes.Unknown)
+                        {
                             throw new Exception("Invalid message type. Message type field (msgtype) was not initialized correctly.");
+                        }
                         if (!_typeregistry.ContainsKey(msg.msgtype()))
                             _typeregistry.Add(msg.msgtype(), msg.GetType());
                         if (!constructors.ContainsKey(msg.msgtype()))
