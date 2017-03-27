@@ -65,7 +65,7 @@ namespace Uml.Robotics.Ros
                 parent.removeSubscriberLink(this);
         }
 
-        public override void getPublishTypes(ref bool ser, ref bool nocopy, MsgTypes mt)
+        public override void getPublishTypes(ref bool ser, ref bool nocopy, string messageType)
         {
             lock (drop_mutex)
             {
@@ -76,7 +76,7 @@ namespace Uml.Robotics.Ros
                     return;
                 }
             }
-            subscriber.getPublishTypes(ref ser, ref nocopy, mt);
+            subscriber.getPublishTypes(ref ser, ref nocopy, messageType);
         }
     }
 }

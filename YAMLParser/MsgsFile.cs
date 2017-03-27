@@ -448,7 +448,7 @@ namespace FauxMessages
             }
             GUTS = GUTS.Replace("$WHATAMI", classname);
             GUTS = GUTS.Replace("$MYISMETA", meta.ToString().ToLower());
-            GUTS = GUTS.Replace("$MYMSGTYPE", "MsgTypes." + Namespace.Replace("Messages.", "") + "__" + classname);
+            GUTS = GUTS.Replace("$MYMSGTYPE", Namespace.Replace("Messages.", "") + "/" + classname);
             for (int i = 0; i < def.Count; i++)
             {
                 while (def[i].Contains("\t"))

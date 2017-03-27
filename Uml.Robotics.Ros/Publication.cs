@@ -346,14 +346,14 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        internal void getPublishTypes(ref bool serialize, ref bool nocopy, MsgTypes typeEnum)
+        internal void getPublishTypes(ref bool serialize, ref bool nocopy, string messageType)
         {
             lock (subscriber_links_mutex)
             {
                 foreach (SubscriberLink sub in subscriber_links)
                 {
                     bool s = false, n = false;
-                    sub.getPublishTypes(ref s, ref n, typeEnum);
+                    sub.getPublishTypes(ref s, ref n, messageType);
                     serialize = serialize || s;
                     nocopy = nocopy || n;
                     if (serialize && nocopy)

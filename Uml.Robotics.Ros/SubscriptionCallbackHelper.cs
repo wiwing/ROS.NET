@@ -10,12 +10,12 @@ namespace Uml.Robotics.Ros
 {
     public class SubscriptionCallbackHelper<M> : ISubscriptionCallbackHelper where M : RosMessage, new()
     {
-        public SubscriptionCallbackHelper(MsgTypes t, CallbackDelegate<M> cb) : this(new Callback<M>(cb))
+        public SubscriptionCallbackHelper(string t, CallbackDelegate<M> cb) : this(new Callback<M>(cb))
         {
             type = t;
         }
 
-        public SubscriptionCallbackHelper(MsgTypes t)
+        public SubscriptionCallbackHelper(string t)
         {
             type = t;
         }
@@ -36,7 +36,7 @@ namespace Uml.Robotics.Ros
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ISubscriptionCallbackHelper>();
         public CallbackInterface Callback { protected set; get; }
 
-        public MsgTypes type;
+        public string type;
 
         protected ISubscriptionCallbackHelper()
         {

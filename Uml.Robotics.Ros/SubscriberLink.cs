@@ -57,7 +57,7 @@ namespace Uml.Robotics.Ros
             throw new NotImplementedException();
         }
 
-        public virtual void getPublishTypes(ref bool ser, ref bool nocopy, MsgTypes type_info)
+        public virtual void getPublishTypes(ref bool ser, ref bool nocopy, string type_info)
         {
             ser = true;
             nocopy = false;

@@ -19,7 +19,7 @@ namespace Messages
         public override bool HasHeader() { return $MYHASHEADER; }
         public override bool IsMetaType() { return $MYISMETA; }
         public override string MessageDefinition() { return $MYMESSAGEDEFINITION; }
-        public override MsgTypes msgtype() { return $MYMSGTYPE; }
+        public override string MessageType { get { return "$MYMSGTYPE"; } }
         public override bool IsServiceComponent() { return false; }
 
         public $WHATAMI()

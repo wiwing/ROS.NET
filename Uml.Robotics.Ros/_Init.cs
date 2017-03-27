@@ -195,7 +195,7 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="type"> The type of message to make </param>
         /// <returns> A message of that type </returns>
-        internal static RosMessage MakeMessage(MsgTypes type)
+        internal static RosMessage MakeMessage(string type)
         {
             return RosMessage.generate(type);
         }

@@ -343,9 +343,9 @@ namespace Uml.Robotics.Ros
             {
                 bool nocopy = false;
                 bool serialize = false;
-                if (msg != null && msg.msgtype() != MsgTypes.Unknown)
+                if (msg != null && msg.MessageType != "xamla/unkown")
                 {
-                    p.getPublishTypes(ref serialize, ref nocopy, msg.msgtype());
+                    p.getPublishTypes(ref serialize, ref nocopy, msg.MessageType);
                 }
                 else
                     serialize = true;

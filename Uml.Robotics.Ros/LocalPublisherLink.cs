@@ -70,7 +70,7 @@ namespace Uml.Robotics.Ros
                     stats.drops += parent.handleMessage(m, ser, nocopy, m.connection_header, this);
         }
 
-        public void getPublishTypes(ref bool ser, ref bool nocopy, MsgTypes mt)
+        public void getPublishTypes(ref bool ser, ref bool nocopy, string messageType)
         {
             lock (drop_mutex)
             {
@@ -84,7 +84,7 @@ namespace Uml.Robotics.Ros
             if (parent != null)
                 lock (parent)
                 {
-                    parent.getPublishTypes(ref ser, ref nocopy, mt);
+                    parent.getPublishTypes(ref ser, ref nocopy, messageType);
                 }
             else
             {

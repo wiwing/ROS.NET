@@ -12,9 +12,9 @@ namespace Uml.Robotics.Ros
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<IServiceServerLink>();
         public bool IsValid;
         public string RequestMd5Sum;
-        public MsgTypes RequestType;
+        public string RequestType;
         public string ResponseMd5Sum;
-        public MsgTypes ResponseType;
+        public string ResponseType;
 
         private Queue<CallInfo> call_queue = new Queue<CallInfo>();
         private object call_queue_mutex = new object();
@@ -55,8 +55,8 @@ namespace Uml.Robotics.Ros
             MSrv srv = new MSrv();
             RequestMd5Sum = srv.RequestMessage.MD5Sum();
             ResponseMd5Sum = srv.ResponseMessage.MD5Sum();
-            RequestType = srv.RequestMessage.msgtype();
-            ResponseType = srv.ResponseMessage.msgtype();
+            RequestType = srv.RequestMessage.MessageType;
+            ResponseType = srv.ResponseMessage.MessageType;
         }
 
         public void initialize<MReq, MRes>() where MReq : RosMessage, new() where MRes : RosMessage, new()
@@ -65,8 +65,8 @@ namespace Uml.Robotics.Ros
             MRes res = new MRes();
             RequestMd5Sum = req.MD5Sum();
             ResponseMd5Sum = res.MD5Sum();
-            RequestType = req.msgtype();
-            ResponseType = res.msgtype();
+            RequestType = req.MessageType;
+            ResponseType = res.MessageType;
         }
 
         internal void initialize(Connection connection)
@@ -77,10 +77,10 @@ namespace Uml.Robotics.Ros
 
             IDictionary<string, string> dict = new Dictionary<string, string>();
             dict["service"] = name;
-            dict["md5sum"] = RosService.generate((SrvTypes) Enum.Parse(typeof (SrvTypes), RequestType.ToString().Replace("__Request", "").Replace("__Response", ""))).MD5Sum();
+            dict["md5sum"] = RosService.generate(RequestType.Replace("__Request", "").Replace("__Response", "")).MD5Sum();
             dict["callerid"] = this_node.Name;
             dict["persistent"] = persistent ? "1" : "0";
-            if (header_values != null) 
+            if (header_values != null)
             {
                 foreach (string o in header_values.Keys)
                 {
@@ -312,7 +312,7 @@ namespace Uml.Robotics.Ros
             if (resp == null)
             {
                 //instantiate null response IN CASE this call succeeds
-                resp = RosMessage.generate((MsgTypes) Enum.Parse(typeof (MsgTypes), req.msgtype().ToString().Replace("Request", "Response")));
+                resp = RosMessage.generate(req.MessageType.Replace("Request", "Response"));
             }
 
             CallInfo info = new CallInfo {req = req, resp = resp, success = false, finished = false};
