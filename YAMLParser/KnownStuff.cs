@@ -28,7 +28,7 @@ namespace FauxMessages
         {
             if (type == null)
                 type = st.Type;
-            if (st.Package != null && !KnownTypes.ContainsKey(st.rostype) && !type.Contains(st.Package) && !STATIC_NAMESPACE_STRING.Contains("Messages." + st.Package))
+            if (st.Package != null && !KnownTypes.ContainsKey(st.rostype) && !type.Contains(st.Package))
                 return string.Format("Messages.{0}.{1}", st.Package, type);
             return type;
         }
