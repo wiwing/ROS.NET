@@ -6,7 +6,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-using String = Messages.std_msgs.String;
 using System.Security.Cryptography;
 using uint8 = System.Byte;
 
@@ -97,6 +96,7 @@ namespace Messages
         }
 
         public virtual string MD5Sum() { return ""; }
+
         public virtual bool HasHeader() { return false; }
         public virtual bool IsMetaType() { return false; }
         public virtual string MessageDefinition() { return ""; }
@@ -268,7 +268,7 @@ namespace Messages
     }
 
     [IgnoreRosMessage]
-    public class WrappedFeedbackMessage<T>: RosMessage where T : InnerActionMessage, new()
+    public class WrappedFeedbackMessage<T> : RosMessage where T : InnerActionMessage, new()
     {
         public Messages.std_msgs.Header Header { get; set; }
         public Messages.actionlib_msgs.GoalStatus GoalStatus { get; set; }

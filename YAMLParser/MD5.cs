@@ -15,6 +15,7 @@ namespace YAMLParser
         public static Dictionary<string, string> srvmd5memo = new Dictionary<string, string>();
         private static ILogger Logger { get; } = ApplicationLogging.CreateLogger("MD5");
 
+
         public static string Sum(SrvsFile m)
         {
             if (!srvmd5memo.ContainsKey(m.Name))
@@ -101,7 +102,8 @@ namespace YAMLParser
             hashme = hashme.Trim();
             string[] lines = hashme.Split('\n');
 
-            Queue<string> haves = new Queue<string>(), havenots = new Queue<string>();
+            var haves = new Queue<string>();
+            var havenots = new Queue<string>();
             for (int i = 0; i < lines.Length; i++)
             {
                 string l = lines[i];
@@ -109,19 +111,24 @@ namespace YAMLParser
                 {
                     //condense spaces on either side of =
                     string[] ls = l.Split('=');
-                    haves.Enqueue(ls[0].Trim()+"="+ls[1].Trim());
+                    haves.Enqueue(ls[0].Trim() + "=" + ls[1].Trim());
                 }
-                else havenots.Enqueue(l.Trim());
+                else
+                {
+                    havenots.Enqueue(l.Trim());
+                }
             }
             hashme = "";
             while (haves.Count + havenots.Count > 0)
                 hashme += (haves.Count > 0 ? haves.Dequeue() : havenots.Dequeue()) + (haves.Count + havenots.Count >= 1 ? "\n" : "");
             Dictionary<string, MsgFieldInfo> mfis = MessageFieldHelper.Instantiate(irm.Stuff);
             MsgFieldInfo[] fields = mfis.Values.ToArray();
-            for(int i=0;i<fields.Length;i++)
+            for (int i = 0; i < fields.Length; i++)
             {
                 if (fields[i].IsLiteral)
+                {
                     continue;
+                }
                 MsgsFile ms = irm.Stuff[i].Definer;
                 if (ms == null)
                 {

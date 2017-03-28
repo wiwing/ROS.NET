@@ -19,12 +19,16 @@ namespace FauxMessages
             {
                 string t = members.Type.Replace("Messages.", "");
                 if (!t.Contains('.'))
+                {
                     if (members.Definer != null)
+                    {
                         t = members.Definer.Package + "." + t;
+                    }
                     else
                     {
                         t = null;
                     }
+                }
                 if (t != null)
                     mt = t.Replace(".", "/");
                 else
