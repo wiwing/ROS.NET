@@ -90,15 +90,13 @@ namespace FauxMessages
 
         public static void WhatItIs(MsgsFile parent, SingleType t)
         {
-            foreach (KeyValuePair<string, string> test in KnownTypes)
+            if (t.IsPrimitve)
             {
-                if (t.Test(test))
-                {
-                    t.rostype = t.Type;
-                    SingleType.Finalize(parent, t, test);
-                    return;
-                }
+                t.rostype = t.Type;
+                SingleType.Finalize(parent, t);
+                return;
             }
+
             t.Finalize(parent, t.input.Split(spliter, StringSplitOptions.RemoveEmptyEntries), false);
         }
     }
