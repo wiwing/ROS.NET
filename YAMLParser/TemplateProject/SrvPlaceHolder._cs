@@ -10,10 +10,10 @@ namespace Messages
 {
     public class $WHATAMI : RosService
     {
-        public override SrvTypes srvtype() { return $MYSRVTYPE; }
+        public override string ServiceType { get { return "$MYSRVTYPE"; } }
         public override string ServiceDefinition() { return $MYSERVICEDEFINITION; }
         public override string MD5Sum() { return "$MYSRVMD5SUM"; }
-        
+
         public $WHATAMI()
         {
             InitSubtypes(new Request(), new Response());
@@ -41,7 +41,7 @@ namespace Messages
             public override bool HasHeader() { return $REQUESTMYHASHEADER; }
             public override bool IsMetaType() { return $REQUESTMYISMETA; }
             public override string MessageDefinition() { return $REQUESTMYMESSAGEDEFINITION; }
-            public override MsgTypes msgtype() { return $REQUESTMYMSGTYPE__Request; }
+			public override string MessageType { get { return "$REQUESTMYMSGTYPE__Request"; } }
             public override bool IsServiceComponent() { return true; }
 
             public Request()
@@ -120,7 +120,7 @@ namespace Messages
             public override bool HasHeader() { return $RESPONSEMYHASHEADER; }
             public override bool IsMetaType() { return $RESPONSEMYISMETA; }
             public override string MessageDefinition() { return $RESPONSEMYMESSAGEDEFINITION; }
-            public override MsgTypes msgtype() { return $RESPONSEMYMSGTYPE__Response; }
+			public override string MessageType { get { return "$RESPONSEMYMSGTYPE__Response"; } }
             public override bool IsServiceComponent() { return true; }
 
             public Response()
@@ -170,7 +170,7 @@ namespace Messages
                 }
                 return __a_b__d;
             }
-            
+
             public override void Randomize()
             {
                 int arraylength=-1;

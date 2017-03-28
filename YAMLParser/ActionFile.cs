@@ -74,7 +74,7 @@ namespace FauxMessages
             template = template.Replace("$CLASS_NAME", message.classname);
             template = template.Replace("$$PROPERTIES", properties);
             template = template.Replace("$ISMETA", message.meta.ToString().ToLower());
-            template = template.Replace("$MSGTYPE", "MsgTypes." + fileNamespace.Replace("Messages.", "") + "__" + message.classname);
+            template = template.Replace("$MSGTYPE", fileNamespace.Replace("Messages.", "") + "/" + message.classname);
             template = template.Replace("$MESSAGEDEFINITION", "@\"" + message.Definition + "\"");
             template = template.Replace("$HASHEADER", message.HasHeader.ToString().ToLower());
             template = template.Replace("$NULLCONSTBODY", "");
@@ -134,10 +134,10 @@ namespace FauxMessages
             {
                 var generatedCode = GenerateMessageFromTemplate(Templates.InnerMessageTemplate, messagePair.InnerMessage, null);
                 template = template.Replace(messagePair.InnerMessagePlaceHolder, generatedCode);
-                generatedCode = GenerateMessageFromTemplate(Templates.ActionMessageTemplate, messagePair.OuterMessage,
+                /*generatedCode = GenerateMessageFromTemplate(Templates.ActionMessageTemplate, messagePair.OuterMessage,
                     messagePair.InnerMessage
                 );
-                template = template.Replace(messagePair.OuterMessagePlaceHoder, generatedCode);
+                template = template.Replace(messagePair.OuterMessagePlaceHoder, generatedCode);*/
             }
 
             return template;

@@ -6,7 +6,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-using String = Messages.std_msgs.String;
 using System.Security.Cryptography;
 using uint8 = System.Byte;
 
@@ -14,54 +13,95 @@ namespace Messages
 {
     public class RosMessage
     {
-        internal static Dictionary<MsgTypes, Func<MsgTypes, RosMessage>> constructors = new Dictionary<MsgTypes, Func<MsgTypes, RosMessage>>();
-        private static Dictionary<MsgTypes, Type> _typeregistry = new Dictionary<MsgTypes, Type>();
+        internal static Dictionary<string, Func<string, RosMessage>> constructors = new Dictionary<string, Func<string, RosMessage>>();
+        private static Dictionary<string, Type> _typeregistry = new Dictionary<string, Type>();
 
-        public static RosMessage generate(MsgTypes t)
+        public static RosMessage generate(string t)
         {
             lock (constructors)
             {
                 if (constructors.ContainsKey(t))
-                    return constructors[t].Invoke(t);
-
-                Type thistype = typeof(RosMessage);
-                foreach (Type othertype in thistype.GetTypeInfo().Assembly.GetTypes())
                 {
-                    if (thistype == othertype || !othertype.GetTypeInfo().IsSubclassOf(thistype))
-                    {
-                        continue;
-                    }
-
-                    var othertypeInfo = othertype.GetTypeInfo();
-                    if (othertype == typeof(InnerActionMessage) || othertypeInfo.ContainsGenericParameters)
-                    {
-                        continue;
-                    }
-
-                    RosMessage msg = Activator.CreateInstance(othertype) as RosMessage;
-                    if (msg != null)
-                    {
-                        if (msg.msgtype() == MsgTypes.Unknown)
-                        {
-                            throw new Exception("Invalid message type. Message type field (msgtype) was not initialized correctly.");
-                        }
-                        if (!_typeregistry.ContainsKey(msg.msgtype()))
-                            _typeregistry.Add(msg.msgtype(), msg.GetType());
-                        if (!constructors.ContainsKey(msg.msgtype()))
-                            constructors.Add(msg.msgtype(), T => Activator.CreateInstance(_typeregistry[T]) as RosMessage);
-                    }
+                    return constructors[t].Invoke(t);
                 }
-
-                return constructors[t].Invoke(t);
+                else
+                {
+                    throw new ArgumentException($"Could not find a RosMessage for {t}", nameof(t));
+                }
             }
         }
 
+
+        public static void ParseAssemblyAndRegisterRosMessages(Assembly assembly)
+        {
+            foreach (Type othertype in assembly.GetTypes())
+            {
+                var messageInfo = othertype.GetTypeInfo();
+                if (othertype == typeof(RosMessage) || !messageInfo.IsSubclassOf(typeof(RosMessage)) || othertype == typeof(InnerActionMessage))
+                {
+                    continue;
+                }
+
+                var goalAttribute = messageInfo.GetCustomAttribute<ActionGoalMessageAttribute>();
+                var resultAttribute = messageInfo.GetCustomAttribute<ActionResultMessageAttribute>();
+                var feedbackAttribute = messageInfo.GetCustomAttribute<ActionFeedbackMessageAttribute>();
+                var ignoreAttribute = messageInfo.GetCustomAttribute<IgnoreRosMessageAttribute>();
+                RosMessage message;
+                if ((goalAttribute != null) || (resultAttribute != null) || (feedbackAttribute != null) || (ignoreAttribute != null))
+                {
+                    Type actionType;
+                    if (goalAttribute != null)
+                    {
+                        actionType = typeof(GoalActionMessage<>);
+                    }
+                    else if (resultAttribute != null)
+                    {
+                        actionType = typeof(ResultActionMessage<>);
+                    }
+                    else if (feedbackAttribute != null)
+                    {
+                        actionType = typeof(FeedbackActionMessage<>);
+                    }
+                    else if (ignoreAttribute != null)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Could create Action Message for {othertype}");
+                    }
+                    Type[] innerType = { othertype };
+                    var goalMessageType = actionType.MakeGenericType(innerType);
+                    message = (Activator.CreateInstance(goalMessageType)) as RosMessage;
+                }
+                else
+                {
+                    message = Activator.CreateInstance(othertype) as RosMessage;
+                    if ((message != null) && (message.MessageType == "xamla/unkown"))
+                    {
+                        throw new Exception("Invalid message type. Message type field (msgtype) was not initialized correctly.");
+                    }
+                }
+
+                if (!_typeregistry.ContainsKey(message.MessageType))
+                {
+                    _typeregistry.Add(message.MessageType, message.GetType());
+                }
+                if (!constructors.ContainsKey(message.MessageType))
+                {
+                    constructors.Add(message.MessageType, T => Activator.CreateInstance(_typeregistry[T]) as RosMessage);
+                }
+            }
+            var test = 1;
+        }
+
         public virtual string MD5Sum() { return ""; }
+
         public virtual bool HasHeader() { return false; }
         public virtual bool IsMetaType() { return false; }
         public virtual string MessageDefinition() { return ""; }
         public byte[] Serialized;
-        public virtual MsgTypes msgtype() { return MsgTypes.Unknown; }
+        public virtual string MessageType { get { return "xamla/unkown"; } }
         public virtual bool IsServiceComponent() { return false; }
         public IDictionary<string, string> connection_header;
 
@@ -131,16 +171,16 @@ namespace Messages
 
         public virtual string ServiceDefinition() { return ""; }
 
-        public virtual SrvTypes srvtype() { return SrvTypes.Unknown; }
+        public virtual string ServiceType { get { return "xamla/unkown"; } }
 
-        public MsgTypes msgtype_req
+        public string msgtype_req
         {
-            get { return RequestMessage.msgtype(); }
+            get { return RequestMessage.MessageType; }
         }
 
-        public MsgTypes msgtype_res
+        public string msgtype_res
         {
-            get { return ResponseMessage.msgtype(); }
+            get { return ResponseMessage.MessageType; }
         }
 
         public RosMessage RequestMessage, ResponseMessage;
@@ -160,10 +200,10 @@ namespace Messages
             ResponseMessage = response;
         }
 
-        internal static Dictionary<SrvTypes, Func<SrvTypes, RosService>> constructors = new Dictionary<SrvTypes, Func<SrvTypes, RosService>>();
-        private static Dictionary<SrvTypes, Type> _typeregistry = new Dictionary<SrvTypes, Type>();
+        internal static Dictionary<string, Func<string, RosService>> constructors = new Dictionary<string, Func<string, RosService>>();
+        private static Dictionary<string, Type> _typeregistry = new Dictionary<string, Type>();
 
-        public static RosService generate(SrvTypes t)
+        public static RosService generate(string t)
         {
             lock (constructors)
             {
@@ -180,14 +220,14 @@ namespace Messages
                     RosService srv = Activator.CreateInstance(othertype) as RosService;
                     if (srv != null)
                     {
-                        if (srv.srvtype() == SrvTypes.Unknown)
+                        if (srv.ServiceType == "xamla/unkown")
                             throw new Exception("Invalid servive type. Service type field (srvtype) was not initialized correctly.");
-                        if (!_typeregistry.ContainsKey(srv.srvtype()))
-                            _typeregistry.Add(srv.srvtype(), srv.GetType());
-                        if (!constructors.ContainsKey(srv.srvtype()))
-                            constructors.Add(srv.srvtype(), T => Activator.CreateInstance(_typeregistry[T]) as RosService);
-                        srv.RequestMessage = RosMessage.generate((MsgTypes)Enum.Parse(typeof(MsgTypes), srv.srvtype() + "__Request"));
-                        srv.ResponseMessage = RosMessage.generate((MsgTypes)Enum.Parse(typeof(MsgTypes), srv.srvtype() + "__Response"));
+                        if (!_typeregistry.ContainsKey(srv.ServiceType))
+                            _typeregistry.Add(srv.ServiceType, srv.GetType());
+                        if (!constructors.ContainsKey(srv.ServiceType))
+                            constructors.Add(srv.ServiceType, T => Activator.CreateInstance(_typeregistry[T]) as RosService);
+                        srv.RequestMessage = RosMessage.generate(srv.ServiceType + "__Request");
+                        srv.ResponseMessage = RosMessage.generate(srv.ServiceType + "__Response");
                     }
                 }
 
@@ -221,13 +261,14 @@ namespace Messages
     }
 
 
+    [IgnoreRosMessage]
     public class InnerActionMessage : RosMessage
     {
 
     }
 
-
-    public class WrappedFeedbackMessage<T>: RosMessage where T : InnerActionMessage, new()
+    [IgnoreRosMessage]
+    public class WrappedFeedbackMessage<T> : RosMessage where T : InnerActionMessage, new()
     {
         public Messages.std_msgs.Header Header { get; set; }
         public Messages.actionlib_msgs.GoalStatus GoalStatus { get; set; }
@@ -323,11 +364,23 @@ namespace Messages
     }
 
 
+    [IgnoreRosMessage]
     public class GoalActionMessage<TGoal> : RosMessage where TGoal : InnerActionMessage, new()
     {
         public Messages.std_msgs.Header Header { get; set; }
         public Messages.actionlib_msgs.GoalID GoalId { get; set; }
         public TGoal Goal { get; set; }
+        public override string MessageType
+        {
+            get
+            {
+                var typeName = typeof(TGoal).ToString().Replace("Messages.", "").Replace(".", "/");
+                var front = typeName.Substring(0, typeName.Length - 4);
+                var back = typeName.Substring(typeName.Length - 4);
+                typeName = front + "Action" + back;
+                return typeName;
+            }
+        }
 
 
         public GoalActionMessage() : base()
@@ -357,9 +410,7 @@ namespace Messages
 
         public override string MessageDefinition()
         {
-            string definition = "Header header\nactionlib_msgs/GoalID goal_id\n";
-            definition += typeof(TGoal).ToString().Replace("Messages.", "").Replace(".", "/");
-            definition += " goal";
+            var definition = $"Header header\nactionlib_msgs/GoalID goal_id\n{this.MessageType} goal";
 
             return definition;
         }
@@ -442,9 +493,21 @@ namespace Messages
     }
 
 
+    [IgnoreRosMessage]
     public class ResultActionMessage<TResult> : WrappedFeedbackMessage<TResult> where TResult : InnerActionMessage, new()
     {
         public TResult Result { get { return Content; } set { Content = value; } }
+        public override string MessageType
+        {
+            get
+            {
+                var typeName = typeof(TResult).ToString().Replace("Messages.", "").Replace(".", "/");
+                var front = typeName.Substring(0, typeName.Length - 6);
+                var back = typeName.Substring(typeName.Length - 6);
+                typeName = front + "Action" + back;
+                return typeName;
+            }
+        }
 
 
         public ResultActionMessage() : base()
@@ -461,10 +524,15 @@ namespace Messages
         {
         }
 
-
         public bool Equals(ResultActionMessage<TResult> message)
         {
             return base.Equals(message);
+        }
+
+
+        public override string MessageDefinition()
+        {
+            return $"Header header\nactionlib_msgs/GoalStatus status\n{this.MessageType} result";
         }
 
 
@@ -483,9 +551,21 @@ namespace Messages
     }
 
 
+    [IgnoreRosMessage]
     public class FeedbackActionMessage<TFeedback> : WrappedFeedbackMessage<TFeedback> where TFeedback : InnerActionMessage, new()
     {
         public TFeedback Feedback { get { return base.Content; } set { base.Content = value; } }
+        public override string MessageType
+        {
+            get
+            {
+                var typeName = typeof(TFeedback).ToString().Replace("Messages.", "").Replace(".", "/");
+                var front = typeName.Substring(0, typeName.Length - 8);
+                var back = typeName.Substring(typeName.Length - 8);
+                typeName = front + "Action" + back;
+                return typeName;
+            }
+        }
 
 
         public FeedbackActionMessage() : base()
@@ -509,6 +589,12 @@ namespace Messages
         }
 
 
+        public override string MessageDefinition()
+        {
+            return $"Header header\nactionlib_msgs/GoalStatus status\n{this.MessageType} feedback";
+        }
+
+
         public override string MD5Sum()
         {
             var messageDefinition = new List<string>();
@@ -524,5 +610,26 @@ namespace Messages
     }
 
 
+    public class ActionGoalMessageAttribute : Attribute
+    {
 
+    }
+
+
+    public class ActionResultMessageAttribute : Attribute
+    {
+
+    }
+
+
+    public class ActionFeedbackMessageAttribute : Attribute
+    {
+
+    }
+
+
+    public class IgnoreRosMessageAttribute : Attribute
+    {
+
+    }
 }

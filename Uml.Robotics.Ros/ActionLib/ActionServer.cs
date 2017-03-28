@@ -137,6 +137,7 @@ namespace Uml.Robotics.Ros.ActionLib
         public void PublishFeedback(GoalStatus goalStatus, TFeedback feedback)
         {
             var newFeedback = new FeedbackActionMessage<TFeedback>();
+            newFeedback.Header = new Messages.std_msgs.Header();
             newFeedback.Header.stamp = ROS.GetTime();
             newFeedback.GoalStatus = goalStatus;
             newFeedback.Feedback = feedback;
@@ -150,6 +151,7 @@ namespace Uml.Robotics.Ros.ActionLib
         public void PublishResult(GoalStatus goalStatus, TResult result)
         {
             var newResult = new ResultActionMessage<TResult>();
+            newResult.Header = new Messages.std_msgs.Header();
             newResult.Header.stamp = ROS.GetTime();
             newResult.GoalStatus = goalStatus;
             if (result != null)
@@ -168,9 +170,11 @@ namespace Uml.Robotics.Ros.ActionLib
         {
             var now = DateTime.Now;
             var statusArray = new GoalStatusArray();
+            statusArray.header = new Messages.std_msgs.Header();
             statusArray.header.stamp = ROS.GetTime(now);
             var goalStatuses = new List<GoalStatus>();
 
+            var idsToBeRemoved = new List<string>();
             foreach (var pair in goalHandles)
             {
                 goalStatuses.Add(pair.Value.GoalStatus);
@@ -178,8 +182,13 @@ namespace Uml.Robotics.Ros.ActionLib
                 if ((pair.Value.DestructionTime != null) && (pair.Value.DestructionTime + StatusListTimeout < now))
                 {
                     ROS.Debug()("actionlib", $"Removing server goal handle for goal id: {pair.Value.GoalId.id}");
-                    goalHandles.Remove(pair.Value.GoalId.id);
+                    idsToBeRemoved.Add(pair.Value.GoalId.id);
                 }
+            }
+
+            foreach (string id in idsToBeRemoved)
+            {
+                goalHandles.Remove(id);
             }
         }
 

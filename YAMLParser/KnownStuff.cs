@@ -28,7 +28,7 @@ namespace FauxMessages
         {
             if (type == null)
                 type = st.Type;
-            if (st.Package != null && !KnownTypes.ContainsKey(st.rostype) && !type.Contains(st.Package) && !STATIC_NAMESPACE_STRING.Contains("Messages." + st.Package))
+            if (st.Package != null && !KnownTypes.ContainsKey(st.rostype) && !type.Contains(st.Package))
                 return string.Format("Messages.{0}.{1}", st.Package, type);
             return type;
         }
@@ -90,15 +90,13 @@ namespace FauxMessages
 
         public static void WhatItIs(MsgsFile parent, SingleType t)
         {
-            foreach (KeyValuePair<string, string> test in KnownTypes)
+            if (t.IsPrimitve)
             {
-                if (t.Test(test))
-                {
-                    t.rostype = t.Type;
-                    SingleType.Finalize(parent, t, test);
-                    return;
-                }
+                t.rostype = t.Type;
+                SingleType.Finalize(parent, t);
+                return;
             }
+
             t.Finalize(parent, t.input.Split(spliter, StringSplitOptions.RemoveEmptyEntries), false);
         }
     }

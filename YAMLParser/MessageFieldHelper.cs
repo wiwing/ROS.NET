@@ -13,20 +13,24 @@ namespace FauxMessages
     {
         public static string Generate(SingleType members)
         {
-            string mt = "MsgTypes.Unknown";
+            string mt = "xamla/unknown";
             string pt = KnownStuff.GetNamespacedType(members);
             if (members.meta)
             {
                 string t = members.Type.Replace("Messages.", "");
                 if (!t.Contains('.'))
+                {
                     if (members.Definer != null)
+                    {
                         t = members.Definer.Package + "." + t;
+                    }
                     else
                     {
                         t = null;
                     }
+                }
                 if (t != null)
-                    mt = "MsgTypes." + t.Replace(".", "__");
+                    mt = t.Replace(".", "/");
                 else
                     members.meta = false;
             }
@@ -46,13 +50,13 @@ namespace FauxMessages
         }
         public static KeyValuePair<string, MsgFieldInfo> Instantiate(SingleType member)
         {
-            string mt = "MsgTypes.Unknown";
+            string mt = "xamla/unknown";
             if (member.meta)
             {
                 string t = member.Type.Replace("Messages.", "");
                 if (!t.Contains('.'))
                     t = "std_msgs." + t;
-                mt = "MsgType." + t.Replace(".", "__");
+                mt = t.Replace(".", "/");
             }
             return new KeyValuePair<string, MsgFieldInfo>(member.Name, new MsgFieldInfo(member.Name, member.IsLiteral, member.Type, member.Const, member.ConstValue, member.IsArray, member.length, member.meta));
         }

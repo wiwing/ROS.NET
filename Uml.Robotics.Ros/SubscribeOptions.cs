@@ -32,16 +32,15 @@ namespace Uml.Robotics.Ros
             // TODO: Complete member initialization
             this.topic = topic;
             this.queue_size = queue_size;
+            var generic = new T();
             if (CALL != null)
-                helper = new SubscriptionCallbackHelper<T>(new T().msgtype(), CALL);
+                helper = new SubscriptionCallbackHelper<T>(generic.MessageType, CALL);
             else
-                helper = new SubscriptionCallbackHelper<T>(new T().msgtype());
+                helper = new SubscriptionCallbackHelper<T>(generic.MessageType);
 
 
-            Type msgtype = new T().GetType();
-            string[] chunks = msgtype.FullName.Split('.');
-            datatype = chunks[chunks.Length - 2] + "/" + chunks[chunks.Length - 1];
-            md5sum = new T().MD5Sum();
+            datatype = generic.MessageType;
+            md5sum = generic.MD5Sum();
         }
     }
 

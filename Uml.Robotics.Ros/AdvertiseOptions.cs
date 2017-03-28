@@ -45,7 +45,7 @@ namespace Uml.Robotics.Ros
                 datatype = dt;
             else
             {
-                datatype = tt.msgtype().ToString().Replace("__", "/");
+                datatype = tt.MessageType;
             }
             if (message_def.Length == 0)
                 message_definition = tt.MessageDefinition();
@@ -65,7 +65,7 @@ namespace Uml.Robotics.Ros
             SubscriberStatusCallback disconnectcallback) :
                 this(
                 t, q_size, new T().MD5Sum(),
-                new T().msgtype().ToString().Replace("__", "/"),
+                new T().MessageType,
                 new T().MessageDefinition(),
                 connectcallback, disconnectcallback)
         {

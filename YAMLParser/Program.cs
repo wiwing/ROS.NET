@@ -386,6 +386,7 @@ namespace YAMLParser
 
         public new static string ToString()
         {
+            return "";
             if (uberpwnage == null)
             {
                 if (fronthalf == null)

@@ -153,11 +153,15 @@ namespace FauxMessages
             Namespace = Namespace.Trim('.');
 
             if (!resolver.Keys.Contains(Package))
+            {
                 resolver.Add(Package, new Dictionary<string, List<ResolvedMsg>>());
+            }
             if (!resolver[Package].ContainsKey(classname))
-                resolver[Package].Add(classname, new List<ResolvedMsg> { new ResolvedMsg { OtherType = Namespace + "." + classname, Definer = this } });
-            else
-                resolver[Package][classname].Add(new ResolvedMsg { OtherType = Namespace + "." + classname, Definer = this });
+            {
+                resolver[Package].Add(classname, new List<ResolvedMsg>());
+            }
+            resolver[Package][classname].Add(new ResolvedMsg { OtherType = Namespace + "." + classname, Definer = this });
+            Debug.Assert(resolver[Package][classname].Count <= 1);
 
             this.lines = lines.Where(s => s.Trim().Length > 0).ToList();
         }
@@ -184,6 +188,12 @@ namespace FauxMessages
             {
                 KnownStuff.WhatItIs(parent, st);
             }
+
+            if (st.IsPrimitve)
+            {
+                return;
+            }
+
             List<string> prefixes = new List<string>(new[] { "", "std_msgs", "geometry_msgs", "actionlib_msgs" });
             if (st.Type.Contains("/"))
             {
@@ -448,7 +458,7 @@ namespace FauxMessages
             }
             GUTS = GUTS.Replace("$WHATAMI", classname);
             GUTS = GUTS.Replace("$MYISMETA", meta.ToString().ToLower());
-            GUTS = GUTS.Replace("$MYMSGTYPE", "MsgTypes." + Namespace.Replace("Messages.", "") + "__" + classname);
+            GUTS = GUTS.Replace("$MYMSGTYPE", Namespace.Replace("Messages.", "") + "/" + classname);
             for (int i = 0; i < def.Count; i++)
             {
                 while (def[i].Contains("\t"))

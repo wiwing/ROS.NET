@@ -24,7 +24,7 @@ namespace Uml.Robotics.Ros
         public Dictionary<PublisherLink, LatchInfo> latched_messages = new Dictionary<PublisherLink, LatchInfo>();
         public string md5sum = "";
         public object md5sum_mutex = new object();
-        public MsgTypes msgtype;
+        public string msgtype;
         public string name = "";
         public int nonconst_callbacks;
         public List<PendingConnection> pending_connections = new List<PendingConnection>();
@@ -38,7 +38,7 @@ namespace Uml.Robotics.Ros
             name = n;
             md5sum = md5s;
             datatype = dt;
-            msgtype = (MsgTypes) Enum.Parse(typeof (MsgTypes), dt.Replace("/", "__"));
+            msgtype = dt;
         }
 
         public bool IsDropped
@@ -258,7 +258,7 @@ namespace Uml.Robotics.Ros
                 c.Dispose();
                 return false;
             }
-            Logger.LogDebug("Began asynchronous xmlrpc connection to http://" + peer_host + ":" + peer_port + 
+            Logger.LogDebug("Began asynchronous xmlrpc connection to http://" + peer_host + ":" + peer_port +
                             "/ for topic [" + name + "]");
             PendingConnection conn = new PendingConnection(c, this, xmlrpc_uri, Params);
             lock (pending_connections_mutex)
@@ -272,7 +272,7 @@ namespace Uml.Robotics.Ros
         public void pendingConnectionDone(PendingConnection conn, XmlRpcValue result)
         {
             using (Logger.BeginScope ($"{ nameof(pendingConnectionDone) }"))
-            {           
+            {
                 //XmlRpcValue result = XmlRpcValue.LookUp(res);
                 lock (shutdown_mutex)
                 {
@@ -374,7 +374,7 @@ namespace Uml.Robotics.Ros
             {
                 foreach (ICallbackInfo info in callbacks)
                 {
-                    MsgTypes ti = info.helper.type;
+                    string ti = info.helper.type;
                     if (nocopy || ser)
                     {
                         t = msg;
@@ -438,7 +438,7 @@ namespace Uml.Robotics.Ros
 
                 if (latched_messages.Count > 0)
                 {
-                    MsgTypes ti = info.helper.type;
+                    string ti = info.helper.type;
                     lock (publisher_links_mutex)
                     {
                         foreach (PublisherLink link in publisher_links)
@@ -499,13 +499,13 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        public void getPublishTypes(ref bool ser, ref bool nocopy, MsgTypes ti)
+        public void getPublishTypes(ref bool ser, ref bool nocopy, string typeInfo)
         {
             lock (callbacks_mutex)
             {
                 foreach (ICallbackInfo info in callbacks)
                 {
-                    if (info.helper.type == ti)
+                    if (info.helper.type == typeInfo)
                         nocopy = true;
                     else
                         ser = true;
@@ -521,7 +521,7 @@ namespace Uml.Robotics.Ros
         {
             public CallbackInfo()
             {
-                helper = new SubscriptionCallbackHelper<M>(new M().msgtype());
+                helper = new SubscriptionCallbackHelper<M>(new M().MessageType);
             }
         }
 

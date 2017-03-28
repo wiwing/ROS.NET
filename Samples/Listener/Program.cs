@@ -20,6 +20,7 @@ namespace Listener
         private static void chatterCallback(m.String s)
         {
             ROS.Info()("RECEIVED: " + s.data);
+            Console.WriteLine($"Received: " + s.data);
         }
         private static void Main(string[] args)
         {

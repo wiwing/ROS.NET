@@ -195,7 +195,7 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="type"> The type of message to make </param>
         /// <returns> A message of that type </returns>
-        internal static RosMessage MakeMessage(MsgTypes type)
+        internal static RosMessage MakeMessage(string type)
         {
             return RosMessage.generate(type);
         }
@@ -333,6 +333,7 @@ namespace Uml.Robotics.Ros
         /// <param name="options"> options? </param>
         internal static void Init(IDictionary<string, string> remapping_args, string name, int options)
         {
+            Messages.RosMessage.ParseAssemblyAndRegisterRosMessages((new Messages.RosMessage()).GetType().GetTypeInfo().Assembly);
             // if we haven't sunk our fangs into the processes jugular so we can tell
             //    when it has stopped kicking, do so now
             if (!atexit_registered)

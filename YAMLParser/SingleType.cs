@@ -59,18 +59,34 @@ namespace FauxMessages
             input = s;
         }
 
-        public bool Test(KeyValuePair<string, string> candidate)
+        public bool IsPrimitve
         {
-            return (input.Split(' ')[0].ToLower().Equals(candidate.Key));
+            get
+            {
+                if (!String.IsNullOrEmpty(Package))
+                {
+                    return false;
+                }
+                var typeName = input.Split(' ')[0];
+                if (KnownStuff.KnownTypes.ContainsKey(typeName))
+                {
+                    return true;
+                }
+                return false;
+            }
         }
 
-        public static void Finalize(MsgsFile parent, SingleType thing, KeyValuePair<string, string> csharptype)
+        public static void Finalize(MsgsFile parent, SingleType thing)
         {
             string[] parts = thing.input.Split(' ');
             thing.rostype = parts[0];
             if (!KnownStuff.KnownTypes.ContainsKey(thing.rostype))
+            {
                 thing.meta = true;
-            parts[0] = csharptype.Value;
+            } else
+            {
+                parts[0] = KnownStuff.KnownTypes[thing.rostype];
+            }
             thing.Finalize(parent, parts, true);
         }
 

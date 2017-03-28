@@ -43,7 +43,7 @@ namespace Uml.Robotics.Ros
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<IServiceCallbackHelper>();
         protected ServiceFunction<RosMessage, RosMessage> _callback;
 
-        public MsgTypes type;
+        public string type;
 
         protected IServiceCallbackHelper()
         {

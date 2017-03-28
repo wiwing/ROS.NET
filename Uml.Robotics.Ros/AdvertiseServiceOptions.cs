@@ -14,7 +14,7 @@ namespace Uml.Robotics.Ros
         public string res_datatype;
         public string service = "";
         public ServiceFunction<MReq, MRes> srv_func;
-        public SrvTypes srvtype;
+        public string srvtype;
         public object tracked_object;
 
         public AdvertiseServiceOptions(string service, ServiceFunction<MReq, MRes> srv_func)
@@ -28,10 +28,10 @@ namespace Uml.Robotics.Ros
             this.service = service;
             srv_func = callback;
             helper = new ServiceCallbackHelper<MReq, MRes>(callback);
-            req_datatype = new MReq().msgtype().ToString().Replace("__", "/").Replace("/Request", "__Request");
-            res_datatype = new MRes().msgtype().ToString().Replace("__", "/").Replace("/Response", "__Response");
-            srvtype = (SrvTypes) Enum.Parse(typeof (SrvTypes), req_datatype.Replace("__Request", "").Replace("/", "__"));
-            datatype = srvtype.ToString().Replace("__", "/");
+            req_datatype = new MReq().MessageType.Replace("/Request", "__Request");
+            res_datatype = new MRes().MessageType.Replace("/Response", "__Response");
+            srvtype = req_datatype.Replace("__Request", "");
+            datatype = srvtype;
             md5sum = RosService.generate(srvtype).MD5Sum();
         }
     }

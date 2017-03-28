@@ -192,7 +192,7 @@ namespace FauxMessages
             #region THE SERVICE
 
             GUTS = GUTS.Replace("$WHATAMI", classname);
-            GUTS = GUTS.Replace("$MYSRVTYPE", "SrvTypes." + Namespace.Replace("Messages.", "") + "__" + classname);
+            GUTS = GUTS.Replace("$MYSRVTYPE", Namespace.Replace("Messages.", "") + "/" + classname);
             GUTS = GUTS.Replace("$MYSERVICEDEFINITION", "@\"" + MessageDefinition + "\"");
 
             #endregion
@@ -202,7 +202,7 @@ namespace FauxMessages
             string RequestDict = Request.GenFields();
             meta = Request.meta;
             GUTS = GUTS.Replace("$REQUESTMYISMETA", meta.ToString().ToLower());
-            GUTS = GUTS.Replace("$REQUESTMYMSGTYPE", "MsgTypes." + Namespace.Replace("Messages.", "") + "__" + classname);
+            GUTS = GUTS.Replace("$REQUESTMYMSGTYPE", Namespace.Replace("Messages.", "") + "/" + classname);
             GUTS = GUTS.Replace("$REQUESTMYMESSAGEDEFINITION", "@\"" + RequestDefinition + "\"");
             GUTS = GUTS.Replace("$REQUESTMYHASHEADER", Request.HasHeader.ToString().ToLower());
             GUTS = GUTS.Replace("$REQUESTMYFIELDS", RequestDict.Length > 5 ? "{{" + RequestDict + "}}" : "()");
@@ -215,7 +215,7 @@ namespace FauxMessages
 
             string ResponseDict = Response.GenFields();
             GUTS = GUTS.Replace("$RESPONSEMYISMETA", Response.meta.ToString().ToLower());
-            GUTS = GUTS.Replace("$RESPONSEMYMSGTYPE", "MsgTypes." + Namespace.Replace("Messages.", "") + "__" + classname);
+            GUTS = GUTS.Replace("$RESPONSEMYMSGTYPE", Namespace.Replace("Messages.", "") + "/" + classname);
             GUTS = GUTS.Replace("$RESPONSEMYMESSAGEDEFINITION", "@\"" + ResponseDefinition + "\"");
             GUTS = GUTS.Replace("$RESPONSEMYHASHEADER", Response.HasHeader.ToString().ToLower());
             GUTS = GUTS.Replace("$RESPONSEMYFIELDS", ResponseDict.Length > 5 ? "{{" + ResponseDict + "}}" : "()");

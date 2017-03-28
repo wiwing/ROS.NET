@@ -12,20 +12,22 @@ using Messages.std_msgs;
 
 namespace Messages.$NAMESPACE
 {
+	[ActionGoalMessage]
     $GOAL_MESSAGE
 
 
-    $ACTION_GOAL_MESSAGE
+    //$ACTION_GOAL_MESSAGE
 
-
+	[ActionResultMessage]
     $RESULT_MESSAGE
 
 
-    $ACTION_RESULT_MESSAGE
+    //$ACTION_RESULT_MESSAGE
 
 
+	[ActionFeedbackMessage]
     $FEEDBACK_MESSAGE
 
 
-    $ACTION_FEEDBACK_MESSAGE
+    //$ACTION_FEEDBACK_MESSAGE
 }

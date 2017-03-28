@@ -6,7 +6,7 @@
         public override bool HasHeader() { return $HASHEADER; }
         public override bool IsMetaType() { return $ISMETA; }
         public override string MessageDefinition() { return $MESSAGEDEFINITION; }
-        public override MsgTypes msgtype() { return $MSGTYPE; }
+		public override string MessageType { get { return "$MSGTYPE"; } }
         public override bool IsServiceComponent() { return false; }
 
         public $CLASS_NAME()
