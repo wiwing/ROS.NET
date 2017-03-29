@@ -105,6 +105,16 @@ namespace Uml.Robotics.Ros
                 }
                 return CallResult.Success;
             }
+
+            public override void AddToCallbackQueue(ISubscriptionCallbackHelper helper, RosMessage msg, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override void Clear()
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 

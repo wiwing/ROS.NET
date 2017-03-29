@@ -122,7 +122,7 @@ namespace Uml.Robotics.Ros.ActionLib
                 statusInterval = new TimeSpan(0, 0, split.seconds, split.milliseconds);
                 nextStatusPublishTime = DateTime.Now + statusInterval;
                 spinCallbackId = (ulong)(DateTime.Now.Ticks + (new Random()).Next());
-                ROS.GlobalCallbackQueue.addCallback(new CallbackInterface(SpinCallback), spinCallbackId);
+                ROS.GlobalCallbackQueue.addCallback(new SpinCallbackImplementation(SpinCallback), spinCallbackId);
             }
 
             // Message consumers
@@ -285,7 +285,7 @@ namespace Uml.Robotics.Ros.ActionLib
         }
 
 
-        private void SpinCallback(RosMessage message)
+        private void SpinCallback()
         {
             if (DateTime.Now > nextStatusPublishTime)
             {
@@ -301,6 +301,37 @@ namespace Uml.Robotics.Ros.ActionLib
             int milliseconds = (int)((exactSeconds - seconds) * 1000);
 
             return (seconds, milliseconds);
+        }
+
+
+        private class SpinCallbackImplementation : CallbackInterface
+        {
+            private Action callback;
+
+
+            public SpinCallbackImplementation(Action callback)
+            {
+                this.callback = callback;
+            }
+
+
+            public override void AddToCallbackQueue(ISubscriptionCallbackHelper helper, RosMessage msg, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time)
+            {
+                throw new NotImplementedException();
+            }
+
+
+            public override void Clear()
+            {
+                throw new NotImplementedException();
+            }
+
+
+            internal override CallResult Call()
+            {
+                callback();
+                return CallResult.Success;
+            }
         }
     }
 }

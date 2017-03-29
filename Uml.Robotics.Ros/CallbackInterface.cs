@@ -36,7 +36,7 @@ namespace Uml.Robotics.Ros
                 };
         }
 
-        public override void pushitgood(ISubscriptionCallbackHelper helper, RosMessage message, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time)
+        public override void AddToCallbackQueue(ISubscriptionCallbackHelper helper, RosMessage message, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time)
         {
             if (was_full)
                 was_full = false;
@@ -58,7 +58,7 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        public override void clear()
+        public override void Clear()
         {
             queue.Clear();
         }
@@ -108,34 +108,33 @@ namespace Uml.Robotics.Ros
         }
     }
 
-    public class CallbackInterface
+
+    public abstract class CallbackInterface
     {
+        public UInt64 Uid { get; }
+        public delegate void CallbackDelegate(RosMessage msg);
+        public event CallbackDelegate Event;
+
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<CallbackInterface>();
         private static object uidlock = new object();
         private static UInt64 nextuid;
-        private UInt64 uid;
+
 
         public CallbackInterface()
         {
             lock (uidlock)
             {
-                uid = nextuid;
+                Uid = nextuid;
                 nextuid++;
             }
         }
 
-        public UInt64 Get()
+
+        public CallbackInterface(CallbackDelegate f) : this()
         {
-            return uid;
+            Event += f;
         }
 
-        #region Delegates
-
-        public delegate void ICallbackDelegate(RosMessage msg);
-
-        #endregion
-
-        #region CallResult enum
 
         public enum CallResult
         {
@@ -144,14 +143,8 @@ namespace Uml.Robotics.Ros
             Invalid
         }
 
-        #endregion
 
-        public CallbackInterface(ICallbackDelegate f) : this()
-        {
-            Event += f;
-        }
-
-        public void func<T>(T msg) where T : RosMessage, new()
+        public void SendEvent<T>(T msg) where T : RosMessage, new()
         {
             if (Event != null)
             {
@@ -163,26 +156,9 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        public virtual void pushitgood(ISubscriptionCallbackHelper helper, RosMessage msg, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time)
-        {
-            throw new NotImplementedException();
-        }
 
-        public virtual void clear()
-        {
-            throw new NotImplementedException();
-        }
-
-        public event ICallbackDelegate Event;
-
-        internal virtual CallResult Call()
-        {
-            return CallResult.Invalid;
-        }
-
-        internal bool ready()
-        {
-            return true;
-        }
+        public abstract void AddToCallbackQueue(ISubscriptionCallbackHelper helper, RosMessage msg, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time);
+        public abstract void Clear();
+        internal abstract CallResult Call();
     }
 }

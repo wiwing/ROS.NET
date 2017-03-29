@@ -27,7 +27,7 @@ namespace Uml.Robotics.Ros
 
         public override void call(RosMessage msg)
         {
-            Callback.func(msg);
+            Callback.SendEvent(msg);
         }
     }
 

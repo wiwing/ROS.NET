@@ -79,12 +79,14 @@ namespace Uml.Robotics.Ros
         public override void addCallback(CallbackInterface cb, UInt64 owner_id)
         {
             ICallbackInfo info = new ICallbackInfo {Callback = cb, removal_id = owner_id};
+            //Logger.LogDebug($"CallbackQueue@{cbthread.ManagedThreadId}: Add callback owner: {owner_id} {cb.ToString()}");
 
             lock (mutex)
             {
                 if (!enabled)
                     return;
                 callbacks.Add(info);
+                //Logger.LogDebug($"CallbackQueue@{cbthread.ManagedThreadId}: Added");
                 Count++;
             }
             lock (id_info_mutex)
@@ -230,6 +232,7 @@ namespace Uml.Robotics.Ros
                 if (!sem.WaitOne(timeout))
                     return true;
             }
+            //Logger.LogDebug($"CallbackQueue@{cbthread.ManagedThreadId}: Enqueue TLS");
             lock (mutex)
             {
                 if (Count == 0)
@@ -241,9 +244,10 @@ namespace Uml.Robotics.Ros
                 Count = 0;
                 calling += tls.Count;
             }
-
+            //Logger.LogDebug($"CallbackQueue@{cbthread.ManagedThreadId}: TLS count {tls.Count}");
             while (tls.Count > 0 && ROS.ok)
             {
+                //Logger.LogDebug($"CallbackQueue@{cbthread.ManagedThreadId}: call {tls.head.Callback.ToString()}");
                 if (callOneCB(tls) != CallOneResult.Empty)
                     ++called;
             }
@@ -263,7 +267,7 @@ namespace Uml.Robotics.Ros
 
         public int Count
         {
-            get { 
+            get {
                 lock(_queue)
                     return _queue.Count; }
         }
@@ -328,7 +332,7 @@ namespace Uml.Robotics.Ros
     {
         public virtual void addCallback(CallbackInterface callback)
         {
-            addCallback(callback, callback.Get());
+            addCallback(callback, callback.Uid);
         }
 
         public virtual void addCallback(CallbackInterface callback, UInt64 owner_id)

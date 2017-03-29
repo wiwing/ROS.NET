@@ -277,7 +277,7 @@ namespace Uml.Robotics.Ros
             {
                 _callback = ROS.GlobalCallbackQueue;
             }
-            SubscribeOptions<M> ops = new SubscribeOptions<M>(topic, queue_size, cb.func)
+            SubscribeOptions<M> ops = new SubscribeOptions<M>(topic, queue_size, cb.SendEvent)
             {callback_queue = _callback, allow_concurrent_callbacks=allow_concurrent_callbacks};
             ops.callback_queue.addCallback(cb);
             return subscribe(ops);
