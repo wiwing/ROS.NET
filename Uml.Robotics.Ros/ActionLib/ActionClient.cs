@@ -7,6 +7,7 @@ using Messages;
 using Messages.actionlib_msgs;
 using Messages.std_msgs;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros.ActionLib
 {
@@ -31,6 +32,9 @@ namespace Uml.Robotics.Ros.ActionLib
         private Subscriber<ResultActionMessage<TResult>> resultSubscriber;
         private int nextGoalId = 0; // Shared amon all clients
         private string statusCallerId = null;
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ActionClient<TGoal, TResult, TFeedback>>();
+        private Object lockId = new Object();
+        private Object lockGoalHandles = new Object();
 
 
         public ActionClient(string name, NodeHandle parentNodeHandle)
@@ -51,6 +55,8 @@ namespace Uml.Robotics.Ros.ActionLib
             );
             CancelPublisher = nodeHandle.advertise<GoalID>("cancel", QueueSize, OnCancelConnectCallback,
                 OnCancelDisconnectCallback);
+
+            Logger.LogInformation($"Callbackqueue of NodeHandle equals Global Callbackqueue: {ROS.GlobalCallbackQueue.Equals(nodeHandle.Callback)}");
         }
 
 
@@ -88,10 +94,13 @@ namespace Uml.Robotics.Ros.ActionLib
         {
             // Create Goal Message;
             var goalId = new GoalID();
-            var now = ROS.GetTime();
-            goalId.id = $"{this_node.Name}-{nextGoalId}-{now.data.sec}.{now.data.nsec}";
-            goalId.stamp = now;
-            nextGoalId = nextGoalId + 1;
+            lock (lockId)
+            {
+                var now = ROS.GetTime();
+                goalId.id = $"{this_node.Name}-{nextGoalId}-{now.data.sec}.{now.data.nsec}";
+                goalId.stamp = now;
+                nextGoalId = nextGoalId + 1;
+            }
 
             // Prepaer Goal Message
             var goalAction = new GoalActionMessage<TGoal>();
@@ -104,7 +113,10 @@ namespace Uml.Robotics.Ros.ActionLib
             var goalHandle = new ClientGoalHandle<TGoal, TResult, TFeedback>(this, goalAction,
                 OnTransistionCallback, OnFeedbackCallback
             );
-            goalHandles[goalAction.GoalId.id] = goalHandle;
+            lock (lockGoalHandles)
+            {
+                goalHandles[goalAction.GoalId.id] = goalHandle;
+            }
 
             // Publish goal message
             GoalPublisher.publish(goalAction);
@@ -121,6 +133,7 @@ namespace Uml.Robotics.Ros.ActionLib
             resultSubscriber.shutdown();
             GoalPublisher.shutdown();
             CancelPublisher.shutdown();
+            nodeHandle.shutdown();
         }
 
 
@@ -284,7 +297,11 @@ namespace Uml.Robotics.Ros.ActionLib
         private void OnFeedbackMessage(FeedbackActionMessage<TFeedback> feedback)
         {
             ClientGoalHandle<TGoal, TResult, TFeedback> goalHandle;
-            var goalExists = goalHandles.TryGetValue(feedback.GoalStatus.goal_id.id, out goalHandle);
+            bool goalExists;
+            lock (lockGoalHandles)
+            {
+                goalExists = goalHandles.TryGetValue(feedback.GoalStatus.goal_id.id, out goalHandle);
+            }
             if (goalExists && (goalHandle.OnFeedbackCallback != null))
             {
                 goalHandle.OnFeedbackCallback(goalHandle, feedback);
@@ -332,7 +349,11 @@ namespace Uml.Robotics.Ros.ActionLib
         private void OnResultMessage(ResultActionMessage<TResult> result)
         {
             ClientGoalHandle<TGoal, TResult, TFeedback> goalHandle;
-            var goalExists = goalHandles.TryGetValue(result.GoalStatus.goal_id.id, out goalHandle);
+            bool goalExists;
+            lock (lockGoalHandles)
+            {
+                goalExists = goalHandles.TryGetValue(result.GoalStatus.goal_id.id, out goalHandle);
+            }
             if (goalExists)
             {
                 goalHandle.LatestGoalStatus = result.GoalStatus;
@@ -393,13 +414,37 @@ namespace Uml.Robotics.Ros.ActionLib
                 }
                 LatestStatusTime = statusArray.header.stamp;
 
-                // Process status message
-                foreach (var pair in goalHandles)
+                // Create a copy of all goal handle references in thread safe environment so it can be looped over all goal
+                // handles without blocking the sending of new goals
+                Dictionary<string, ClientGoalHandle<TGoal, TResult, TFeedback>> goalHandlesReferenceCopy;
+                lock (lockGoalHandles)
+                {
+                    goalHandlesReferenceCopy = new Dictionary<string, ClientGoalHandle<TGoal, TResult, TFeedback>>(goalHandles);
+                }
+
+                // Loop over all goal handles and update their state, mark goal handles that are done for deletion
+                var completedGoals = new List<string>();
+                foreach (var pair in goalHandlesReferenceCopy)
                 {
                     var goalStatus = FindGoalInStatusList(statusArray, pair.Key);
                     UpdateStatus(pair.Value, goalStatus);
+                    if (pair.Value.State == CommunicationState.DONE)
+                    {
+                        completedGoals.Add(pair.Key);
+                    }
                 }
-            } else
+
+                // Remove goal handles that are done from the tracking list
+                foreach (var goalHandleId in completedGoals)
+                {
+                    Logger.LogInformation($"Remove goal handle id {goalHandleId} from tracked goal handles");
+                    lock (lockGoalHandles)
+                    {
+                        goalHandles.Remove(goalHandleId);
+                    }
+                }
+
+                } else
             {
                 ROS.Error()("Received StatusMessage with no caller ID");
             }
@@ -432,6 +477,11 @@ namespace Uml.Robotics.Ros.ActionLib
                     (goalHandle.State != CommunicationState.DONE))
                 {
                     ProcessLost(goalHandle);
+                    return;
+                } else
+                {
+                    Logger.LogDebug($"goal status is null for {goalHandle.Id}, most propably because it was just send and there" +
+                        $"and the server has not yet sent an update");
                     return;
                 }
             }
