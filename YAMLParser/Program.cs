@@ -17,7 +17,6 @@ namespace YAMLParser
         public static List<MsgsFile> msgsFiles = new List<MsgsFile>();
         public static List<SrvsFile> srvFiles = new List<SrvsFile>();
         public static List<ActionFile> actionFiles = new List<ActionFile>();
-        public static List<string> messageFilesToSkip = new List<string> {"Header.msg", "Time.msg", "GoalID.msg", "GoalStatus.msg"};
         public static string backhalf;
         public static string fronthalf;
         public static string name = "Messages";
@@ -35,7 +34,7 @@ namespace YAMLParser
             ApplicationLogging.LoggerFactory = loggerFactory;
             Logger = ApplicationLogging.CreateLogger("Program");
 
-            RosMessage.ParseAssemblyAndRegisterRosMessages((new RosMessage()).GetType().GetTypeInfo().Assembly);
+            MessageTypeRegistry.Instance.ParseAssemblyAndRegisterRosMessages(MessageTypeRegistry.Instance.GetType().GetTypeInfo().Assembly);
 
             /*System.Console.WriteLine($"Process ID: {System.Diagnostics.Process.GetCurrentProcess().Id}");
             while (!System.Diagnostics.Debugger.IsAttached)
@@ -98,10 +97,11 @@ namespace YAMLParser
             }
 
             // first pass: create all msg files (and register them in static resolver dictionary)
+            var baseTypes = MessageTypeRegistry.Instance.GetTypeNames().ToList();
             foreach (MsgFileLocation path in paths)
             {
-                var fileName = Path.GetFileName(path.Path);
-                if (messageFilesToSkip.Contains(fileName))
+                var typeName = $"{path.package}/{path.basename}";
+                if (baseTypes.Contains(typeName))
                 {
                     Logger.LogInformation($"Skip file {path} because MessageBase already contains this message");
                 }

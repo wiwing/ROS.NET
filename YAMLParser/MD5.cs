@@ -144,7 +144,7 @@ namespace YAMLParser
                 if (ms == null)
                 {
                     RosMessage rosMessage = null;
-                    var packages = new List<string>() { "std_msgs", "actionlib_msgs" };
+                    var packages = MessageTypeRegistry.Instance.PackageNames;
                     foreach (var package in packages)
                     {
                         try
