@@ -5,9 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using m = Messages.std_msgs;
-using gm = Messages.geometry_msgs;
-using nm = Messages.nav_msgs;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 
@@ -15,7 +12,7 @@ namespace Uml.Robotics.Ros
 {
     public class ConnectionManager
     {
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ConnectionManager>(); 
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ConnectionManager>();
         private static Lazy<ConnectionManager> _instance = new Lazy<ConnectionManager>(LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static ConnectionManager Instance

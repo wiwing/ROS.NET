@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Messages;
 using Microsoft.Extensions.Logging;
-using std_msgs = Messages.std_msgs;
 
 namespace Uml.Robotics.Ros
 {
@@ -83,7 +81,7 @@ namespace Uml.Robotics.Ros
 
         public virtual void processResponse(string error, bool success)
         {
-            var msg = new std_msgs.String(error);
+            var msg = new Messages.std_msgs.String(error);
             msg.Serialized = msg.Serialize();
             byte[] buf;
             if (success)

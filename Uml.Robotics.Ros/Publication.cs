@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
-using Messages;
-using Uml.Robotics.XmlRpc;
-using m = Messages.std_msgs;
-using gm = Messages.geometry_msgs;
-using nm = Messages.nav_msgs;
 using Microsoft.Extensions.Logging;
+
+using Uml.Robotics.XmlRpc;
+using std_msgs = Messages.std_msgs;
 
 namespace Uml.Robotics.Ros
 {
@@ -252,11 +250,11 @@ namespace Uml.Robotics.Ros
             if (HasHeader)
             {
                 object h = holder.msg.GetType().GetTypeInfo().GetField("header").GetValue(holder.msg);
-                m.Header header;
+                std_msgs.Header header;
                 if (h == null)
-                    header = new m.Header();
+                    header = new std_msgs.Header();
                 else
-                    header = (m.Header) h;
+                    header = (std_msgs.Header) h;
                 header.seq = seq;
                 if (header.stamp == null)
                 {

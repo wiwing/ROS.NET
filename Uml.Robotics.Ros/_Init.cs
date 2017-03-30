@@ -5,11 +5,12 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using Messages;
+using System.Runtime.Loader;
+
 using Microsoft.Extensions.Logging;
 using Uml.Robotics.XmlRpc;
 using std_msgs = Messages.std_msgs;
-
+using System.IO;
 
 namespace Uml.Robotics.Ros
 {
@@ -333,7 +334,18 @@ namespace Uml.Robotics.Ros
         /// <param name="options"> options? </param>
         internal static void Init(IDictionary<string, string> remapping_args, string name, int options)
         {
-            Messages.RosMessage.ParseAssemblyAndRegisterRosMessages((new Messages.RosMessage()).GetType().GetTypeInfo().Assembly);
+            MessageTypeRegistry.Instance.ParseAssemblyAndRegisterRosMessages(MessageTypeRegistry.Instance.GetType().GetTypeInfo().Assembly);
+            var assemblyPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            var messageDllPath = Path.Combine(assemblyPath, "Messages.dll");
+            if (!File.Exists(messageDllPath))
+            {
+                throw new InvalidOperationException("ROS.NET depends on Messages.dll");
+            }
+            Logger.LogInformation($"Loading ROS message types from {messageDllPath}");
+            var messageDll = AssemblyLoadContext.Default.LoadFromAssemblyPath(messageDllPath);
+            MessageTypeRegistry.Instance.ParseAssemblyAndRegisterRosMessages(messageDll);
+
+
             // if we haven't sunk our fangs into the processes jugular so we can tell
             //    when it has stopped kicking, do so now
             if (!atexit_registered)

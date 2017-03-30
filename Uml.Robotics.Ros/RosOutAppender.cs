@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading;
-using Messages;
 using Messages.rosgraph_msgs;
-using m = Messages.std_msgs;
-using gm = Messages.geometry_msgs;
-using nm = Messages.nav_msgs;
 
 namespace Uml.Robotics.Ros
 {
@@ -84,8 +78,8 @@ namespace Uml.Robotics.Ros
                 file = callerInfo.FilePath,
                 function = callerInfo.MemberName,
                 line = (uint)callerInfo.LineNumber,
-                level = ((byte) ((int)level)),
-                header = new m.Header() { stamp = ROS.GetTime() }
+                level = ((byte)((int)level)),
+                header = new Messages.std_msgs.Header() { stamp = ROS.GetTime() }
             };
             TopicManager.Instance.getAdvertisedTopics(out logMessage.topics);
             lock (log_queue)

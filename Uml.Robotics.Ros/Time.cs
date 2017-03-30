@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading;
-using Messages.rosgraph_msgs;
 using Microsoft.Extensions.Logging;
-using m = Messages.std_msgs;
+
+using Messages.rosgraph_msgs;
 
 namespace Uml.Robotics.Ros
 {
