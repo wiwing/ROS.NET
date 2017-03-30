@@ -397,7 +397,7 @@ namespace Uml.Robotics.Ros
         private static void shutdownCallback(XmlRpcValue parms, XmlRpcValue r)
         {
             int num_params = 0;
-            if (parms.Type == XmlRpcValue.ValueType.Array)
+            if (parms.Type == XmlRpcType.Array)
                 num_params = parms.Size;
             if (num_params > 1)
             {

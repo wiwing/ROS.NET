@@ -3,20 +3,20 @@ using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
-using System.Xml;
+using System.Xml.Linq;
 
 namespace Uml.Robotics.XmlRpc
 {
     public class XmlRpcClient : XmlRpcSource
     {
         // Static data
-        private static string REQUEST_BEGIN = "<?xml version=\"1.0\"?>\r\n<methodCall><methodName>";
-        private static string REQUEST_END_METHODNAME = "</methodName>\r\n";
-        private static string PARAMS_TAG = "<params>";
-        private static string PARAMS_ETAG = "</params>";
-        private static string PARAM_TAG = "<param>";
-        private static string PARAM_ETAG = "</param>";
-        private static string REQUEST_END = "</methodCall>\r\n";
+        const string REQUEST_BEGIN = "<?xml version=\"1.0\"?>\r\n<methodCall><methodName>";
+        const string REQUEST_END_METHODNAME = "</methodName>\r\n";
+        const string PARAMS_TAG = "<params>";
+        const string PARAMS_ETAG = "</params>";
+        const string PARAM_TAG = "<param>";
+        const string PARAM_ETAG = "</param>";
+        const string REQUEST_END = "</methodCall>\r\n";
 
         public string HostUri = "";
         private int _bytesWritten;
@@ -146,43 +146,39 @@ namespace Uml.Robotics.XmlRpc
             XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.MAX, "XmlRpcClient::Execute: method {0} (_connectionState {0}).", method, _connectionState);
             lock (this)
             {
-                //result = null;
                 // This is not a thread-safe operation, if you want to do multithreading, use separate
                 // clients for each thread. If you want to protect yourself from multiple threads
                 // accessing the same client, replace this code with a real mutex.
                 if (_executing)
                     return false;
 
-                _executing = true;
-                //ClearFlagOnExit cf(_executing);
+                try
+                {
+                    _executing = true;
+                    _sendAttempts = 0;
 
-                _sendAttempts = 0;
+                    if (!setupConnection())
+                        return false;
 
-                if (!setupConnection())
+                    if (!generateRequest(method, parameters))
+                        return false;
+
+                    double msTime = -1.0;
+                    _disp.Work(msTime);
+
+                    if (_connectionState != ConnectionState.IDLE)
+                        return false;
+
+                    if (!parseResponse(result, header.DataString))
+                        return false;
+
+                    XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.DEBUG, "XmlRpcClient::execute: method {0} completed.", method);
+                }
+                finally
                 {
                     _executing = false;
-                    return false;
                 }
-
-                if (!generateRequest(method, parameters))
-                {
-                    _executing = false;
-                    return false;
-                }
-
-                double msTime = -1.0;
-                _disp.Work(msTime);
-
-                if (_connectionState != ConnectionState.IDLE || !parseResponse(result, header.DataString))
-                {
-                    _executing = false;
-                    return false;
-                }
-
-                XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.DEBUG, "XmlRpcClient::execute: method {0} completed.", method);
-                _executing = false;
             }
-            _executing = false;
             return true;
         }
 
@@ -224,14 +220,10 @@ namespace Uml.Robotics.XmlRpc
 
         public bool ExecuteCheckDone(XmlRpcValue result)
         {
-            //result.clear();
-            // Are we done yet?
             if (_connectionState != ConnectionState.IDLE)
                 return false;
-            if (!parseResponse(result, header.DataString))
-            {
-                // Hopefully the caller can determine that parsing failed.
-            }
+
+            parseResponse(result, header.DataString);
             XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.DEBUG, "XmlRpcClient::execute: method completed.");
             return true;
         }
@@ -436,7 +428,7 @@ namespace Uml.Robotics.XmlRpc
             if (parameters.IsValid)
             {
                 body += PARAMS_TAG;
-                if (parameters.Type == XmlRpcValue.ValueType.Array)
+                if (parameters.Type == XmlRpcType.Array)
                 {
                     for (int i = 0; i < parameters.Length; ++i)
                     {
@@ -574,62 +566,50 @@ namespace Uml.Robotics.XmlRpc
         }
 
         // Convert the response xml into a result value
-        private bool parseResponse(XmlRpcValue result, string _response)
+        private bool parseResponse(XmlRpcValue result, string response)
         {
-            bool success = true;
-            //XmlRpcValue result = null;
-            using (XmlReader reader = XmlReader.Create(new StringReader(_response)))
+            // Parse response xml into result
+            var responseDocument = XDocument.Parse(response);
+            var methodResponseElement = responseDocument.Element("methodResponse");
+            if (methodResponseElement == null)
+                throw new XmlRpcException("Expected <methodResponse> element missing. Response:\n" + response);
+            
+            var paramsElement = methodResponseElement.Element("params");
+            var faultElement = methodResponseElement.Element("fault");
+
+            if (paramsElement != null)
             {
-                XmlDocument response = new XmlDocument();
-                response.Load(reader);
-                // Parse response xml into result
-                //int offset = 0;
-                XmlNodeList resp = response.GetElementsByTagName("methodResponse");
-                XmlNode responseNode = resp[0];
-
-                //if (!XmlRpcUtil.findTag(METHODRESPONSE_TAG, _response, out offset))
-                if (resp.Count == 0)
+                var selection = paramsElement.Elements("param").ToList();
+                if (selection.Count > 1)
                 {
-                    XmlRpcUtil.error("Error in XmlRpcClient::parseResponse: Invalid response - no methodResponse. Response:\n{0}", _response);
-                    return false;
-                }
-
-                XmlElement pars = responseNode["params"];
-                XmlElement fault = responseNode["fault"];
-
-                //result = new XmlRpcValue();
-                if (pars != null)
-                {
-                    var selection = pars.SelectNodes("param");
-                    if (selection.Count > 1)
+                    result.SetArray(selection.Count);
+                    for (int i = 0; i < selection.Count; i++)
                     {
-                        result.SetArray(selection.Count);
-                        int i = 0;
-                        foreach (XmlNode par in selection)
-                        {
-                            var value = new XmlRpcValue();
-                            value.FromXml(par["value"]);
-                            result[i++] = value;
-                        }
+                        var value = new XmlRpcValue();
+                        value.FromXElement(selection[i].Element("value"));
+                        result.Set(i, value);
                     }
-                    else if (selection.Count == 1)
-                    {
-                        result.FromXml(selection[0]["value"]);
-                    }
-                    else
-                        success = false;
                 }
-                else if (fault != null && result.FromXml(fault))
+                else if (selection.Count == 1)
                 {
-                    success = false;
+                    result.FromXElement(selection[0].Element("value"));
                 }
                 else
                 {
-                    XmlRpcUtil.error("Error in XmlRpcClient::parseResponse: Invalid response - no param or fault tag. Response:\n{0}", _response);
+                    return false;
                 }
-                _response = "";
             }
-            return success;
+            else if (faultElement != null)
+            {
+                result.FromXElement(faultElement);
+                return false;
+            }
+            else
+            {
+                throw new XmlRpcException("Invalid response - no param or fault tag. Response:\n" + response);
+            }
+
+            return true;
         }
 
         private enum ConnectionState

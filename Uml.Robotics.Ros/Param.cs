@@ -298,7 +298,7 @@ namespace Uml.Robotics.Ros
             parm.Set(0, this_node.Name);
             if (!master.execute("getParamNames", parm, result, payload, false))
                 return ret;
-            if (result.Size != 3 || result[0].GetInt() != 1 || result[2].Type != XmlRpcValue.ValueType.Array)
+            if (result.Size != 3 || result[0].GetInt() != 1 || result[2].Type != XmlRpcType.Array)
             {
                 Logger.LogWarning("Expected a return code, a description, and a list!");
                 return ret;
@@ -322,7 +322,7 @@ namespace Uml.Robotics.Ros
             parm.Set(1, names.resolve(key));
             if (!master.execute("hasParam", parm, result, payload, false))
                 return false;
-            if (result.Size != 3 || result[0].GetInt() != 1 || result[2].Type != XmlRpcValue.ValueType.Boolean)
+            if (result.Size != 3 || result[0].GetInt() != 1 || result[2].Type != XmlRpcType.Boolean)
                 return false;
             return result[2].GetBool();
         }

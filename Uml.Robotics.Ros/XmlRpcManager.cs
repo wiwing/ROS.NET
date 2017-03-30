@@ -131,14 +131,14 @@ namespace Uml.Robotics.Ros
 
         public bool validateXmlRpcResponse(string method, XmlRpcValue response, XmlRpcValue payload)
         {
-            if (response.Type != XmlRpcValue.ValueType.Array)
+            if (response.Type != XmlRpcType.Array)
                 return validateFailed(method, "didn't return an array -- {0}", response);
             if (response.Size != 3)
                 return validateFailed(method, "didn't return a 3-element array -- {0}", response);
-            if (response[0].Type != XmlRpcValue.ValueType.Int)
+            if (response[0].Type != XmlRpcType.Int)
                 return validateFailed(method, "didn't return an int as the 1st element -- {0}", response);
             int status_code = response[0].GetInt();
-            if (response[1].Type != XmlRpcValue.ValueType.String)
+            if (response[1].Type != XmlRpcType.String)
                 return validateFailed(method, "didn't return a string as the 2nd element -- {0}", response);
             string status_string = response[1].GetString();
             if (status_code != 1)
@@ -148,7 +148,7 @@ namespace Uml.Robotics.Ros
 
             switch (response[2].Type)
             {
-                case XmlRpcValue.ValueType.Array:
+                case XmlRpcType.Array:
                     {
                         payload.SetArray(0);
                         for (int i = 0; i < response[2].Length; i++)
@@ -157,13 +157,13 @@ namespace Uml.Robotics.Ros
                         }
                     }
                     break;
-                case XmlRpcValue.ValueType.Int:
-                case XmlRpcValue.ValueType.Double:
-                case XmlRpcValue.ValueType.String:
-                case XmlRpcValue.ValueType.Boolean:
+                case XmlRpcType.Int:
+                case XmlRpcType.Double:
+                case XmlRpcType.String:
+                case XmlRpcType.Boolean:
                     payload.Copy(response[2]);
                     break;
-                case XmlRpcValue.ValueType.Invalid:
+                case XmlRpcType.Invalid:
                     break;
                 default:
                     throw new ArgumentException("Unhandled valid xmlrpc payload type: " + response[2].Type, nameof(response));

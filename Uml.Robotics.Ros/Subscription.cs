@@ -296,7 +296,7 @@ namespace Uml.Robotics.Ros
                                 "]");
                     return;
                 }
-                if (proto.Type != XmlRpcValue.ValueType.Array)
+                if (proto.Type != XmlRpcType.Array)
                 {
                     Logger.LogWarning("Available protocol info returned from " + xmlrpc_uri + " is not a list.");
                     return;
@@ -308,7 +308,7 @@ namespace Uml.Robotics.Ros
                 }
                 else if (proto_name == "TCPROS")
                 {
-                    if (proto.Size != 3 || proto[1].Type != XmlRpcValue.ValueType.String || proto[2].Type != XmlRpcValue.ValueType.Int)
+                    if (proto.Size != 3 || proto[1].Type != XmlRpcType.String || proto[2].Type != XmlRpcType.Int)
                     {
                         Logger.LogWarning("TcpRos Publisher should implement string, int as parameter");
                         return;

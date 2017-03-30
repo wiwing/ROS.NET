@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Xml;
+using System.Xml.Linq;
 
 namespace Uml.Robotics.XmlRpc
 {
@@ -274,42 +275,27 @@ namespace Uml.Robotics.XmlRpc
         private string parseRequest(XmlRpcValue parms, string _request)
         {
             string methodName = "unknown";
-            //XmlRpcValue result = null;
-            using (XmlReader reader = XmlReader.Create(new StringReader(_request)))
+
+            var requestDocument = XDocument.Parse(_request);
+            var methodNameElement = requestDocument.Element("methodName");
+            if (methodNameElement != null)   
+                methodName = methodNameElement.Value;
+            
+            var xmlParameters = requestDocument.Elements("param").ToList();
+            
+            if (xmlParameters.Count == 0)
             {
-                XmlDocument xmldoc = new XmlDocument();
-                xmldoc.Load(reader);
+                XmlRpcUtil.error("Error in XmlRpcServer::parseRequest: Invalid request - no methodResponse. Request:\n{0}", _request);
+                return null;
+            }
 
-                // Parse response xml into result
-                //int offset = 0;
-                XmlNodeList xmlMethodNameList = xmldoc.GetElementsByTagName("methodName");
-                if (xmlMethodNameList.Count > 0)
-                {
-                    XmlNode xmlMethodName = xmlMethodNameList[0];
-                    methodName = xmlMethodName.InnerText;
-                }
+            parms.SetArray(xmlParameters.Count);
 
-                XmlNodeList xmlParameters = xmldoc.GetElementsByTagName("param");
-                XmlNodeList xmlFault = xmldoc.GetElementsByTagName("fault");
-                if (xmlParameters.Count == 0)
-                {
-                    XmlRpcUtil.error("Error in XmlRpcServer::parseRequest: Invalid request - no methodResponse. Request:\n{0}", _request);
-                    return null;
-                }
-
-                parms.SetArray(xmlParameters.Count);
-
-                for (int i = 0; i < xmlParameters.Count; i++)
-                {
-                    var value = new XmlRpcValue();
-                    value.FromXml(xmlParameters[i]["value"]);
-                    parms.Set(i, value);
-                }
-
-                if (xmlFault.Count > 0 && parms.FromXml(xmlFault[0]))
-                {
-                    XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.WARNING, "Read fault on response for request:\n{0}\nFAULT: {1}", _request, parms.ToString());
-                }
+            for (int i = 0; i < xmlParameters.Count; i++)
+            {
+                var value = new XmlRpcValue();
+                value.FromXElement(xmlParameters[i].Element("value"));
+                parms.Set(i, value);
             }
 
             return methodName;
@@ -348,7 +334,7 @@ namespace Uml.Robotics.XmlRpc
             if (methodNameRoot != SYSTEM_MULTICALL) return false;
 
             // There ought to be 1 parameter, an array of structs
-            if (parms.Length != 1 || parms[0].Type != XmlRpcValue.ValueType.Array)
+            if (parms.Length != 1 || parms[0].Type != XmlRpcType.Array)
                 throw new XmlRpcException(SYSTEM_MULTICALL + ": Invalid argument (expected an array)");
 
             int nc = parms[0].Length;
@@ -421,7 +407,7 @@ namespace Uml.Robotics.XmlRpc
 
             private void execute(XmlRpcValue parms, XmlRpcValue result)
             {
-                if (parms[0].Type != XmlRpcValue.ValueType.String)
+                if (parms[0].Type != XmlRpcType.String)
                     throw new XmlRpcException(METHOD_HELP + ": Invalid argument type");
 
                 XmlRpcServerMethod m = server.FindMethod(parms[0].GetString());

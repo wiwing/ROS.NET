@@ -2,45 +2,46 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Xml.Linq;
 using System.Xml;
 
 namespace Uml.Robotics.XmlRpc
 {
+    public enum XmlRpcType
+    {
+        Invalid,
+        Boolean,
+        Int,
+        Double,
+        String,
+        DateTime,
+        Base64,
+        Array,
+        Struct
+    }
+
     public class XmlRpcValue
     {
-        public enum ValueType
-        {
-            Invalid,
-            Boolean,
-            Int,
-            Double,
-            String,
-            DateTime,
-            Base64,
-            Array,
-            Struct
-        }
+        private static readonly XName VALUE_TAG = "value";
+        private static readonly XName BOOLEAN_TAG = "boolean";
+        private static readonly XName DOUBLE_TAG = "double";
+        private static readonly XName INT_TAG = "int";
+        private static readonly XName I4_TAG = "i4";
+        private static readonly XName STRING_TAG = "string";
+        private static readonly XName DATETIME_TAG = "dateTime.iso8601";
+        private static readonly XName BASE64_TAG = "base64";
+        private static readonly XName ARRAY_TAG = "array";
+        private static readonly XName DATA_TAG = "data";
+        private static readonly XName STRUCT_TAG = "struct";
+        private static readonly XName MEMBER_TAG = "member";
+        private static readonly XName NAME_TAG = "name";
 
-        private const string VALUE_TAG = "value";
-        private const string BOOLEAN_TAG = "boolean";
-        private const string DOUBLE_TAG = "double";
-        private const string INT_TAG = "int";
-        private const string I4_TAG = "i4";
-        private const string STRING_TAG = "string";
-        private const string DATETIME_TAG = "dateTime.iso8601";
-        private const string BASE64_TAG = "base64";
-        private const string ARRAY_TAG = "array";
-        private const string DATA_TAG = "data";
-        private const string STRUCT_TAG = "struct";
-        private const string MEMBER_TAG = "member";
-        private const string NAME_TAG = "name";
-
-        private ValueType type;
+        private XmlRpcType type;
         object value;
 
         public XmlRpcValue()
         {
-            type = ValueType.Invalid;
+            type = XmlRpcType.Invalid;
         }
 
         public XmlRpcValue(params Object[] initialvalues)
@@ -79,13 +80,13 @@ namespace Uml.Robotics.XmlRpc
             {
                 switch (type)
                 {
-                    case ValueType.String:
+                    case XmlRpcType.String:
                         return GetString().Length;
-                    case ValueType.Base64:
+                    case XmlRpcType.Base64:
                         return GetBinary().Length;
-                    case ValueType.Array:
+                    case XmlRpcType.Array:
                         return GetArray().Length;
-                    case ValueType.Struct:
+                    case XmlRpcType.Struct:
                         return GetStruct().Count;
                     default:
                         XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.DEBUG, "Trying to get size of value without size (type:{0})", type);
@@ -98,17 +99,17 @@ namespace Uml.Robotics.XmlRpc
 
         public bool IsValid
         {
-            get { return type != ValueType.Invalid; }
+            get { return type != XmlRpcType.Invalid; }
         }
 
-        public ValueType Type
+        public XmlRpcType Type
         {
             get { return type; }
         }
 
         public bool IsArray
         {
-            get { return type == ValueType.Array; }
+            get { return type == XmlRpcType.Array; }
         }
 
         public int Size
@@ -117,11 +118,11 @@ namespace Uml.Robotics.XmlRpc
             {
                 switch (type)
                 {
-                    case ValueType.Array:
+                    case XmlRpcType.Array:
                         return this.GetArray().Length;
-                    case ValueType.String:
+                    case XmlRpcType.String:
                         return this.GetString().Length;
-                    case ValueType.Struct:
+                    case XmlRpcType.Struct:
                         return this.GetStruct().Count;
                     default:
                         return 0;
@@ -133,12 +134,12 @@ namespace Uml.Robotics.XmlRpc
         {
             get
             {
-                EnsureArraySize(index);
+                EnsureArraySize(index + 1);
                 return Get(index);
             }
             set
             {
-                EnsureArraySize(index);
+                EnsureArraySize(index + 1);
                 var array = this.GetArray();
                 if (array[index] == null)
                 {
@@ -154,26 +155,20 @@ namespace Uml.Robotics.XmlRpc
             set { Set(key, value); }
         }
 
-        private void SetFromObject(int key, object value)
+        private void SetFromObject(int index, object value)
         {
             if (value == null)
-            {
-                Set(key, "");
-                return;
-            }
-
-            if (value is string)
-                Set(key, (string)value);
+                Set(index, string.Empty);
+            else if (value is string)
+                Set(index, (string)value);
             else if (value is int)
-                Set(key, (int)value);
+                Set(index, (int)value);
             else if (value is double)
-                Set(key, (double)value);
+                Set(index, (double)value);
             else if (value is bool)
-                Set(key, (bool)value);
+                Set(index, (bool)value);
             else
-            {
                 throw new XmlRpcException($"Invalid type {type} or error while parsing {value.ToString()} as {type}");
-            }
         }
 
         public override bool Equals(object obj)
@@ -185,19 +180,19 @@ namespace Uml.Robotics.XmlRpc
 
             switch (type)
             {
-                case ValueType.Boolean:
-                case ValueType.Int:
-                case ValueType.Double:
-                case ValueType.String:
-                case ValueType.DateTime:
+                case XmlRpcType.Boolean:
+                case XmlRpcType.Int:
+                case XmlRpcType.Double:
+                case XmlRpcType.String:
+                case XmlRpcType.DateTime:
                     return object.Equals(value, other.value);
-                case ValueType.Base64:
+                case XmlRpcType.Base64:
                     return this.GetBinary().SequenceEqual(other.GetBinary());
-                case ValueType.Array:
+                case XmlRpcType.Array:
                     return this.GetArray().SequenceEqual(other.GetArray());
-                case ValueType.Struct:
+                case XmlRpcType.Struct:
                     return this.GetStruct().SequenceEqual(other.GetStruct());
-                case ValueType.Invalid:
+                case XmlRpcType.Invalid:
                     return true;
             }
 
@@ -213,13 +208,13 @@ namespace Uml.Robotics.XmlRpc
         {
             switch (other.type)
             {
-                case ValueType.Base64:
+                case XmlRpcType.Base64:
                     value = other.GetBinary().Clone();
                     break;
-                case ValueType.Array:
+                case XmlRpcType.Array:
                     value = other.GetArray().Clone();
                     break;
-                case ValueType.Struct:
+                case XmlRpcType.Struct:
                     value = new Dictionary<string, XmlRpcValue>(other.GetStruct());
                     break;
                 default:
@@ -232,93 +227,85 @@ namespace Uml.Robotics.XmlRpc
 
         public bool HasMember(string name)
         {
-            return type == ValueType.Struct && GetStruct().ContainsKey(name);
+            return type == XmlRpcType.Struct && GetStruct().ContainsKey(name);
         }
 
-        public bool FromXml(XmlNode value)
+        public void FromXml(string xml)
         {
-            try
+            FromXElement(XElement.Parse(xml));
+        }
+
+        public void FromXElement(XElement valueElement)
+        {
+            if (valueElement == null)
+                throw new ArgumentNullException(nameof(valueElement), "Value element must not be null.");
+
+            var content = valueElement.Elements().FirstOrDefault();
+            if (content == null)
             {
-                if (value == null)
-                    return false;
-
-                string tex = value.InnerText;
-                XmlElement val;
-                if ((val = value[BOOLEAN_TAG]) != null)
-                {
-                    int i;
-                    if (!int.TryParse(tex, out i))
-                        return false;
-                    if (i != 0 && i != 1)
-                        return false;
-                    Set(i == 0);
-                }
-                else if ((val = value[I4_TAG]) != null)
-                {
-                    int i;
-                    if (!int.TryParse(tex, out i))
-                        return false;
-                    Set(i);
-                    return true;
-                }
-                else if ((val = value[INT_TAG]) != null)
-                {
-                    int i;
-                    if (!int.TryParse(tex, out i))
-                        return false;
-                    Set(i);
-                    return true;
-                }
-                else if ((val = value[DOUBLE_TAG]) != null)
-                {
-                    double d;
-                    if (!double.TryParse(tex, out d))
-                        return false;
-                    Set(d);
-                    return true;
-                }
-                else if ((val = value[DATETIME_TAG]) != null)
-                {
-                    throw new NotImplementedException();        // TODO: implement
-
-                }
-                else if ((val = value[BASE64_TAG]) != null)
-                {
-                    throw new NotImplementedException();         // TODO: implement
-                }
-                else if ((val = value[STRING_TAG]) != null)
-                {
-                    Set(tex);
-                }
-                else if ((val = value[ARRAY_TAG]) != null)
-                {
-                    var data = val[DATA_TAG];
-                    if (data == null)
-                        return false;
-                    var selection = data.SelectNodes(VALUE_TAG);
-                    SetArray(selection.Count);
-                    for (int i = 0; i < selection.Count; i++)
-                    {
-                        var xmlValue = new XmlRpcValue();
-                        if (!xmlValue.FromXml(selection[i]))
-                            return false;
-                        Set(i, xmlValue);
-                    }
-                }
-                else if ((val = value[STRUCT_TAG]) != null)
-                {
-                    throw new NotImplementedException();         // TODO: implement
-                }
+                Set(valueElement.Value);
+            }
+            else if (content.Name == BOOLEAN_TAG)
+            {
+                int x = (int)content;
+                if (x == 0)
+                    Set(false);
+                else if (x == 1)
+                    Set(true);
                 else
+                    throw new XmlRpcException("XML-RPC boolean value must be '0' or '1'.");
+            }
+            else if (content.Name == I4_TAG || content.Name == INT_TAG)
+            {
+                Set((int)content);
+            }
+            else if (content.Name == DOUBLE_TAG)
+            {
+                Set((double)content);
+            }
+            else if (content.Name == DATETIME_TAG)
+            {
+                Set(XmlConvert.ToDateTime(content.Value, XmlDateTimeSerializationMode.RoundtripKind));
+            }
+            else if (content.Name == BASE64_TAG)
+            {
+                Set(Convert.FromBase64String(content.Value));
+            }
+            else if (content.Name == STRING_TAG)
+            {
+                Set(valueElement.Value);
+            }
+            else if (content.Name == ARRAY_TAG)
+            {
+                var dataElement = content.Element(DATA_TAG);
+                if (dataElement == null)
+                    throw new XmlRpcException("Expected <data> element is missing.");
+                var valueElements = dataElement.Elements(VALUE_TAG).ToList();
+                SetArray(valueElements.Count);
+                for (int i = 0; i < valueElements.Count; i++)
                 {
-                    Set(tex);
+                    var v = new XmlRpcValue();
+                    v.FromXElement(valueElements[i]);
+                    Set(i, v);
                 }
             }
-            catch
+            else if (content.Name == STRUCT_TAG)
             {
-                return false;
+                foreach (var memberElement in content.Elements(MEMBER_TAG))
+                {
+                    var nameElement = memberElement.Element(NAME_TAG);
+                    if (nameElement == null)
+                        throw new XmlRpcException("Expected <name> element is missing.");
+                    var name = nameElement.Value;
+                    var v = new XmlRpcValue();
+                    v.FromXElement(memberElement.Element(VALUE_TAG));
+                    Set(name, v);
+                }
             }
-            return true;
+            else
+            {
+                Set(valueElement.Value);
+            }
         }
 
         public string ToXml()
@@ -333,105 +320,88 @@ namespace Uml.Robotics.XmlRpc
             var sw = new StringWriter();
             using (var writer = XmlWriter.Create(sw, settings))
             {
-                var doc = new XmlDocument();
-                ToXml(doc, doc);
-                doc.WriteContentTo(writer);
+                var valueElement = this.ToXElement();
+                valueElement.WriteTo(writer);
             }
             return sw.ToString();
         }
 
-        public XmlNode ToXml(XmlDocument doc, XmlNode parent)
+        public XElement ToXElement()
         {
-            XmlElement root = doc.CreateElement(VALUE_TAG);
-            XmlElement el = null;
+            var valueElement = new XElement(VALUE_TAG);
             switch (type)
             {
-                case ValueType.Boolean:
-                    el = doc.CreateElement(BOOLEAN_TAG);
-                    el.AppendChild(doc.CreateTextNode(XmlConvert.ToString(GetBool() ? 1 : 0)));
+                case XmlRpcType.Boolean:
+                    valueElement.Add(new XElement(BOOLEAN_TAG, GetBool() ? 1 : 0));
                     break;
-                case ValueType.Int:
-                    el = doc.CreateElement(INT_TAG);
-                    el.AppendChild(doc.CreateTextNode(XmlConvert.ToString(GetInt())));
+                case XmlRpcType.Int:
+                    valueElement.Add(new XElement(INT_TAG, GetInt()));
                     break;
-                case ValueType.Double:
-                    el = doc.CreateElement(BOOLEAN_TAG);
-                    el.AppendChild(doc.CreateTextNode(XmlConvert.ToString(GetDouble())));
+                case XmlRpcType.Double:
+                    valueElement.Add(new XElement(DOUBLE_TAG, GetDouble()));
                     break;
-                case ValueType.DateTime:
-                    el = doc.CreateElement(DATETIME_TAG);
-                    XmlConvert.ToString(GetDateTime(), XmlDateTimeSerializationMode.RoundtripKind);
+                case XmlRpcType.DateTime:
+                    valueElement.Add(new XElement(DATETIME_TAG, XmlConvert.ToString(GetDateTime(), XmlDateTimeSerializationMode.RoundtripKind)));
                     break;
-                case ValueType.String:
-                    el = doc.CreateElement(STRING_TAG);
-                    el.AppendChild(doc.CreateTextNode(GetString()));
+                case XmlRpcType.String:
+                    valueElement.Add(new XElement(STRING_TAG, GetString()));
                     break;
-                case ValueType.Base64:
-                    el = doc.CreateElement(BASE64_TAG);
-                    var base64 = Convert.ToBase64String(GetBinary());
-                    el.AppendChild(doc.CreateTextNode(base64));
+                case XmlRpcType.Base64:
+                    valueElement.Add(new XElement(BASE64_TAG, Convert.ToBase64String(GetBinary())));
                     break;
-                case ValueType.Array:
-                    el = doc.CreateElement(ARRAY_TAG);
-                    var elData = doc.CreateElement(DATA_TAG);
-                    el.AppendChild(elData);
-                    foreach (var x in GetArray())
-                        x.ToXml(doc, elData);
+                case XmlRpcType.Array:
+                    valueElement.Add(new XElement(ARRAY_TAG, new XElement(DATA_TAG, GetArray().Select(x => x.ToXElement()))));
                     break;
-                case ValueType.Struct:
-                    el = doc.CreateElement(STRUCT_TAG);
-                    foreach (var record in GetStruct())
-                    {
-                        var member = doc.CreateElement(MEMBER_TAG);
-                        var name = doc.CreateElement(NAME_TAG);
-                        name.AppendChild(doc.CreateTextNode(record.Key));
-                        member.AppendChild(name);
-                        record.Value.ToXml(doc, member);
-                        el.AppendChild(member);
-                    }
+                case XmlRpcType.Struct:
+                    valueElement.Add(
+                        new XElement(STRUCT_TAG,
+                            GetStruct()
+                            .Select(x => new XElement(MEMBER_TAG,
+                                new XElement(NAME_TAG, x.Key), x.Value.ToXElement())
+                            )
+                        )
+                    );
                     break;
+                default:
+                    throw new XmlRpcException($"Cannot serialize XmlRpcValue type '${type}'.");
             }
 
-            if (el != null)
-                root.AppendChild(el);
-
-            parent.AppendChild(root);
-            return root;
+            return valueElement;
         }
 
         public void Set(string value)
         {
-            type = ValueType.String;
+            type = XmlRpcType.String;
             this.value = value;
         }
 
         public void Set(int value)
         {
-            type = ValueType.Int;
+            type = XmlRpcType.Int;
             this.value = value;
         }
 
         public void Set(bool value)
         {
-            type = ValueType.Boolean;
+            type = XmlRpcType.Boolean;
             this.value = value;
         }
 
         public void Set(double value)
         {
-            type = ValueType.Double;
+            type = XmlRpcType.Double;
             this.value = value;
         }
 
         public void Set(DateTime value)
         {
-            type = ValueType.DateTime;
+            type = XmlRpcType.DateTime;
             this.value = value;
         }
 
         public void Set(byte[] value)
         {
-            type = ValueType.Base64;
+            type = XmlRpcType.Base64;
             this.value = value;
         }
 
@@ -442,22 +412,22 @@ namespace Uml.Robotics.XmlRpc
 
         public void SetArray(int elementCount)
         {
-            type = ValueType.Array;
-            value = new XmlRpcValue[elementCount];
+            type = XmlRpcType.Array;
+            EnsureArraySize(elementCount);
         }
 
-        public void Set(string key, string value) => this[key].Set(value);
-        public void Set(string key, int value) => this[key].Set(value);
-        public void Set(string key, bool value) => this[key].Set(value);
-        public void Set(string key, double value) => this[key].Set(value);
-        public void Set(string key, byte[] value) => this[key].Set(value);
-        public void Set(string key, XmlRpcValue value) => this[key].Set(value);
+        public void Set(string name, string value) => this[name].Set(value);
+        public void Set(string name, int value) => this[name].Set(value);
+        public void Set(string name, bool value) => this[name].Set(value);
+        public void Set(string name, double value) => this[name].Set(value);
+        public void Set(string name, byte[] value) => this[name].Set(value);
+        public void Set(string name, XmlRpcValue value) => this[name].Set(value);
 
         public void Set(int index, string value) => this[index].Set(value);
         public void Set(int index, int value) => this[index].Set(value);
         public void Set(int index, bool value) => this[index].Set(value);
         public void Set(int index, double value) => this[index].Set(value);
-        public void Ste(int index, byte[] value) => this[index].Set(value);
+        public void Set(int index, byte[] value) => this[index].Set(value);
         public void Set(int index, XmlRpcValue value) => this[index].Set(value);
 
         public IDictionary<string, XmlRpcValue> GetStruct() => (IDictionary<string, XmlRpcValue>)value;
@@ -478,21 +448,21 @@ namespace Uml.Robotics.XmlRpc
 
         private void EnsureArraySize(int size)
         {
-            if (type != ValueType.Invalid && type != ValueType.Array)
+            if (type != XmlRpcType.Invalid && type != XmlRpcType.Array)
                 throw new XmlRpcException($"Cannot convert {type} to array");
 
             int before = 0;
             var array = value as XmlRpcValue[];
             if (array == null)
             {
-                array = new XmlRpcValue[size + 1];
+                array = new XmlRpcValue[size];
             }
             else
             {
                 before = array.Length;
-                if (array.Length < size + 1)
+                if (array.Length < size)
                 {
-                    Array.Resize(ref array, size + 1);
+                    Array.Resize(ref array, size);
                 }
             }
 
@@ -500,7 +470,7 @@ namespace Uml.Robotics.XmlRpc
                 array[i] = new XmlRpcValue();
 
             value = array;
-            type = ValueType.Array;
+            type = XmlRpcType.Array;
         }
 
         private XmlRpcValue Get(int index) => this.GetArray()[index];

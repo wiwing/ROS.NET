@@ -436,12 +436,12 @@ namespace Uml.Robotics.Ros
             for (int proto_idx = 0; proto_idx < protos.Size; proto_idx++)
             {
                 XmlRpcValue proto = protos[proto_idx];
-                if (proto.Type != XmlRpcValue.ValueType.Array)
+                if (proto.Type != XmlRpcType.Array)
                 {
                     this.Logger.LogError("requestTopic protocol list was not a list of lists");
                     return false;
                 }
-                if (proto[0].Type != XmlRpcValue.ValueType.String)
+                if (proto[0].Type != XmlRpcType.String)
                 {
                     this.Logger.LogError(
                         "requestTopic received a protocol list in which a sublist did not start with a string");
