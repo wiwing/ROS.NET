@@ -7,6 +7,8 @@ using System.Threading;
 using FauxMessages;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
+using System.Reflection;
+using Uml.Robotics.Ros;
 
 namespace YAMLParser
 {
@@ -15,6 +17,7 @@ namespace YAMLParser
         public static List<MsgsFile> msgsFiles = new List<MsgsFile>();
         public static List<SrvsFile> srvFiles = new List<SrvsFile>();
         public static List<ActionFile> actionFiles = new List<ActionFile>();
+        public static List<string> messageFilesToSkip = new List<string> {"Header.msg", "Time.msg", "GoalID.msg", "GoalStatus.msg"};
         public static string backhalf;
         public static string fronthalf;
         public static string name = "Messages";
@@ -32,12 +35,13 @@ namespace YAMLParser
             ApplicationLogging.LoggerFactory = loggerFactory;
             Logger = ApplicationLogging.CreateLogger("Program");
 
+            RosMessage.ParseAssemblyAndRegisterRosMessages((new RosMessage()).GetType().GetTypeInfo().Assembly);
+
             /*System.Console.WriteLine($"Process ID: {System.Diagnostics.Process.GetCurrentProcess().Id}");
             while (!System.Diagnostics.Debugger.IsAttached)
             {
                 System.Threading.Thread.Sleep(1);
             }*/
-
 
             string solutiondir;
             bool interactive = false; //wait for ENTER press when complete
@@ -96,7 +100,15 @@ namespace YAMLParser
             // first pass: create all msg files (and register them in static resolver dictionary)
             foreach (MsgFileLocation path in paths)
             {
-                msgsFiles.Add(new MsgsFile(path));
+                var fileName = Path.GetFileName(path.Path);
+                if (messageFilesToSkip.Contains(fileName))
+                {
+                    Logger.LogInformation($"Skip file {path} because MessageBase already contains this message");
+                }
+                else
+                {
+                    msgsFiles.Add(new MsgsFile(path));
+                }
             }
             Logger.LogDebug($"Added {msgsFiles.Count} message files");
 
