@@ -33,7 +33,7 @@ namespace Uml.Robotics.XmlRpc
         // Number of times the client has attempted to send the request
         private int _sendAttempts;
         private string _uri;
-        private HTTPHeader header;
+        private HttpHeader header;
         private TcpClient socket;
         public delegate void DisposedEvent();
         public event DisposedEvent Disposed;
@@ -143,7 +143,7 @@ namespace Uml.Robotics.XmlRpc
         // might be a fault).
         public bool Execute(string method, XmlRpcValue parameters, XmlRpcValue result)
         {
-            XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.SPEW, "XmlRpcClient::Execute: method {0} (_connectionState {0}).", method, _connectionState);
+            XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.MAX, "XmlRpcClient::Execute: method {0} (_connectionState {0}).", method, _connectionState);
             lock (this)
             {
                 //result = null;
@@ -192,7 +192,7 @@ namespace Uml.Robotics.XmlRpc
         // might be a fault).
         public bool ExecuteNonBlock(string method, XmlRpcValue parameters)
         {
-            XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.SPEW, "XmlRpcClient::ExecuteNonBlock: method {0} (_connectionState {0}.", method, _connectionState);
+            XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.MAX, "XmlRpcClient::ExecuteNonBlock: method {0} (_connectionState {0}.", method, _connectionState);
 
             // This is not a thread-safe operation, if you want to do multithreading, use separate
             // clients for each thread. If you want to protect yourself from multiple threads
@@ -353,11 +353,11 @@ namespace Uml.Robotics.XmlRpc
                 ? XmlRpcDispatch.EventType.WritableEvent : XmlRpcDispatch.EventType.ReadableEvent;
         }
 
-        internal override bool readHeader(ref HTTPHeader header)
+        internal override bool readHeader(ref HttpHeader header)
         {
             if (base.readHeader(ref header))
             {
-                if (header.m_headerStatus == HTTPHeader.STATUS.COMPLETE_HEADER)
+                if (header.HeaderStatus == HttpHeader.STATUS.COMPLETE_HEADER)
                 {
                     _connectionState = ConnectionState.READ_RESPONSE;
                 }
@@ -417,7 +417,7 @@ namespace Uml.Robotics.XmlRpc
 
                 throw;
             }
-    
+
             return true;
         }
 
@@ -433,10 +433,10 @@ namespace Uml.Robotics.XmlRpc
             body += REQUEST_END_METHODNAME;
 
             // If params is an array, each element is a separate parameter
-            if (parameters.Valid)
+            if (parameters.IsValid)
             {
                 body += PARAMS_TAG;
-                if (parameters.Type == XmlRpcValue.ValueType.TypeArray)
+                if (parameters.Type == XmlRpcValue.ValueType.Array)
                 {
                     for (int i = 0; i < parameters.Length; ++i)
                     {
@@ -492,7 +492,7 @@ namespace Uml.Robotics.XmlRpc
         private bool writeRequest()
         {
             if (_bytesWritten == 0)
-                XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.SPEW, "XmlRpcClient::writeRequest (attempt {0}):\n{1}\n", _sendAttempts + 1, _request);
+                XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.MAX, "XmlRpcClient::writeRequest (attempt {0}):\n{1}\n", _sendAttempts + 1, _request);
             // Try to write the request
             try
             {

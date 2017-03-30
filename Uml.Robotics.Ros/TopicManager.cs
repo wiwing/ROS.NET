@@ -1,14 +1,10 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
-using System.Threading;
-using System.Diagnostics;
-using System.Linq;
 using Messages;
+using System.Linq;
+using System.Threading;
 using Uml.Robotics.XmlRpc;
-using m = Messages.std_msgs;
-using gm = Messages.geometry_msgs;
-using nm = Messages.nav_msgs;
-using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
@@ -20,8 +16,6 @@ namespace Uml.Robotics.Ros
 
         #endregion
 
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<TopicManager>();
-
         private static Lazy<TopicManager> _instance = new Lazy<TopicManager>(LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static TopicManager Instance
@@ -29,6 +23,7 @@ namespace Uml.Robotics.Ros
             get { return _instance.Value; }
         }
 
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<TopicManager>();
         private List<Publication> advertised_topics = new List<Publication>();
         private object advertised_topics_mutex = new object();
         private bool shutting_down;
@@ -159,9 +154,13 @@ namespace Uml.Robotics.Ros
                 throw new Exception("Advertising on topic [" + ops.topic + "] with an empty md5sum");
             if (ops.datatype == "")
                 throw new Exception("Advertising on topic [" + ops.topic + "] with an empty datatype");
-            if (ops.message_definition == "")
-                Logger.LogWarning("Advertising on topic [" + ops.topic +
-                     "] with an empty message definition. Some tools may not work correctly");
+            if (string.IsNullOrEmpty(ops.message_definition))
+            {
+                this.Logger.LogWarning(
+                    "Advertising on topic [" + ops.topic +
+                     "] with an empty message definition. Some tools may not work correctly"
+                );
+            }
             return true;
         }
 
@@ -174,7 +173,9 @@ namespace Uml.Robotics.Ros
         /// <returns></returns>
         public bool advertise<T>(AdvertiseOptions<T> ops, SubscriberCallbacks callbacks) where T : RosMessage, new()
         {
-            if (!isValid(ops)) return false;
+            if (!isValid(ops))
+                return false;
+
             Publication pub = null;
             lock (advertised_topics_mutex)
             {
@@ -185,10 +186,11 @@ namespace Uml.Robotics.Ros
                 {
                     if (pub.Md5sum != ops.md5sum)
                     {
-                        Logger.LogError
-                            ("Tried to advertise on topic [{0}] with md5sum [{1}] and datatype [{2}], but the topic is already advertised as md5sum [{3}] and datatype [{4}]",
-                                ops.topic, ops.md5sum,
-                                ops.datatype, pub.Md5sum, pub.DataType);
+                        this.Logger.LogError(
+                            "Tried to advertise on topic [{0}] with md5sum [{1}] and datatype [{2}], but the topic is already advertised as md5sum [{3}] and datatype [{4}]",
+                            ops.topic, ops.md5sum,
+                            ops.datatype, pub.Md5sum, pub.DataType
+                        );
                         return false;
                     }
                 }
@@ -217,13 +219,13 @@ namespace Uml.Robotics.Ros
             if (found)
                 sub.addLocalConnection(pub);
 
-            XmlRpcValue args = new XmlRpcValue(this_node.Name, ops.topic, ops.datatype, XmlRpcManager.Instance.uri),
-                result = new XmlRpcValue(),
-                payload = new XmlRpcValue();
+            var args = new XmlRpcValue(this_node.Name, ops.topic, ops.datatype, XmlRpcManager.Instance.Uri);
+            var result = new XmlRpcValue();
+            var payload = new XmlRpcValue();
 
-            if(!master.execute("registerPublisher", args, result, payload, true))
+            if (!master.execute("registerPublisher", args, result, payload, true))
             {
-                Logger.LogError("RPC \"registerService\" for service " + ops.topic + " failed.");
+                this.Logger.LogError("RPC \"registerService\" for service " + ops.topic + " failed.");
                 return false;
             }
 
@@ -251,7 +253,7 @@ namespace Uml.Robotics.Ros
             s.addCallback(ops.helper, ops.md5sum, ops.callback_queue, ops.queue_size, ops.allow_concurrent_callbacks, ops.topic);
             if (!registerSubscriber(s, ops.datatype))
             {
-                Logger.LogError("Couldn't register subscriber on topic [{0}]", ops.topic);
+                this.Logger.LogError("Couldn't register subscriber on topic [{0}]", ops.topic);
                 s.shutdown();
                 return false;
             }
@@ -283,7 +285,10 @@ namespace Uml.Robotics.Ros
                     }
                 }
             }
-            if (sub == null) return false;
+
+            if (sub == null)
+                return false;
+
             sub.removeCallback(sbch);
             if (sub.NumCallbacks == 0)
             {
@@ -291,8 +296,9 @@ namespace Uml.Robotics.Ros
                 {
                     subscriptions.Remove(sub);
                 }
+
                 if (!unregisterSubscriber(topic))
-                    Logger.LogWarning("Couldn't unregister subscriber for topic [" + topic + "]");
+                    this.Logger.LogWarning("Couldn't unregister subscriber for topic [" + topic + "]");
 
                 sub.shutdown();
                 return true;
@@ -304,7 +310,8 @@ namespace Uml.Robotics.Ros
         {
             lock (subs_mutex)
             {
-                if (shutting_down) return null;
+                if (shutting_down)
+                    return null;
 
                 foreach (Subscription t in subscriptions)
                 {
@@ -338,7 +345,10 @@ namespace Uml.Robotics.Ros
                 p.connection_header.Values["callerid"] = this_node.Name;
                 p.connection_header.Values["latching"] = Convert.ToString(p.Latch);
             }
-            if (!ROS.ok || shutting_down) return;
+
+            if (!ROS.ok || shutting_down)
+                return;
+
             if (p.HasSubscribers || p.Latch)
             {
                 bool nocopy = false;
@@ -348,7 +358,9 @@ namespace Uml.Robotics.Ros
                     p.getPublishTypes(ref serialize, ref nocopy, msg.MessageType);
                 }
                 else
+                {
                     serialize = true;
+                }
 
                 p.publish(new MessageAndSerializerFunc(msg, serfunc, serialize, nocopy));
 
@@ -356,7 +368,9 @@ namespace Uml.Robotics.Ros
                     PollManager.Instance.poll_set.signal();
             }
             else
+            {
                 p.incrementSequence();
+            }
         }
 
         public void incrementSequence(string topic)
@@ -369,7 +383,8 @@ namespace Uml.Robotics.Ros
         public bool isLatched(string topic)
         {
             Publication pub = lookupPublication(topic);
-            if (pub != null) return pub.Latch;
+            if (pub != null)
+                return pub.Latch;
             return false;
         }
 
@@ -383,7 +398,10 @@ namespace Uml.Robotics.Ros
             bool found = false;
             bool found_topic = false;
             Subscription sub = null;
-            if (shutting_down) return false;
+
+            if (shutting_down)
+                return false;
+
             foreach (Subscription s in subscriptions)
             {
                 sub = s;
@@ -396,15 +414,20 @@ namespace Uml.Robotics.Ros
                 }
             }
             if (found_topic && !found)
+            {
                 throw new Exception
                     ("Tried to subscribe to a topic with the same name but different md5sum as a topic that was already subscribed [" +
                      ops.datatype + "/" + ops.md5sum + " vs. " + sub.datatype + "/" +
                      sub.md5sum + "]");
+            }
             if (found)
-                if (
-                    !sub.addCallback(ops.helper, ops.md5sum, ops.callback_queue, ops.queue_size,
+            {
+                if (!sub.addCallback(ops.helper, ops.md5sum, ops.callback_queue, ops.queue_size,
                         ops.allow_concurrent_callbacks, ops.topic))
+                {
                     return false;
+                }
+            }
             return found;
         }
 
@@ -413,14 +436,14 @@ namespace Uml.Robotics.Ros
             for (int proto_idx = 0; proto_idx < protos.Size; proto_idx++)
             {
                 XmlRpcValue proto = protos[proto_idx];
-                if (proto.Type != XmlRpcValue.ValueType.TypeArray)
+                if (proto.Type != XmlRpcValue.ValueType.Array)
                 {
-                    Logger.LogError("requestTopic protocol list was not a list of lists");
+                    this.Logger.LogError("requestTopic protocol list was not a list of lists");
                     return false;
                 }
-                if (proto[0].Type != XmlRpcValue.ValueType.TypeString)
+                if (proto[0].Type != XmlRpcValue.ValueType.String)
                 {
-                    Logger.LogError(
+                    this.Logger.LogError(
                         "requestTopic received a protocol list in which a sublist did not start with a string");
                     return false;
                 }
@@ -429,20 +452,23 @@ namespace Uml.Robotics.Ros
 
                 if (proto_name == "TCPROS")
                 {
-                    XmlRpcValue tcp_ros_params = new XmlRpcValue("TCPROS", network.host, ConnectionManager.Instance.TCPPort);
+                    var tcpRosParams = new XmlRpcValue("TCPROS", network.host, ConnectionManager.Instance.TCPPort);
                     ret.Set(0, 1);
                     ret.Set(1, "");
-                    ret.Set(2, tcp_ros_params);
+                    ret.Set(2, tcpRosParams);
                     return true;
                 }
                 if (proto_name == "UDPROS")
                 {
-                    Logger.LogWarning("Ignoring topics with UdpRos as protocol");
+                    this.Logger.LogWarning("Ignoring topics with UdpRos as protocol");
                 }
                 else
-                    Logger.LogWarning("An unsupported protocol was offered: [{0}]", proto_name);
+                {
+                    this.Logger.LogWarning("An unsupported protocol was offered: [{0}]", proto_name);
+                }
             }
-            Logger.LogError("No supported protocol was provided");
+
+            this.Logger.LogError("No supported protocol was provided");
             return false;
         }
 
@@ -453,7 +479,7 @@ namespace Uml.Robotics.Ros
 
         public bool registerSubscriber(Subscription s, string datatype)
         {
-            string uri = XmlRpcManager.Instance.uri;
+            string uri = XmlRpcManager.Instance.Uri;
 
             XmlRpcValue args = new XmlRpcValue(this_node.Name, s.name, datatype, uri);
             XmlRpcValue result = new XmlRpcValue();
@@ -498,16 +524,14 @@ namespace Uml.Robotics.Ros
 
         public bool unregisterSubscriber(string topic)
         {
-            XmlRpcValue args = new XmlRpcValue(this_node.Name, topic, XmlRpcManager.Instance.uri),
-                result = new XmlRpcValue(),
-                payload = new XmlRpcValue();
-
+            var args = new XmlRpcValue(this_node.Name, topic, XmlRpcManager.Instance.Uri);
+            var result = new XmlRpcValue();
+            var payload = new XmlRpcValue();
 
             bool unregisterSuccess = false;
             try
             {
-                unregisterSuccess = master.execute("unregisterSubscriber", args, result, payload, false) && result.Valid;
-
+                unregisterSuccess = master.execute("unregisterSubscriber", args, result, payload, false) && result.IsValid;
             }
             // Ignore exception during unregister
             catch (Exception e)
@@ -519,14 +543,14 @@ namespace Uml.Robotics.Ros
 
         public bool unregisterPublisher(string topic)
         {
-            XmlRpcValue args = new XmlRpcValue(this_node.Name, topic, XmlRpcManager.Instance.uri),
-                result = new XmlRpcValue(),
-                payload = new XmlRpcValue();
+            var args = new XmlRpcValue(this_node.Name, topic, XmlRpcManager.Instance.Uri);
+            var result = new XmlRpcValue();
+            var payload = new XmlRpcValue();
 
             bool unregisterSuccess = false;
             try
             {
-                unregisterSuccess = master.execute("unregisterPublisher", args, result, payload, false) && result.Valid;
+                unregisterSuccess = master.execute("unregisterPublisher", args, result, payload, false) && result.IsValid;
             }
             // Ignore exception during unregister
             catch (Exception e)
@@ -543,9 +567,10 @@ namespace Uml.Robotics.Ros
 
         public void getBusStats(XmlRpcValue stats)
         {
-            XmlRpcValue publish_stats = new XmlRpcValue(),
-                subscribe_stats = new XmlRpcValue(),
-                service_stats = new XmlRpcValue();
+            var publish_stats = new XmlRpcValue();
+            var subscribe_stats = new XmlRpcValue();
+            var service_stats = new XmlRpcValue();
+
             publish_stats.SetArray(0); //.Size = 0;
             subscribe_stats.SetArray(0); //subscribe_stats.Size = 0;
             service_stats.SetArray(0); //service_stats.Size = 0;
@@ -623,14 +648,16 @@ namespace Uml.Robotics.Ros
 
         public bool pubUpdate(string topic, List<string> pubs)
         {
-            using (Logger.BeginScope ($"{ nameof(pubUpdate) }"))
+            using (this.Logger.BeginScope ($"{ nameof(pubUpdate) }"))
             {
-                Logger.LogDebug("TopicManager is updating publishers for " + topic);
+                this.Logger.LogDebug("TopicManager is updating publishers for " + topic);
 
                 Subscription sub = null;
                 lock (subs_mutex)
                 {
-                    if (shutting_down) return false;
+                    if (shutting_down)
+                        return false;
+
                     foreach (Subscription s in subscriptions)
                     {
                         if (s.name != topic || s.IsDropped)
@@ -641,8 +668,9 @@ namespace Uml.Robotics.Ros
                 }
                 if (sub != null)
                     return sub.pubUpdate(pubs);
-                Logger.LogInformation("Request for updating publishers of topic " + topic +
-                            ", which has no subscribers.");
+                this.Logger.LogInformation(
+                    "Request for updating publishers of topic " + topic + ", which has no subscribers."
+                );
                 return false;
             }
         }
@@ -659,7 +687,7 @@ namespace Uml.Robotics.Ros
             else
             {
                 const string error = "Unknown error while handling XmlRpc call to pubUpdate";
-                Logger.LogError(error);
+                this.Logger.LogError(error);
                 XmlRpcManager.Instance.responseInt(0, error, 0)(result);
             }
         }
@@ -673,7 +701,7 @@ namespace Uml.Robotics.Ros
             if (!requestTopic(parm[1].Get<string>(), parm[2], ref res))
             {
                 const string error = "Unknown error while handling XmlRpc call to requestTopic";
-                Logger.LogError(error);
+                this.Logger.LogError(error);
                 XmlRpcManager.Instance.responseInt(0, error, 0)(res);
             }
         }
@@ -684,7 +712,7 @@ namespace Uml.Robotics.Ros
             //XmlRpcValue res = XmlRpcValue.Create(ref result);
             res.Set(0, 1);
             res.Set(1, "");
-            XmlRpcValue response = new XmlRpcValue();
+            var response = new XmlRpcValue();
             getBusStats(response);
             res.Set(2, response);
         }
@@ -695,7 +723,7 @@ namespace Uml.Robotics.Ros
             //XmlRpcValue res = XmlRpcValue.Create(ref result);
             res.Set(0, 1);
             res.Set(1, "");
-            XmlRpcValue response = new XmlRpcValue();
+            var response = new XmlRpcValue();
             //IntPtr resp = response.instance;
             getBusInfo(response);
             res.Set(2, response);
@@ -707,7 +735,7 @@ namespace Uml.Robotics.Ros
             //XmlRpcValue res = XmlRpcValue.Create(ref result);
             res.Set(0, 1);
             res.Set(1, "subscriptions");
-            XmlRpcValue response = new XmlRpcValue();
+            var response = new XmlRpcValue();
             getSubscriptions(ref response);
             res.Set(2, response);
         }
@@ -718,7 +746,7 @@ namespace Uml.Robotics.Ros
             //XmlRpcValue res = XmlRpcValue.Create(ref result);
             res.Set(0, 1);
             res.Set(1, "publications");
-            XmlRpcValue response = new XmlRpcValue();
+            var response = new XmlRpcValue();
             getPublications(ref response);
             res.Set(2, response);
         }

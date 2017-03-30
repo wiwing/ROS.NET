@@ -17,7 +17,7 @@ namespace Uml.Robotics.XmlRpc
         private bool _keepAlive;
 
         // Request headers
-        private HTTPHeader header;
+        private HttpHeader header;
 
         // The XmlRpc server that accepted this connection
         private XmlRpcServer server;
@@ -60,11 +60,11 @@ namespace Uml.Robotics.XmlRpc
                 ? XmlRpcDispatch.EventType.WritableEvent : XmlRpcDispatch.EventType.ReadableEvent;
         }
 
-        internal override bool readHeader(ref HTTPHeader header)
+        internal override bool readHeader(ref HttpHeader header)
         {
             if (base.readHeader(ref header))
             {
-                if (header.m_headerStatus == HTTPHeader.STATUS.COMPLETE_HEADER)
+                if (header.HeaderStatus == HttpHeader.STATUS.COMPLETE_HEADER)
                 {
                     XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.DEBUG, "KeepAlive: {0}", _keepAlive);
                     _connectionState = ServerConnectionState.READ_REQUEST;

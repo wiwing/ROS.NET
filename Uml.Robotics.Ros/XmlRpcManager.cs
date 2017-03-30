@@ -3,16 +3,19 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Uml.Robotics.XmlRpc;
-using m = Messages.std_msgs;
-using gm = Messages.geometry_msgs;
-using nm = Messages.nav_msgs;
 using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     public class XmlRpcManager : IDisposable
     {
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<XmlRpcManager>();
+        private class FunctionInfo
+        {
+            public XmlRpcFunc function;
+            public string name;
+            public XmlRpcServerMethod wrapper;
+        }
+
         private static Lazy<XmlRpcManager> _instance = new Lazy<XmlRpcManager>(LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static XmlRpcManager Instance
@@ -20,38 +23,54 @@ namespace Uml.Robotics.Ros
             get { return _instance.Value; }
         }
 
-        private List<AsyncXmlRpcConnection> added_connections = new List<AsyncXmlRpcConnection>();
-        private object added_connections_mutex = new object();
-        private List<CachedXmlRpcClient> clients = new List<CachedXmlRpcClient>();
-        private object clients_mutex = new object();
-        private List<AsyncXmlRpcConnection> connections = new List<AsyncXmlRpcConnection>();
-        private Dictionary<string, FunctionInfo> functions = new Dictionary<string, FunctionInfo>();
-        private object functions_mutex = new object();
-        private XMLRPCFunc getPid;
-        public int port;
-        private List<AsyncXmlRpcConnection> removed_connections = new List<AsyncXmlRpcConnection>();
-        private object removed_connections_mutex = new object();
-        private XmlRpcServer server;
-        public Thread server_thread;
-        public bool shutting_down;
-        public bool unbind_requested;
-        public string uri = "";
+        ILogger Logger { get; } = ApplicationLogging.CreateLogger<XmlRpcManager>();
+
+        List<AsyncXmlRpcConnection> addedConnections = new List<AsyncXmlRpcConnection>();
+        List<AsyncXmlRpcConnection> removedConnections = new List<AsyncXmlRpcConnection>();
+
+        List<CachedXmlRpcClient> clients = new List<CachedXmlRpcClient>();
+        List<AsyncXmlRpcConnection> connections = new List<AsyncXmlRpcConnection>();
+        Dictionary<string, FunctionInfo> functions = new Dictionary<string, FunctionInfo>();
+
+        object addedConnectionsGate = new object();
+        object removedConnectionsGate = new object();
+        object clientsGate = new object();
+        object functionsGate = new object();
+
+        XmlRpcFunc getPid;
+
+        XmlRpcServer server;
+        Thread serverThread;
+        bool shuttingDown;
+        bool unbindRequested;
+
+        string uri = "";
+        int port;
 
         public XmlRpcManager()
         {
             XmlRpcUtil.SetLogLevel(
 #if !DEBUG
-                    XmlRpcUtil.XMLRPC_LOG_LEVEL.ERROR
+                XmlRpcUtil.XMLRPC_LOG_LEVEL.ERROR
+#elif TRACE
+                XmlRpcUtil.XMLRPC_LOG_LEVEL.INFO
 #else
-#if TRACE
-                    XmlRpcUtil.XMLRPC_LOG_LEVEL.INFO
-#else
-                    XmlRpcUtil.XMLRPC_LOG_LEVEL.WARNING
+                XmlRpcUtil.XMLRPC_LOG_LEVEL.WARNING
 #endif
-#endif
-);
-            server = new XmlRpcServer();
-            getPid = (parms, result) => responseInt(1, "", Process.GetCurrentProcess().Id)(result);
+            );
+
+            this.server = new XmlRpcServer();
+            this.getPid = (parms, result) => responseInt(1, "", Process.GetCurrentProcess().Id)(result);
+        }
+
+        public string Uri
+        {
+            get { return uri; }
+        }
+
+        public bool IsShuttingDown
+        {
+            get { return shuttingDown; }
         }
 
         #region IDisposable Members
@@ -65,29 +84,29 @@ namespace Uml.Robotics.Ros
 
         public void serverThreadFunc()
         {
-            while (!shutting_down)
+            while (!shuttingDown)
             {
                 if (server.Dispatch == null)
                 {
                     throw new NullReferenceException("XmlRpcManager is not initialized yet!");
                 }
-                lock (added_connections_mutex)
+                lock (addedConnectionsGate)
                 {
-                    foreach (AsyncXmlRpcConnection con in added_connections)
+                    foreach (AsyncXmlRpcConnection con in addedConnections)
                     {
                         //Logger.LogDebug("Completed ASYNC XmlRpc connection to: " + ((con as PendingConnection) != null ? ((PendingConnection) con).RemoteUri : "SOMEWHERE OVER THE RAINBOW"));
                         con.addToDispatch(server.Dispatch);
                         connections.Add(con);
                     }
-                    added_connections.Clear();
+                    addedConnections.Clear();
                 }
 
-                lock (functions_mutex)
+                lock (functionsGate)
                 {
                     server.Work(0.1);
                 }
 
-                while (unbind_requested)
+                while (unbindRequested)
                 {
                     Thread.Sleep(ROS.WallDuration);
                 }
@@ -98,36 +117,38 @@ namespace Uml.Robotics.Ros
                         removeASyncXMLRPCClient(con);
                 }
 
-                lock (removed_connections_mutex)
+                lock (removedConnectionsGate)
                 {
-                    foreach (AsyncXmlRpcConnection con in removed_connections)
+                    foreach (AsyncXmlRpcConnection con in removedConnections)
                     {
                         con.removeFromDispatch(server.Dispatch);
                         connections.Remove(con);
                     }
-                    removed_connections.Clear();
+                    removedConnections.Clear();
                 }
             }
         }
 
         public bool validateXmlrpcResponse(string method, XmlRpcValue response, XmlRpcValue payload)
         {
-            if (response.Type != XmlRpcValue.ValueType.TypeArray)
+            if (response.Type != XmlRpcValue.ValueType.Array)
                 return validateFailed(method, "didn't return an array -- {0}", response);
             if (response.Size != 3)
                 return validateFailed(method, "didn't return a 3-element array -- {0}", response);
-            if (response[0].Type != XmlRpcValue.ValueType.TypeInt)
+            if (response[0].Type != XmlRpcValue.ValueType.Int)
                 return validateFailed(method, "didn't return an int as the 1st element -- {0}", response);
             int status_code = response[0].Get<int>();
-            if (response[1].Type != XmlRpcValue.ValueType.TypeString)
+            if (response[1].Type != XmlRpcValue.ValueType.String)
                 return validateFailed(method, "didn't return a string as the 2nd element -- {0}", response);
             string status_string = response[1].Get<string>();
             if (status_code != 1)
-                return validateFailed(method, "returned an error ({0}): [{1}] -- {2}", status_code, status_string,
-                    response);
+            {
+                return validateFailed(method, "returned an error ({0}): [{1}] -- {2}", status_code, status_string, response);
+            }
+
             switch (response[2].Type)
             {
-                case XmlRpcValue.ValueType.TypeArray:
+                case XmlRpcValue.ValueType.Array:
                     {
                         payload.SetArray(0);
                         for (int i = 0; i < response[2].Length; i++)
@@ -136,19 +157,19 @@ namespace Uml.Robotics.Ros
                         }
                     }
                     break;
-                case XmlRpcValue.ValueType.TypeInt:
+                case XmlRpcValue.ValueType.Int:
                     payload.asInt = response[2].asInt;
                     break;
-                case XmlRpcValue.ValueType.TypeDouble:
+                case XmlRpcValue.ValueType.Double:
                     payload.asDouble = response[2].asDouble;
                     break;
-                case XmlRpcValue.ValueType.TypeString:
+                case XmlRpcValue.ValueType.String:
                     payload.asString = response[2].asString;
                     break;
-                case XmlRpcValue.ValueType.TypeBoolean:
+                case XmlRpcValue.ValueType.Boolean:
                     payload.asBool = response[2].asBool;
                     break;
-                case XmlRpcValue.ValueType.TypeInvalid:
+                case XmlRpcValue.ValueType.Invalid:
                     break;
                 default:
                     throw new ArgumentException("Unhandled valid xmlrpc payload type: " + response[2].Type, nameof(response));
@@ -165,7 +186,7 @@ namespace Uml.Robotics.Ros
         public CachedXmlRpcClient getXMLRPCClient(string host, int port, string uri)
         {
             CachedXmlRpcClient c = null;
-            lock (clients_mutex)
+            lock (clientsGate)
             {
                 List<CachedXmlRpcClient> zombies = new List<CachedXmlRpcClient>();
                 foreach (CachedXmlRpcClient client in clients)
@@ -206,19 +227,19 @@ namespace Uml.Robotics.Ros
 
         public void addAsyncConnection(AsyncXmlRpcConnection conn)
         {
-            lock (added_connections_mutex)
-                added_connections.Add(conn);
+            lock (addedConnectionsGate)
+                addedConnections.Add(conn);
         }
 
         public void removeASyncXMLRPCClient(AsyncXmlRpcConnection conn)
         {
-            lock (removed_connections_mutex)
-                removed_connections.Add(conn);
+            lock (removedConnectionsGate)
+                removedConnections.Add(conn);
         }
 
-        public bool bind(string function_name, XMLRPCFunc cb)
+        public bool bind(string function_name, XmlRpcFunc cb)
         {
-            lock (functions_mutex)
+            lock (functionsGate)
             {
                 if (functions.ContainsKey(function_name))
                     return false;
@@ -228,19 +249,20 @@ namespace Uml.Robotics.Ros
                         name = function_name,
                         function = cb,
                         wrapper = new XmlRpcServerMethod(function_name, cb, server)
-                    });
+                    }
+                );
             }
             return true;
         }
 
         public void unbind(string function_name)
         {
-            unbind_requested = true;
-            lock (functions_mutex)
+            unbindRequested = true;
+            lock (functionsGate)
             {
                 functions.Remove(function_name);
             }
-            unbind_requested = false;
+            unbindRequested = false;
         }
 
 
@@ -295,17 +317,11 @@ namespace Uml.Robotics.Ros
         ///             </item>
         ///         </list>
         ///     </para>
-        ///     <para>
-        ///         ... so now I'm all up in your codes. :-P
-        ///     </para>
-        ///     <para>
-        ///         -Eric
-        ///     </para>
         /// </summary>
         /// <param name="p">The specific port number to bind to, if any</param>
         public void Start(int p = 0)
         {
-            shutting_down = false;
+            shuttingDown = false;
 
             bind("getPid", getPid);
 
@@ -334,17 +350,16 @@ namespace Uml.Robotics.Ros
             }
 
             Logger.LogInformation("XmlRpc Server listening at " + uri);
-            server_thread = new Thread(serverThreadFunc) { IsBackground = true };
-            server_thread.Start();
+            serverThread = new Thread(serverThreadFunc) { IsBackground = true };
+            serverThread.Start();
         }
-
 
         internal void shutdown()
         {
-            if (shutting_down)
+            if (shuttingDown)
                 return;
-            shutting_down = true;
-            server_thread.Join();
+            shuttingDown = true;
+            serverThread.Join();
             server.Shutdown();
             foreach (CachedXmlRpcClient c in clients)
             {
@@ -353,7 +368,7 @@ namespace Uml.Robotics.Ros
                 c.Dispose();
             }
             clients.Clear();
-            lock (functions_mutex)
+            lock (functionsGate)
             {
                 functions.Clear();
             }
@@ -365,28 +380,17 @@ namespace Uml.Robotics.Ros
                 }
             }
             connections.Clear();
-            lock (added_connections_mutex)
+            lock (addedConnectionsGate)
             {
-                added_connections.Clear();
+                addedConnections.Clear();
             }
-            lock (removed_connections_mutex)
+            lock (removedConnectionsGate)
             {
-                removed_connections.Clear();
+                removedConnections.Clear();
             }
 
             Logger.LogDebug("XmlRpc Server shutted down.");
         }
-
-        #region Nested type: FunctionInfo
-
-        public class FunctionInfo
-        {
-            public XMLRPCFunc function;
-            public string name = "";
-            public XmlRpcServerMethod wrapper;
-        }
-
-        #endregion
     }
 
     public class CachedXmlRpcClient : IDisposable
@@ -396,7 +400,13 @@ namespace Uml.Robotics.Ros
 
         public bool in_use
         {
-            get { lock (busyMutex) return refs != 0; }
+            get
+            {
+                lock (busyMutex)
+                {
+                    return refs != 0;
+                }
+            }
         }
 
         public DateTime last_use_time;
@@ -407,7 +417,13 @@ namespace Uml.Robotics.Ros
 
         internal bool dead
         {
-            get { lock(client_lock) return client == null; }
+            get
+            {
+                lock (client_lock)
+                {
+                    return client == null;
+                }
+            }
         }
 
         public CachedXmlRpcClient(string host, int port, string uri)
@@ -421,9 +437,9 @@ namespace Uml.Robotics.Ros
             {
                 client = c;
                 client.Disposed += () =>
-                                       {
-                                           client = null;
-                                       };
+                {
+                    client = null;
+                };
             }
         }
 
@@ -433,8 +449,11 @@ namespace Uml.Robotics.Ros
         public void Dispose()
         {
             lock (busyMutex)
-            	if (refs != 0)
-                	Logger.LogWarning("XmlRpcClient disposed with "+refs+" refs held");
+            {
+                if (refs != 0)
+                    Logger.LogWarning("XmlRpcClient disposed with " + refs + " refs held");
+            }
+
             lock (client_lock)
             {
                 if (client != null)
@@ -466,7 +485,8 @@ namespace Uml.Robotics.Ros
         {
             lock (client_lock)
             {
-                return client != null && port == client.Port && (host == null || client.Host != null && string.Equals(host, client.Host)) && (uri == null || client.Uri != null && string.Equals(uri, client.Uri));
+                return client != null && port == client.Port
+                    && (host == null || client.Host != null && string.Equals(host, client.Host)) && (uri == null || client.Uri != null && string.Equals(uri, client.Uri));
             }
         }
 

@@ -213,7 +213,7 @@ namespace Uml.Robotics.Ros
             try
             {
                 XmlRpcValue v = getParam(key);
-                if (v == null || !v.Valid)
+                if (v == null || !v.IsValid)
                 {
                     if (def == null)
                         return false;
@@ -276,7 +276,7 @@ namespace Uml.Robotics.Ros
             parm.Set(0, this_node.Name);
             if (!master.execute("getParamNames", parm, result, payload, false))
                 return ret;
-            if (result.Size != 3 || result[0].GetInt() != 1 || result[2].Type != XmlRpcValue.ValueType.TypeArray)
+            if (result.Size != 3 || result[0].GetInt() != 1 || result[2].Type != XmlRpcValue.ValueType.Array)
             {
                 Logger.LogWarning("Expected a return code, a description, and a list!");
                 return ret;
@@ -300,7 +300,7 @@ namespace Uml.Robotics.Ros
             parm.Set(1, names.resolve(key));
             if (!master.execute("hasParam", parm, result, payload, false))
                 return false;
-            if (result.Size != 3 || result[0].GetInt() != 1 || result[2].Type != XmlRpcValue.ValueType.TypeBoolean)
+            if (result.Size != 3 || result[0].GetInt() != 1 || result[2].Type != XmlRpcValue.ValueType.Boolean)
                 return false;
             return result[2].asBool;
         }
@@ -438,7 +438,7 @@ namespace Uml.Robotics.Ros
                     {
                         if (parms.ContainsKey(mapped_key))
                         {
-                            if (parms[mapped_key].Valid)
+                            if (parms[mapped_key].IsValid)
                             {
                                 v = parms[mapped_key];
                                 return true;
@@ -451,7 +451,7 @@ namespace Uml.Robotics.Ros
                         subscribed_params.Add(mapped_key);
                         XmlRpcValue parm = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
                         parm.Set(0, this_node.Name);
-                        parm.Set(1, XmlRpcManager.Instance.uri);
+                        parm.Set(1, XmlRpcManager.Instance.Uri);
                         parm.Set(2, mapped_key);
                         if (!master.execute("subscribeParam", parm, result, payload, false))
                         {

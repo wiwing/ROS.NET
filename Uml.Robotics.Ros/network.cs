@@ -8,16 +8,21 @@ namespace Uml.Robotics.Ros
         public static string host;
         public static int tcpros_server_port;
 
-        public static bool splitURI(string uri, ref string host, ref int port)
+        public static bool splitURI(string uri, out string host, out int port)
         {
+            host = null;
+            port = 11311;
             if (String.IsNullOrEmpty(uri))
-                return false;//throw new ArgumentNullException(nameof(uri));
+                return false;
             if (uri.Substring(0, 7) == "http://")
                 host = uri.Substring(7);
             else if (uri.Substring(0, 9) == "rosrpc://")
                 host = uri.Substring(9);
+
             string[] split = host.Split(':');
-            if (split.Length < 2) return false;
+            if (split.Length < 2)
+                return false;
+
             string port_str = split[1];
             port_str = port_str.Trim('/');
             port = int.Parse(port_str);

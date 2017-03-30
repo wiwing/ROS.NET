@@ -9,31 +9,31 @@ namespace Uml.Robotics.XmlRpc
     {
         public enum ValueType
         {
-            TypeInvalid,
-            TypeBoolean,
-            TypeInt,
-            TypeDouble,
-            TypeString,
-            TypeDateTime,
-            TypeBase64,
-            TypeArray,
-            TypeStruct,
-            TypeIDFK
+            Invalid,
+            Boolean,
+            Int,
+            Double,
+            String,
+            DateTime,
+            Base64,
+            Array,
+            Struct,
+            IDFK
         }
 
-        private static string VALUE_TAG = "value";
-        private static string BOOLEAN_TAG = "boolean";
-        private static string DOUBLE_TAG = "double";
-        private static string INT_TAG = "int";
-        private static string I4_TAG = "i4";
-        private static string STRING_TAG = "string";
-        private static string DATETIME_TAG = "dateTime.iso8601";
-        private static string BASE64_TAG = "base64";
-        private static string ARRAY_TAG = "array";
-        private static string DATA_TAG = "data";
-        private static string STRUCT_TAG = "struct";
-        private static string MEMBER_TAG = "member";
-        private static string NAME_TAG = "name";
+        private const string VALUE_TAG = "value";
+        private const string BOOLEAN_TAG = "boolean";
+        private const string DOUBLE_TAG = "double";
+        private const string INT_TAG = "int";
+        private const string I4_TAG = "i4";
+        private const string STRING_TAG = "string";
+        private const string DATETIME_TAG = "dateTime.iso8601";
+        private const string BASE64_TAG = "base64";
+        private const string ARRAY_TAG = "array";
+        private const string DATA_TAG = "data";
+        private const string STRUCT_TAG = "struct";
+        private const string MEMBER_TAG = "member";
+        private const string NAME_TAG = "name";
 
 
         // Type tag and values
@@ -50,7 +50,7 @@ namespace Uml.Robotics.XmlRpc
 
         public XmlRpcValue()
         {
-            _type = ValueType.TypeInvalid;
+            _type = ValueType.Invalid;
         }
 
         public XmlRpcValue(params Object[] initialvalues)
@@ -65,29 +65,26 @@ namespace Uml.Robotics.XmlRpc
 
         public XmlRpcValue(bool value)
         {
-            /*
-            __instance = create(value);
-            AddRef(__instance);*/
             asBool = value;
-            _type = ValueType.TypeBoolean;
+            _type = ValueType.Boolean;
         }
 
         public XmlRpcValue(int value)
         {
             asInt = value;
-            _type = ValueType.TypeInt;
+            _type = ValueType.Int;
         }
 
         public XmlRpcValue(double value)
         {
             asDouble = value;
-            _type = ValueType.TypeDouble;
+            _type = ValueType.Double;
         }
 
         public XmlRpcValue(string value)
         {
             asString = value;
-            _type = ValueType.TypeString;
+            _type = ValueType.String;
         }
 
         public int Length
@@ -96,27 +93,27 @@ namespace Uml.Robotics.XmlRpc
             {
                 switch (_type)
                 {
-                    case ValueType.TypeString:
+                    case ValueType.String:
                         return asString.Length;
-                    case ValueType.TypeBase64:
+                    case ValueType.Base64:
                         return asBinary.Length;
-                    case ValueType.TypeArray:
+                    case ValueType.Array:
                         return asArray.Length;
-                    case ValueType.TypeStruct:
+                    case ValueType.Struct:
                         return asStruct.Count;
                     default:
                         break;
                 }
 
                 XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.DEBUG, "Trying to get size of something without a size! -- type={0}", _type);
-                throw new XmlRpcException($"Invalid or unkown type: {_type}. Expected {ValueType.TypeString}, " +
-                    $"{ValueType.TypeBase64}, {ValueType.TypeArray} or {ValueType.TypeStruct}");
+                throw new XmlRpcException($"Invalid or unkown type: {_type}. Expected {ValueType.String}, " +
+                    $"{ValueType.Base64}, {ValueType.Array} or {ValueType.Struct}");
             }
         }
 
-        public bool Valid
+        public bool IsValid
         {
-            get { return _type != ValueType.TypeInvalid; }
+            get { return _type != ValueType.Invalid; }
         }
 
         public ValueType Type
@@ -128,17 +125,17 @@ namespace Uml.Robotics.XmlRpc
         {
             get
             {
-                if (!Valid || Type == ValueType.TypeInvalid || Type == ValueType.TypeIDFK)
+                if (!IsValid || Type == ValueType.Invalid || Type == ValueType.IDFK)
                 {
                     return 0;
                 }
-                if (Type != ValueType.TypeString && Type != ValueType.TypeStruct && Type != ValueType.TypeArray)
+                if (Type != ValueType.String && Type != ValueType.Struct && Type != ValueType.Array)
                     return 0;
-                if (Type == ValueType.TypeArray)
+                if (Type == ValueType.Array)
                     return asArray.Length;
-                if (Type == ValueType.TypeString)
+                if (Type == ValueType.String)
                     return asString.Length;
-                if (Type == ValueType.TypeStruct)
+                if (Type == ValueType.Struct)
                     return asStruct.Count;
                 return 0;
             }
@@ -189,31 +186,14 @@ namespace Uml.Robotics.XmlRpc
             }
         }
 
-        public void Dump()
-        {
-            // Dunno what to do here
-        }
-
-        // Clean up
-        private void invalidate()
-        {
-            _type = ValueType.TypeInvalid;
-            asStruct = null;
-            asArray = null;
-            asString = null;
-            asBinary = null;
-            asBool = false;
-            asTime = null;
-        }
-
         private void AssertArray(int size)
         {
-            if (_type == ValueType.TypeInvalid)
+            if (_type == ValueType.Invalid)
             {
-                _type = ValueType.TypeArray;
+                _type = ValueType.Array;
                 asArray = new XmlRpcValue[size];
             }
-            else if (_type == ValueType.TypeArray)
+            else if (_type == ValueType.Array)
             {
                 if (asArray.Length < size)
                     Array.Resize(ref asArray, size);
@@ -224,12 +204,12 @@ namespace Uml.Robotics.XmlRpc
 
         private void AssertStruct()
         {
-            if (_type == ValueType.TypeInvalid)
+            if (_type == ValueType.Invalid)
             {
-                _type = ValueType.TypeStruct;
+                _type = ValueType.Struct;
                 asStruct = new Dictionary<string, XmlRpcValue>();
             }
-            else if (_type != ValueType.TypeStruct)
+            else if (_type != ValueType.Struct)
                 throw new XmlRpcException("type error: expected a struct");
         }
 
@@ -250,23 +230,23 @@ namespace Uml.Robotics.XmlRpc
 
             switch (_type)
             {
-                case ValueType.TypeBoolean:
+                case ValueType.Boolean:
                     return asBool == other.asBool;
-                case ValueType.TypeInt:
+                case ValueType.Int:
                     return asInt == other.asInt;
-                case ValueType.TypeDouble:
+                case ValueType.Double:
                     return asDouble == other.asDouble;
-                case ValueType.TypeDateTime:
+                case ValueType.DateTime:
                     return tmEq(asTime, other.asTime);
-                case ValueType.TypeString:
+                case ValueType.String:
                     return asString.Equals(other.asString);
-                case ValueType.TypeBase64:
+                case ValueType.Base64:
                     return asBinary == other.asBinary;
-                case ValueType.TypeArray:
+                case ValueType.Array:
                     return asArray == other.asArray;
 
                     // The map<>::operator== requires the definition of value< for kcc
-                case ValueType.TypeStruct: //return *_value.asStruct == *other._value.asStruct;
+                case ValueType.Struct: //return *_value.asStruct == *other._value.asStruct;
                 {
                     if (asStruct.Count != other.asStruct.Count)
                         return false;
@@ -292,30 +272,30 @@ namespace Uml.Robotics.XmlRpc
         {
             switch (other._type)
             {
-                case ValueType.TypeBoolean:
+                case ValueType.Boolean:
                     asBool = other.asBool;
                     break;
-                case ValueType.TypeInt:
+                case ValueType.Int:
                     asInt = other.asInt;
                     break;
-                case ValueType.TypeDouble:
+                case ValueType.Double:
                     asDouble = other.asDouble;
                     break;
-                case ValueType.TypeDateTime:
+                case ValueType.DateTime:
                     asTime = other.asTime;
                     break;
-                case ValueType.TypeString:
+                case ValueType.String:
                     asString = other.asString;
                     break;
-                case ValueType.TypeBase64:
+                case ValueType.Base64:
                     asBinary = other.asBinary;
                     break;
-                case ValueType.TypeArray:
+                case ValueType.Array:
                     asArray = other.asArray;
                     break;
 
                     // The map<>::operator== requires the definition of value< for kcc
-                case ValueType.TypeStruct: //return *_value.asStruct == *other._value.asStruct;
+                case ValueType.Struct: //return *_value.asStruct == *other._value.asStruct;
                     asStruct = other.asStruct;
                     break;
             }
@@ -325,12 +305,12 @@ namespace Uml.Robotics.XmlRpc
         // Checks for existence of struct member
         public bool hasMember(string name)
         {
-            return _type == ValueType.TypeStruct && asStruct.ContainsKey(name);
+            return _type == ValueType.Struct && asStruct.ContainsKey(name);
         }
 
         private void parseString(XmlNode node)
         {
-            _type = ValueType.TypeString;
+            _type = ValueType.String;
             asString = node.InnerText;
         }
 
@@ -348,7 +328,7 @@ namespace Uml.Robotics.XmlRpc
                 XmlElement val;
                 if ((val = value[BOOLEAN_TAG]) != null)
                 {
-                    _type = ValueType.TypeBoolean;
+                    _type = ValueType.Boolean;
                     int tmp = 0;
                     if (!int.TryParse(tex, out tmp))
                         return false;
@@ -358,17 +338,17 @@ namespace Uml.Robotics.XmlRpc
                 }
                 else if ((val = value[I4_TAG]) != null)
                 {
-                    _type = ValueType.TypeInt;
+                    _type = ValueType.Int;
                     return int.TryParse(tex, out asInt);
                 }
                 else if ((val = value[INT_TAG]) != null)
                 {
-                    _type = ValueType.TypeInt;
+                    _type = ValueType.Int;
                     return int.TryParse(tex, out asInt);
                 }
                 else if ((val = value[DOUBLE_TAG]) != null)
                 {
-                    _type = ValueType.TypeDouble;
+                    _type = ValueType.Double;
                     return double.TryParse(tex, out asDouble);
                 }
                 else if ((val = value[DATETIME_TAG]) != null)
@@ -381,7 +361,7 @@ namespace Uml.Robotics.XmlRpc
                 }
                 else if ((val = value[STRING_TAG]) != null)
                 {
-                    _type = ValueType.TypeString;
+                    _type = ValueType.String;
                     asString = tex;
                 }
                 else if ((val = value[ARRAY_TAG]) != null)
@@ -405,7 +385,7 @@ namespace Uml.Robotics.XmlRpc
                 }
                 else
                 {
-                    _type = ValueType.TypeString;
+                    _type = ValueType.String;
                     asString = tex;
                 }
             }
@@ -418,18 +398,21 @@ namespace Uml.Robotics.XmlRpc
 
         public string toXml()
         {
-            XmlWriterSettings settings = new XmlWriterSettings();
-            settings.OmitXmlDeclaration = true;
-            settings.ConformanceLevel = ConformanceLevel.Fragment;
-            settings.CloseOutput = false;
-            StringWriter strm = new StringWriter();
-            using (XmlWriter writer = XmlWriter.Create(strm, settings))
+            var settings = new XmlWriterSettings()
             {
-                XmlDocument doc = new XmlDocument();
+                    OmitXmlDeclaration = true,
+                ConformanceLevel = ConformanceLevel.Fragment,
+                CloseOutput = false
+            };
+
+            var sw = new StringWriter();
+            using (var writer = XmlWriter.Create(sw, settings))
+            {
+                var doc = new XmlDocument();
                 toXml(doc, doc);
                 doc.WriteContentTo(writer);
             }
-            string result = strm.ToString();
+            string result = sw.ToString();
             return result;
         }
 
@@ -439,34 +422,34 @@ namespace Uml.Robotics.XmlRpc
             XmlElement el = null;
             switch (_type)
             {
-                case ValueType.TypeBoolean:
+                case ValueType.Boolean:
                     el = doc.CreateElement(BOOLEAN_TAG);
                     el.AppendChild(doc.CreateTextNode(asBool.ToString()));
                     break;
-                case ValueType.TypeInt:
+                case ValueType.Int:
                     el = doc.CreateElement(INT_TAG);
                     el.AppendChild(doc.CreateTextNode(asInt.ToString()));
                     break;
-                case ValueType.TypeDouble:
+                case ValueType.Double:
                     el = doc.CreateElement(BOOLEAN_TAG);
                     el.AppendChild(doc.CreateTextNode(asDouble.ToString()));
                     break;
-                case ValueType.TypeDateTime:
+                case ValueType.DateTime:
                     el = doc.CreateElement(DATETIME_TAG);
                     el.AppendChild(doc.CreateTextNode(asTime.ToString()));
                     break;
-                case ValueType.TypeString:
+                case ValueType.String:
                     //asString = other.asString;
                     el = doc.CreateElement(STRING_TAG);
                     el.AppendChild(doc.CreateTextNode(asString));
                     break;
-                case ValueType.TypeBase64:
+                case ValueType.Base64:
                     //asBinary = other.asBinary;
                     el = doc.CreateElement(BASE64_TAG);
                     var base64 = Convert.ToBase64String(asBinary);
                     el.AppendChild(doc.CreateTextNode(base64));
                     break;
-                case ValueType.TypeArray:
+                case ValueType.Array:
                     el = doc.CreateElement(ARRAY_TAG);
                     var elData = doc.CreateElement(DATA_TAG);
                     el.AppendChild(elData);
@@ -475,7 +458,7 @@ namespace Uml.Robotics.XmlRpc
                         asArray[i].toXml(doc, elData);
                     }
                     break;
-                case ValueType.TypeStruct:
+                case ValueType.Struct:
                     el = doc.CreateElement(STRUCT_TAG);
                     foreach (var record in asStruct)
                     {
@@ -501,12 +484,12 @@ namespace Uml.Robotics.XmlRpc
             Type type = t.GetType();
             if (type.Equals(typeof (String)))
             {
-                _type = ValueType.TypeString;
+                _type = ValueType.String;
                 asString = (string) (object) t;
             }
             else if (type.Equals(typeof (Int32)))
             {
-                _type = ValueType.TypeInt;
+                _type = ValueType.Int;
                 asInt = (int) (object) t;
             }
             else if (type.Equals(typeof (XmlRpcValue)))
@@ -516,12 +499,12 @@ namespace Uml.Robotics.XmlRpc
             else if (type.Equals(typeof (Boolean)))
             {
                 asBool = (bool) (object) t;
-                _type = ValueType.TypeBoolean;
+                _type = ValueType.Boolean;
             }
             else if (type.Equals(typeof (Double)))
             {
                 asDouble = (double) (object) t;
-                _type = ValueType.TypeDouble;
+                _type = ValueType.Double;
             }
             else
             {
@@ -531,7 +514,7 @@ namespace Uml.Robotics.XmlRpc
 
         public void EnsureArraySize(int size)
         {
-            if (_type != ValueType.TypeInvalid && _type != ValueType.TypeArray)
+            if (_type != ValueType.Invalid && _type != ValueType.Array)
                 throw new XmlRpcException($"Cannot convert {_type} to array");
             int before = 0;
             if (asArray != null)
@@ -544,7 +527,7 @@ namespace Uml.Robotics.XmlRpc
                 asArray = new XmlRpcValue[size + 1];
             for (int i = before; i < asArray.Length; i++)
                 asArray[i] = new XmlRpcValue();
-            _type = ValueType.TypeArray;
+            _type = ValueType.Array;
         }
 
         public void Set<T>(int key, T t)
@@ -559,7 +542,7 @@ namespace Uml.Robotics.XmlRpc
 
         public void SetArray(int maxSize)
         {
-            _type = ValueType.TypeArray;
+            _type = ValueType.Array;
             asArray = new XmlRpcValue[maxSize];
         }
 
@@ -570,7 +553,7 @@ namespace Uml.Robotics.XmlRpc
 
         public T Get<T>()
         {
-            if (!Valid)
+            if (!IsValid)
             {
                 XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.WARNING, "Trying to Get() the value of an Invalid XmlRpcValue!");
                 return (T) (object) null;
@@ -641,10 +624,9 @@ namespace Uml.Robotics.XmlRpc
             return asDouble;
         }
 
-
         public override string ToString()
         {
-            if (!Valid)
+            if (!this.IsValid)
                 return "INVALID";
             return toXml();
         }

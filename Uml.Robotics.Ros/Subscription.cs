@@ -147,13 +147,10 @@ namespace Uml.Robotics.Ros
             {
                 throw new ArgumentNullException(nameof(uri2));
             }
-            string n1;
-            string h1 = n1 = "";
-            int p2;
-            int p1 = p2 = 0;
-            network.splitURI(uri1, ref h1, ref p1);
-            network.splitURI(uri2, ref n1, ref p2);
-            return h1 == n1 && p1 == p2;
+
+            string h1, h2;
+            int p1, p2;
+            return network.splitURI(uri1, out h1, out p1) && network.splitURI(uri2, out h2, out p2) && h1 == h2 && p1 == p2;
         }
 
         public void removePublisherLink(PublisherLink pub)
@@ -208,7 +205,7 @@ namespace Uml.Robotics.Ros
                 }
                 foreach (PublisherLink link in subtractions)
                 {
-                    if (link.XmlRpc_Uri != XmlRpcManager.Instance.uri)
+                    if (link.XmlRpc_Uri != XmlRpcManager.Instance.Uri)
                     {
                         Logger.LogDebug("Disconnecting from publisher [" + link.CallerID + "] of topic [" + name +
                                     "] at [" + link.XmlRpc_Uri + "]");
@@ -222,13 +219,13 @@ namespace Uml.Robotics.Ros
 
                 foreach (string i in additions)
                 {
-                    if (XmlRpcManager.Instance.uri != i)
+                    if (XmlRpcManager.Instance.Uri != i)
                     {
                         retval &= NegotiateConnection(i);
                         //Logger.LogDebug("NEGOTIATINGING");
                     }
                     else
-                        Logger.LogInformation("Skipping myself (" + name + ", " + XmlRpcManager.Instance.uri + ")");
+                        Logger.LogInformation("Skipping myself (" + name + ", " + XmlRpcManager.Instance.Uri + ")");
                 }
                 return retval;
             }
@@ -245,7 +242,7 @@ namespace Uml.Robotics.Ros
             Params.Set(2, protos_array);
             string peer_host = "";
             int peer_port = 0;
-            if (!network.splitURI(xmlrpc_uri, ref peer_host, ref peer_port))
+            if (!network.splitURI(xmlrpc_uri, out peer_host, out peer_port))
             {
                 Logger.LogError("Bad xml-rpc URI: [" + xmlrpc_uri + "]");
                 return false;
@@ -299,7 +296,7 @@ namespace Uml.Robotics.Ros
                                 "]");
                     return;
                 }
-                if (proto.Type != XmlRpcValue.ValueType.TypeArray)
+                if (proto.Type != XmlRpcValue.ValueType.Array)
                 {
                     Logger.LogWarning("Available protocol info returned from " + xmlrpc_uri + " is not a list.");
                     return;
@@ -311,7 +308,7 @@ namespace Uml.Robotics.Ros
                 }
                 else if (proto_name == "TCPROS")
                 {
-                    if (proto.Size != 3 || proto[1].Type != XmlRpcValue.ValueType.TypeString || proto[2].Type != XmlRpcValue.ValueType.TypeInt)
+                    if (proto.Size != 3 || proto[1].Type != XmlRpcValue.ValueType.String || proto[2].Type != XmlRpcValue.ValueType.Int)
                     {
                         Logger.LogWarning("TcpRos Publisher should implement string, int as parameter");
                         return;
@@ -489,7 +486,7 @@ namespace Uml.Robotics.Ros
 
                 Logger.LogInformation("Creating intraprocess link for topic [{0}]", name);
 
-                LocalPublisherLink pub_link = new LocalPublisherLink(this, XmlRpcManager.Instance.uri);
+                LocalPublisherLink pub_link = new LocalPublisherLink(this, XmlRpcManager.Instance.Uri);
                 LocalSubscriberLink sub_link = new LocalSubscriberLink(pub);
                 pub_link.setPublisher(sub_link);
                 sub_link.setSubscriber(pub_link);

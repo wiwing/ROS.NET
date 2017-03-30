@@ -26,7 +26,7 @@ namespace Uml.Robotics.Ros
             }
             if (string.IsNullOrEmpty(uri))
                 uri = ROS.ROS_MASTER_URI;
-            if (!network.splitURI(uri, ref host, ref port))
+            if (!network.splitURI(uri, out host, out port))
             {
                 port = 11311;
             }
@@ -111,7 +111,7 @@ namespace Uml.Robotics.Ros
             string nodeuri = payl.GetString();
             string nodehost = null;
             int nodeport = 0;
-            if (!network.splitURI(nodeuri, ref nodehost, ref nodeport) || nodehost == null || nodeport <= 0)
+            if (!network.splitURI(nodeuri, out nodehost, out nodeport) || nodehost == null || nodeport <= 0)
                 return null;
 
             return XmlRpcManager.Instance.getXMLRPCClient(nodehost, nodeport, nodeuri);
@@ -130,7 +130,6 @@ namespace Uml.Robotics.Ros
             if (!cl.Execute("shutdown", req, resp) || !XmlRpcManager.Instance.validateXmlrpcResponse("lookupNode", resp, payl))
                 return false;
 
-            payl.Dump();
             XmlRpcManager.Instance.releaseXMLRPCClient(cl);
             return true;
         }
@@ -159,7 +158,7 @@ namespace Uml.Robotics.Ros
                 while (!success)
                 {
                     // Check if we are shutting down
-                    if (XmlRpcManager.Instance.shutting_down)
+                    if (XmlRpcManager.Instance.IsShuttingDown)
                         return false;
 
                     // if the client is connected, execute the RPC call

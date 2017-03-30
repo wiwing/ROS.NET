@@ -237,7 +237,7 @@ namespace Uml.Robotics.XmlRpc
             catch (XmlRpcException fault)
             {
                 XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.WARNING, "XmlRpcServerConnection::executeRequest: fault {0}.", fault.Message);
-                _response = generateFaultResponse(fault.Message, fault.getCode());
+                _response = generateFaultResponse(fault.Message, fault.ErrorCode);
             }
             return _response;
         }
@@ -252,7 +252,7 @@ namespace Uml.Robotics.XmlRpc
             method.Execute(parms, result);
 
             // Ensure a valid result value
-            if (!result.Valid)
+            if (!result.IsValid)
                 result.Set("");
 
             return true;
@@ -267,7 +267,7 @@ namespace Uml.Robotics.XmlRpc
             string body = RESPONSE_1 + resultXml + RESPONSE_2;
             string header = generateHeader(body);
             string result = header + body;
-            XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.SPEW, "XmlRpcServerConnection::generateResponse:\n{0}\n", result);
+            XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.MAX, "XmlRpcServerConnection::generateResponse:\n{0}\n", result);
             return result;
         }
 
@@ -348,7 +348,7 @@ namespace Uml.Robotics.XmlRpc
             if (methodNameRoot != SYSTEM_MULTICALL) return false;
 
             // There ought to be 1 parameter, an array of structs
-            if (parms.Length != 1 || parms[0].Type != XmlRpcValue.ValueType.TypeArray)
+            if (parms.Length != 1 || parms[0].Type != XmlRpcValue.ValueType.Array)
                 throw new XmlRpcException(SYSTEM_MULTICALL + ": Invalid argument (expected an array)");
 
             int nc = parms[0].Length;
@@ -392,11 +392,10 @@ namespace Uml.Robotics.XmlRpc
 
         private class ListMethods : XmlRpcServerMethod
         {
-            public
-                ListMethods(XmlRpcServer s)
+            public ListMethods(XmlRpcServer s)
                 : base(LIST_METHODS, null, s)
             {
-                FUNC = execute;
+                this.Func = this.execute;
             }
 
             private void execute(XmlRpcValue parms, XmlRpcValue result)
@@ -404,7 +403,7 @@ namespace Uml.Robotics.XmlRpc
                 server.listMethods(result);
             }
 
-            private string help()
+            public override string Help()
             {
                 return "List all methods available on a server as an array of strings";
             }
@@ -417,12 +416,12 @@ namespace Uml.Robotics.XmlRpc
             public MethodHelp(XmlRpcServer s)
                 : base(METHOD_HELP, null, s)
             {
-                FUNC = execute;
+                this.Func = execute;
             }
 
             private void execute(XmlRpcValue parms, XmlRpcValue result)
             {
-                if (parms[0].Type != XmlRpcValue.ValueType.TypeString)
+                if (parms[0].Type != XmlRpcValue.ValueType.String)
                     throw new XmlRpcException(METHOD_HELP + ": Invalid argument type");
 
                 XmlRpcServerMethod m = server.FindMethod(parms[0].GetString());

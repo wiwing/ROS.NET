@@ -156,7 +156,7 @@ namespace Uml.Robotics.Ros
             args.Set(0, this_node.Name);
             args.Set(1, ops.service);
             args.Set(2, string.Format("rosrpc://{0}:{1}", network.host, connection_manager.TCPPort));
-            args.Set(3, xmlrpc_manager.uri);
+            args.Set(3, xmlrpc_manager.Uri);
             if (!master.execute("registerService", args, result, payload, true))
             {
                 throw new RosException("RPC \"registerService\" for service " + ops.service + " failed.");
@@ -273,7 +273,7 @@ namespace Uml.Robotics.Ros
                 Logger.LogError("Service [{0}]: Empty server URI returned from master", name);
                 return false;
             }
-            if (!network.splitURI(serv_uri, ref serv_host, ref serv_port))
+            if (!network.splitURI(serv_uri, out serv_host, out serv_port))
             {
                 Logger.LogError("Service [{0}]: Bad service uri [{0}]", name, serv_uri);
                 return false;

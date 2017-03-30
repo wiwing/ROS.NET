@@ -51,7 +51,7 @@ namespace Uml.Robotics.XmlRpc
             _keepOpen = b;
         }
 
-        internal virtual bool readHeader(ref HTTPHeader header)
+        internal virtual bool readHeader(ref HttpHeader header)
         {
             // Read available data
             int dataLen = 0;
@@ -70,12 +70,12 @@ namespace Uml.Robotics.XmlRpc
 
                 if (header == null)
                 {
-                    header = new HTTPHeader(Encoding.ASCII.GetString(data, 0, dataLen));
-                    if (header.m_headerStatus == HTTPHeader.STATUS.UNINITIALIZED)
+                    header = new HttpHeader(Encoding.ASCII.GetString(data, 0, dataLen));
+                    if (header.HeaderStatus == HttpHeader.STATUS.UNINITIALIZED)
                         return false; //should only happen if the constructor's invocation of Append did not happen as desired
                 }
-                else if (header.Append(Encoding.ASCII.GetString(data, 0, dataLen)) == HTTPHeader.STATUS.PARTIAL_HEADER)
-                    return true; //if we successfully append a piece of the header, return true, but DO NOT change states 
+                else if (header.Append(Encoding.ASCII.GetString(data, 0, dataLen)) == HttpHeader.STATUS.PARTIAL_HEADER)
+                    return true; //if we successfully append a piece of the header, return true, but DO NOT change states
             }
             catch (SocketException ex)
             {
@@ -88,7 +88,7 @@ namespace Uml.Robotics.XmlRpc
                 return false;
             }
 
-            if (header.m_headerStatus != HTTPHeader.STATUS.COMPLETE_HEADER)
+            if (header.HeaderStatus != HttpHeader.STATUS.COMPLETE_HEADER)
                 return false;
 
             return true;
