@@ -300,7 +300,6 @@ namespace YAMLParser
 
         public static void GenerateProject(List<MsgsFile> files, List<SrvsFile> srvfiles)
         {
-            File.WriteAllText(Path.Combine(outputdir, "Interfaces.cs"), Templates.Interfaces);
             string[] lines = Templates.MessagesProj.Split('\n');
             string output = "";
             for (int i = 0; i < lines.Length; i++)

@@ -4,4 +4,7 @@
     <OutputType>Library</OutputType>
     <NoWarn>168;219;1701;1702;1705</NoWarn>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Uml.Robotics.Ros.MessageBase\Uml.Robotics.Ros.MessageBase.csproj" />
+  </ItemGroup>
 </Project>

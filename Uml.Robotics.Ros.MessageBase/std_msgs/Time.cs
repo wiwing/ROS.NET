@@ -1,44 +1,46 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.IO;
 using System.Runtime.InteropServices;
-using uint8 = System.Byte;
 using Uml.Robotics.Ros;
-using Messages.geometry_msgs;
-using Messages.sensor_msgs;
-using Messages.actionlib_msgs;
 
-namespace Messages
+
+namespace Messages.std_msgs
 {
-    public class $WHATAMI : RosMessage
+    public class Time : RosMessage
     {
-        $$DOLLADOLLABILLS
 
-        public override string MD5Sum() { return "$MYMD5SUM"; }
-        public override bool HasHeader() { return $MYHASHEADER; }
-        public override bool IsMetaType() { return $MYISMETA; }
-        public override string MessageDefinition() { return $MYMESSAGEDEFINITION; }
-        public override string MessageType { get { return "$MYMSGTYPE"; } }
+            public TimeData data = new TimeData();
+
+
+        public override string MD5Sum() { return "cd7166c74c552c311fbcc2fe5a7bc289"; }
+        public override bool HasHeader() { return false; }
+        public override bool IsMetaType() { return false; }
+        public override string MessageDefinition() { return @"time data"; }
+        public override string MessageType { get { return "std_msgs/Time"; } }
         public override bool IsServiceComponent() { return false; }
 
-        public $WHATAMI()
+        public Time()
         {
-            $NULLCONSTBODY
+
         }
 
-        public $WHATAMI(byte[] SERIALIZEDSTUFF)
+        public Time(byte[] SERIALIZEDSTUFF)
         {
             Deserialize(SERIALIZEDSTUFF);
         }
 
-        public $WHATAMI(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public Time(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
 
-$EXTRACONSTRUCTOR
+
+        public Time(TimeData d)
+        {
+            data = d;
+        }
+
 
         public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
@@ -48,7 +50,12 @@ $EXTRACONSTRUCTOR
             int piecesize = 0;
             byte[] thischunk, scratch1, scratch2;
             IntPtr h;
-            $DESERIALIZATIONCODE
+
+            //data
+            data.sec = BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex);
+            currentIndex += Marshal.SizeOf(typeof(System.Int32));
+            data.nsec  = BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex);
+            currentIndex += Marshal.SizeOf(typeof(System.Int32));
         }
 
         public override byte[] Serialize(bool partofsomethingelse)
@@ -58,7 +65,10 @@ $EXTRACONSTRUCTOR
             byte[] thischunk, scratch1, scratch2;
             List<byte[]> pieces = new List<byte[]>();
             GCHandle h;
-            $SERIALIZATIONCODE
+
+            //data
+            pieces.Add(BitConverter.GetBytes(data.sec));
+            pieces.Add(BitConverter.GetBytes(data.nsec));
             // combine every array in pieces into one array and return it
             int __a_b__f = pieces.Sum((__a_b__c)=>__a_b__c.Length);
             int __a_b__e=0;
@@ -77,15 +87,20 @@ $EXTRACONSTRUCTOR
             Random rand = new Random();
             int strlength;
             byte[] strbuf, myByte;
-            $RANDOMIZATIONCODE
+
+            //data
+            data.sec = Convert.ToUInt32(rand.Next());
+            data.nsec  = Convert.ToUInt32(rand.Next());
         }
 
         public override bool Equals(RosMessage ____other)
         {
             if (____other == null)
-				return false;
+                return false;
             bool ret = true;
-            $EQUALITYCODE
+            std_msgs.Time other = (Messages.std_msgs.Time)____other;
+
+            ret &= data.Equals(other.data);
             // for each SingleType st:
             //    ret &= {st.Name} == other.{st.Name};
             return ret;
