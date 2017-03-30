@@ -17,7 +17,7 @@ namespace Uml.Robotics.XmlRpc
 
         private bool _doClear;
         private double _endTime;
-        private bool _inWork;
+
         private List<DispatchRecord> sources = new List<DispatchRecord>();
 
         public void AddSource(XmlRpcSource source, EventType eventMask)
@@ -52,9 +52,9 @@ namespace Uml.Robotics.XmlRpc
         {
             EventType defaultMask = EventType.ReadableEvent | EventType.WritableEvent | EventType.Exception;
 
-            List<System.Net.Sockets.Socket> checkRead = new List<System.Net.Sockets.Socket>();
-            List<System.Net.Sockets.Socket> checkWrite = new List<System.Net.Sockets.Socket>();
-            List<System.Net.Sockets.Socket> checkExc = new List<System.Net.Sockets.Socket>();
+            var checkRead = new List<Socket>();
+            var checkWrite = new List<Socket>();
+            var checkExc = new List<Socket>();
 
             foreach (var src in sources)
             {
@@ -73,7 +73,9 @@ namespace Uml.Robotics.XmlRpc
 
             // Check for events
             if (timeout < 0)
+            {
                 Socket.Select(checkRead, checkWrite, checkExc, -1);
+            }
             else
             {
                 Socket.Select(checkRead, checkWrite, checkExc, (int)(timeout * 1000000.0));
@@ -92,6 +94,7 @@ namespace Uml.Robotics.XmlRpc
                 Socket sock = src.getSocket();
                 if (sock == null)
                     continue; // Seems like this is serious error
+
                 // If you select on multiple event types this could be ambiguous
                 if (checkRead.Contains(sock))
                     newMask &= src.HandleEvent(EventType.ReadableEvent);
@@ -135,7 +138,6 @@ namespace Uml.Robotics.XmlRpc
         {
             _endTime = (timeout < 0.0) ? -1.0 : (getTime() + timeout);
             _doClear = false;
-            _inWork = true;
 
             while (sources.Count > 0)
             {
@@ -166,7 +168,7 @@ namespace Uml.Robotics.XmlRpc
                 if (0 <= _endTime && getTime() > _endTime)
                     break;
             }
-            _inWork = false;
+
             //work(instance, msTime);
         }
 

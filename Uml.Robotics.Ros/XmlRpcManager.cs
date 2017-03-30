@@ -25,11 +25,11 @@ namespace Uml.Robotics.Ros
 
         ILogger Logger { get; } = ApplicationLogging.CreateLogger<XmlRpcManager>();
 
-        List<AsyncXmlRpcConnection> addedConnections = new List<AsyncXmlRpcConnection>();
-        List<AsyncXmlRpcConnection> removedConnections = new List<AsyncXmlRpcConnection>();
+        List<IAsyncXmlRpcConnection> addedConnections = new List<IAsyncXmlRpcConnection>();
+        List<IAsyncXmlRpcConnection> removedConnections = new List<IAsyncXmlRpcConnection>();
 
         List<CachedXmlRpcClient> clients = new List<CachedXmlRpcClient>();
-        List<AsyncXmlRpcConnection> connections = new List<AsyncXmlRpcConnection>();
+        List<IAsyncXmlRpcConnection> connections = new List<IAsyncXmlRpcConnection>();
         Dictionary<string, FunctionInfo> functions = new Dictionary<string, FunctionInfo>();
 
         object addedConnectionsGate = new object();
@@ -92,10 +92,10 @@ namespace Uml.Robotics.Ros
                 }
                 lock (addedConnectionsGate)
                 {
-                    foreach (AsyncXmlRpcConnection con in addedConnections)
+                    foreach (var con in addedConnections)
                     {
                         //Logger.LogDebug("Completed ASYNC XmlRpc connection to: " + ((con as PendingConnection) != null ? ((PendingConnection) con).RemoteUri : "SOMEWHERE OVER THE RAINBOW"));
-                        con.addToDispatch(server.Dispatch);
+                        con.AddToDispatch(server.Dispatch);
                         connections.Add(con);
                     }
                     addedConnections.Clear();
@@ -111,17 +111,17 @@ namespace Uml.Robotics.Ros
                     Thread.Sleep(ROS.WallDuration);
                 }
 
-                foreach (AsyncXmlRpcConnection con in connections)
+                foreach (var con in connections)
                 {
-                    if (con.check())
-                        removeASyncXMLRPCClient(con);
+                    if (con.Check())
+                        removeAsyncXMLRPCClient(con);
                 }
 
                 lock (removedConnectionsGate)
                 {
-                    foreach (AsyncXmlRpcConnection con in removedConnections)
+                    foreach (var con in removedConnections)
                     {
-                        con.removeFromDispatch(server.Dispatch);
+                        con.RemoveFromDispatch(server.Dispatch);
                         connections.Remove(con);
                     }
                     removedConnections.Clear();
@@ -129,7 +129,7 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        public bool validateXmlrpcResponse(string method, XmlRpcValue response, XmlRpcValue payload)
+        public bool validateXmlRpcResponse(string method, XmlRpcValue response, XmlRpcValue payload)
         {
             if (response.Type != XmlRpcValue.ValueType.Array)
                 return validateFailed(method, "didn't return an array -- {0}", response);
@@ -137,10 +137,10 @@ namespace Uml.Robotics.Ros
                 return validateFailed(method, "didn't return a 3-element array -- {0}", response);
             if (response[0].Type != XmlRpcValue.ValueType.Int)
                 return validateFailed(method, "didn't return an int as the 1st element -- {0}", response);
-            int status_code = response[0].Get<int>();
+            int status_code = response[0].GetInt();
             if (response[1].Type != XmlRpcValue.ValueType.String)
                 return validateFailed(method, "didn't return a string as the 2nd element -- {0}", response);
-            string status_string = response[1].Get<string>();
+            string status_string = response[1].GetString();
             if (status_code != 1)
             {
                 return validateFailed(method, "returned an error ({0}): [{1}] -- {2}", status_code, status_string, response);
@@ -158,16 +158,10 @@ namespace Uml.Robotics.Ros
                     }
                     break;
                 case XmlRpcValue.ValueType.Int:
-                    payload.asInt = response[2].asInt;
-                    break;
                 case XmlRpcValue.ValueType.Double:
-                    payload.asDouble = response[2].asDouble;
-                    break;
                 case XmlRpcValue.ValueType.String:
-                    payload.asString = response[2].asString;
-                    break;
                 case XmlRpcValue.ValueType.Boolean:
-                    payload.asBool = response[2].asBool;
+                    payload.Copy(response[2]);
                     break;
                 case XmlRpcValue.ValueType.Invalid:
                     break;
@@ -225,13 +219,13 @@ namespace Uml.Robotics.Ros
             client.Dispose();
         }
 
-        public void addAsyncConnection(AsyncXmlRpcConnection conn)
+        public void addAsyncConnection(IAsyncXmlRpcConnection conn)
         {
             lock (addedConnectionsGate)
                 addedConnections.Add(conn);
         }
 
-        public void removeASyncXMLRPCClient(AsyncXmlRpcConnection conn)
+        public void removeAsyncXMLRPCClient(IAsyncXmlRpcConnection conn)
         {
             lock (removedConnectionsGate)
                 removedConnections.Add(conn);
@@ -374,9 +368,9 @@ namespace Uml.Robotics.Ros
             }
             if (server != null)
             {
-                foreach (AsyncXmlRpcConnection ass in connections)
+                foreach (var ass in connections)
                 {
-                    ass.removeFromDispatch(server.Dispatch);
+                    ass.RemoveFromDispatch(server.Dispatch);
                 }
             }
             connections.Clear();

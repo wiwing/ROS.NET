@@ -6,7 +6,7 @@ using nm = Messages.nav_msgs;
 
 namespace Uml.Robotics.Ros
 {
-    public class PendingConnection : AsyncXmlRpcConnection, IDisposable
+    public class PendingConnection : IAsyncXmlRpcConnection, IDisposable
     {
         public string RemoteUri;
         private int _failures;
@@ -14,7 +14,6 @@ namespace Uml.Robotics.Ros
         public XmlRpcClient client;
         public Subscription parent;
 
-        //public XmlRpcValue stickaroundyouwench = null;
         public PendingConnection(XmlRpcClient client, Subscription s, string uri, XmlRpcValue chk)
         {
             this.client = client;
@@ -40,21 +39,21 @@ namespace Uml.Robotics.Ros
             set { _failures = value; }
         }
 
-        public override void addToDispatch(XmlRpcDispatch disp)
+        public void AddToDispatch(XmlRpcDispatch disp)
         {
             if (disp == null)
                 return;
-            if (check())
+            if (Check())
                 return;
             disp.AddSource(client, (XmlRpcDispatch.EventType.WritableEvent | XmlRpcDispatch.EventType.Exception));
         }
 
-        public override void removeFromDispatch(XmlRpcDispatch disp)
+        public void RemoveFromDispatch(XmlRpcDispatch disp)
         {
             disp.RemoveSource(client);
         }
 
-        public override bool check()
+        public bool Check()
         {
             if (parent == null)
                 return false;

@@ -277,7 +277,7 @@ namespace Uml.Robotics.Ros
                         return;
                 }
                 XmlRpcValue proto = new XmlRpcValue();
-                if (!XmlRpcManager.Instance.validateXmlrpcResponse("requestTopic", result, proto))
+                if (!XmlRpcManager.Instance.validateXmlRpcResponse("requestTopic", result, proto))
                 {
                     conn.failures++;
                     Logger.LogWarning("Negotiating for " + conn.parent.name + " has failed " + conn.failures + " times");
@@ -301,7 +301,7 @@ namespace Uml.Robotics.Ros
                     Logger.LogWarning("Available protocol info returned from " + xmlrpc_uri + " is not a list.");
                     return;
                 }
-                string proto_name = proto[0].Get<string>();
+                string proto_name = proto[0].GetString();
                 if (proto_name == "UDPROS")
                 {
                     Logger.LogError("Udp is currently not supported. Use TcpRos instead.");
@@ -313,8 +313,8 @@ namespace Uml.Robotics.Ros
                         Logger.LogWarning("TcpRos Publisher should implement string, int as parameter");
                         return;
                     }
-                    string pub_host = proto[1].Get<string>();
-                    int pub_port = proto[2].Get<int>();
+                    string pub_host = proto[1].GetString();
+                    int pub_port = proto[2].GetInt();
                     Logger.LogDebug("Connecting via tcpros to topic [" + name + "] at host [" + pub_host + ":" + pub_port +
                                 "]");
 

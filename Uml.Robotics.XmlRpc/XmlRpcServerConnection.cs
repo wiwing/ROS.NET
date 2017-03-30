@@ -64,7 +64,7 @@ namespace Uml.Robotics.XmlRpc
         {
             if (base.readHeader(ref header))
             {
-                if (header.HeaderStatus == HttpHeader.STATUS.COMPLETE_HEADER)
+                if (header.HeaderStatus == HttpHeader.ParseStatus.COMPLETE_HEADER)
                 {
                     XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.DEBUG, "KeepAlive: {0}", _keepAlive);
                     _connectionState = ServerConnectionState.READ_REQUEST;

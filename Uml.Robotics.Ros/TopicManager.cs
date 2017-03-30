@@ -448,7 +448,7 @@ namespace Uml.Robotics.Ros
                     return false;
                 }
 
-                string proto_name = proto[0].Get<string>();
+                string proto_name = proto[0].GetString();
 
                 if (proto_name == "TCPROS")
                 {
@@ -493,7 +493,7 @@ namespace Uml.Robotics.Ros
             for (int i = 0; i < payload.Size; i++)
             {
                 XmlRpcValue load = payload[i];
-                string pubed = load.Get<string>();
+                string pubed = load.GetString();
                 if (pubed != uri && !pub_uris.Contains(pubed))
                 {
                     pub_uris.Add(pubed);
@@ -681,8 +681,8 @@ namespace Uml.Robotics.Ros
             //XmlRpcValue parm = XmlRpcValue.Create(ref parms);
             List<string> pubs = new List<string>();
             for (int idx = 0; idx < parm[2].Size; idx++)
-                pubs.Add(parm[2][idx].Get<string>());
-            if (pubUpdate(parm[1].Get<string>(), pubs))
+                pubs.Add(parm[2][idx].GetString());
+            if (pubUpdate(parm[1].GetString(), pubs))
                 XmlRpcManager.Instance.responseInt(1, "", 0)(result);
             else
             {
@@ -698,7 +698,7 @@ namespace Uml.Robotics.Ros
             //XmlRpcValue res = XmlRpcValue.Create(ref result)
             //	, parm = XmlRpcValue.Create(ref parms);
             //result = res.instance;
-            if (!requestTopic(parm[1].Get<string>(), parm[2], ref res))
+            if (!requestTopic(parm[1].GetString(), parm[2], ref res))
             {
                 const string error = "Unknown error while handling XmlRpc call to requestTopic";
                 this.Logger.LogError(error);

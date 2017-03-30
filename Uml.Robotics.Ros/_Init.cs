@@ -401,7 +401,7 @@ namespace Uml.Robotics.Ros
                 num_params = parms.Size;
             if (num_params > 1)
             {
-                string reason = parms[1].Get<string>();
+                string reason = parms[1].GetString();
                 Logger.LogInformation("Shutdown request received.");
                 Logger.LogInformation("Reason given for shutdown: [" + reason + "]");
                 shutdown();

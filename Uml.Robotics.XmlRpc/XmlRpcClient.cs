@@ -297,7 +297,7 @@ namespace Uml.Robotics.XmlRpc
             }
 
             // Default to keeping the connection open until an explicit close is done
-            setKeepOpen();
+            this.KeepOpen = true;
         }
 
         // Close the owned fd
@@ -357,7 +357,7 @@ namespace Uml.Robotics.XmlRpc
         {
             if (base.readHeader(ref header))
             {
-                if (header.HeaderStatus == HttpHeader.STATUS.COMPLETE_HEADER)
+                if (header.HeaderStatus == HttpHeader.ParseStatus.COMPLETE_HEADER)
                 {
                     _connectionState = ConnectionState.READ_RESPONSE;
                 }
@@ -441,14 +441,14 @@ namespace Uml.Robotics.XmlRpc
                     for (int i = 0; i < parameters.Length; ++i)
                     {
                         body += PARAM_TAG;
-                        body += parameters[i].toXml();
+                        body += parameters[i].ToXml();
                         body += PARAM_ETAG;
                     }
                 }
                 else
                 {
                     body += PARAM_TAG;
-                    body += parameters.toXml();
+                    body += parameters.ToXml();
                     body += PARAM_ETAG;
                 }
 
@@ -608,18 +608,18 @@ namespace Uml.Robotics.XmlRpc
                         foreach (XmlNode par in selection)
                         {
                             var value = new XmlRpcValue();
-                            value.fromXml(par["value"]);
+                            value.FromXml(par["value"]);
                             result[i++] = value;
                         }
                     }
                     else if (selection.Count == 1)
                     {
-                        result.fromXml(selection[0]["value"]);
+                        result.FromXml(selection[0]["value"]);
                     }
                     else
                         success = false;
                 }
-                else if (fault != null && result.fromXml(fault))
+                else if (fault != null && result.FromXml(fault))
                 {
                     success = false;
                 }

@@ -59,7 +59,7 @@ namespace Uml.Robotics.Ros
 
             topicss.Clear();
             for (int i = 0; i < payload.Size; i++)
-                topicss.Add(new TopicInfo(payload[i][0].Get<string>(), payload[i][1].Get<string>()));
+                topicss.Add(new TopicInfo(payload[i][0].GetString(), payload[i][1].GetString()));
             topics = topicss.ToArray();
             return true;
         }
@@ -86,7 +86,7 @@ namespace Uml.Robotics.Ros
                     XmlRpcValue val = payload[i][j][1];
                     for (int k = 0; k < val.Size; k++)
                     {
-                        string name = val[k].Get<string>();
+                        string name = val[k].GetString();
                         names.Add(name);
                     }
                 }
@@ -105,7 +105,7 @@ namespace Uml.Robotics.Ros
             if (!execute("lookupNode", args, resp, payl, true))
                 return null;
 
-            if (!XmlRpcManager.Instance.validateXmlrpcResponse("lookupNode", resp, payl))
+            if (!XmlRpcManager.Instance.validateXmlRpcResponse("lookupNode", resp, payl))
                 return null;
 
             string nodeuri = payl.GetString();
@@ -127,7 +127,7 @@ namespace Uml.Robotics.Ros
             XmlRpcValue req = new XmlRpcValue(), resp = new XmlRpcValue(), payl = new XmlRpcValue();
             req.Set(0, this_node.Name);
             req.Set(1, "Out of respect for Mrs. " + this_node.Name);
-            if (!cl.Execute("shutdown", req, resp) || !XmlRpcManager.Instance.validateXmlrpcResponse("lookupNode", resp, payl))
+            if (!cl.Execute("shutdown", req, resp) || !XmlRpcManager.Instance.validateXmlRpcResponse("lookupNode", resp, payl))
                 return false;
 
             XmlRpcManager.Instance.releaseXMLRPCClient(cl);
@@ -169,7 +169,7 @@ namespace Uml.Robotics.Ros
                     {
                         // validateXmlrpcResponse logs error in case of validation error
                         // So we don't need any logging here.
-                        if (XmlRpcManager.Instance.validateXmlrpcResponse(method, response, payload))
+                        if (XmlRpcManager.Instance.validateXmlRpcResponse(method, response, payload))
                             return true;
                         else
                             return false;
@@ -178,8 +178,8 @@ namespace Uml.Robotics.Ros
                     {
                         if (client.IsConnected)
                         {
-                            if (response != null && response.asArray != null && response.asArray.Length >= 2)
-                                Logger.LogError("Execute failed: return={0}, desc={1}", response[0].asInt, response[1].asString);
+                            if (response != null && response.IsArray && response.Length >= 2)
+                                Logger.LogError("Execute failed: return={0}, desc={1}", response[0].GetInt(), response[1].GetString());
                             else
                                 Logger.LogError("response type == " + (response != null ? response.Type.ToString() : "null"));
                         }

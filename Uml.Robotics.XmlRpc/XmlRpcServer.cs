@@ -10,15 +10,16 @@ namespace Uml.Robotics.XmlRpc
 {
     public class XmlRpcServer : XmlRpcSource
     {
-        private static string SYSTEM_MULTICALL = "system.multicall";
-        private static string METHODNAME = "methodName";
-        private static string PARAMS = "params";
+        const string SYSTEM_MULTICALL = "system.multicall";
+        const string METHODNAME = "methodName";
+        const string PARAMS = "params";
 
-        private static string FAULTCODE = "faultCode";
-        private static string FAULTSTRING = "faultString";
-        private static string LIST_METHODS = "system.listMethods";
-        private static string METHOD_HELP = "system.methodHelp";
-        private static string MULTICALL = "system.multicall";
+        const string FAULTCODE = "faultCode";
+        const string FAULTSTRING = "faultString";
+        const string LIST_METHODS = "system.listMethods";
+        const string METHOD_HELP = "system.methodHelp";
+        const string MULTICALL = "system.multicall";
+
         private XmlRpcDispatch _disp = new XmlRpcDispatch();
         // Whether the introspection API is supported by this server
         private bool _introspectionEnabled;
@@ -93,7 +94,6 @@ namespace Uml.Robotics.XmlRpc
             return listener != null ? listener.Server : null;
         }
 
-
         public bool BindAndListen(int port, int backlog)
         {
             IPAddress address = new IPAddress(0); // INADDR_ANY
@@ -127,7 +127,6 @@ namespace Uml.Robotics.XmlRpc
         private void acceptConnection()
         {
             bool p = true;
-// ReSharper disable once CSharpWarnings::CS0665
             while (p = listener.Pending())
             {
                 try
@@ -232,7 +231,7 @@ namespace Uml.Robotics.XmlRpc
                     !executeMulticall(methodName, parms, resultValue))
                     _response = generateFaultResponse(methodName + ": unknown method name");
                 else
-                    _response = generateResponse(resultValue.toXml());
+                    _response = generateResponse(resultValue.ToXml());
             }
             catch (XmlRpcException fault)
             {
@@ -303,11 +302,11 @@ namespace Uml.Robotics.XmlRpc
                 for (int i = 0; i < xmlParameters.Count; i++)
                 {
                     var value = new XmlRpcValue();
-                    value.fromXml(xmlParameters[i]["value"]);
-                    parms.asArray[i] = value;
+                    value.FromXml(xmlParameters[i]["value"]);
+                    parms.Set(i, value);
                 }
 
-                if (xmlFault.Count > 0 && parms.fromXml(xmlFault[0]))
+                if (xmlFault.Count > 0 && parms.FromXml(xmlFault[0]))
                 {
                     XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.WARNING, "Read fault on response for request:\n{0}\nFAULT: {1}", _request, parms.ToString());
                 }
@@ -325,7 +324,8 @@ namespace Uml.Robotics.XmlRpc
                 "Content-Type: text/xml\r\n" +
                 "Content-length: {1}\r\n\r\n",
                 XmlRpcUtil.XMLRPC_VERSION,
-                body.Length);
+                body.Length
+            );
         }
 
         public string generateFaultResponse(string errorMsg, int errorCode = -1)
@@ -336,7 +336,7 @@ namespace Uml.Robotics.XmlRpc
             XmlRpcValue faultStruct = new XmlRpcValue();
             faultStruct.Set(FAULTCODE, errorCode);
             faultStruct.Set(FAULTSTRING, errorMsg);
-            string body = RESPONSE_1 + faultStruct.toXml() + RESPONSE_2;
+            string body = RESPONSE_1 + faultStruct.ToXml() + RESPONSE_2;
             string header = generateHeader(body);
 
             return header + body;
@@ -356,8 +356,8 @@ namespace Uml.Robotics.XmlRpc
 
             for (int i = 0; i < nc; ++i)
             {
-                if (!parms[0][i].hasMember(METHODNAME) ||
-                    !parms[0][i].hasMember(PARAMS))
+                if (!parms[0][i].HasMember(METHODNAME) ||
+                    !parms[0][i].HasMember(PARAMS))
                 {
                     result[i].Set(FAULTCODE, -1);
                     result[i].Set(FAULTSTRING, SYSTEM_MULTICALL + ": Invalid argument (expected a struct with members methodName and params)");

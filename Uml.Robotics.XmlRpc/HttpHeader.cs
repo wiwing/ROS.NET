@@ -63,8 +63,7 @@ namespace Uml.Robotics.XmlRpc
 
     internal class HttpHeader
     {
-        [Flags]
-        internal enum STATUS
+        internal enum ParseStatus
         {
             UNINITIALIZED,
             PARTIAL_HEADER,
@@ -75,25 +74,25 @@ namespace Uml.Robotics.XmlRpc
         Dictionary<HttpHeaderField, string> HeaderFieldToStrings = new Dictionary<HttpHeaderField, string>();
         byte[] data = new byte[4096];
         string headerSoFar = "";
-        STATUS headerStatus = STATUS.UNINITIALIZED;
+        ParseStatus headerStatus = ParseStatus.UNINITIALIZED;
 
         private HttpHeader()
         {
             this.DataString = "";
         }
 
-        public HttpHeader(string HTTPRequest)
+        public HttpHeader(string request)
             : this()
         {
-            Append(HTTPRequest);
+            Append(request);
         }
 
-        public HttpHeader(byte[] ByteHTTPRequest)
-            : this(Encoding.ASCII.GetString(ByteHTTPRequest))
+        public HttpHeader(byte[] binaryRequest)
+            : this(Encoding.ASCII.GetString(binaryRequest))
         {
         }
 
-        internal STATUS HeaderStatus
+        internal ParseStatus HeaderStatus
         {
             get { return headerStatus; }
         }
@@ -146,14 +145,14 @@ namespace Uml.Robotics.XmlRpc
         /// </summary>
         /// <param name="HTTPRequest"></param>
         /// <returns></returns>
-        public STATUS Append(string HTTPRequest)
+        public ParseStatus Append(string HTTPRequest)
         {
-            if (headerStatus != STATUS.COMPLETE_HEADER)
+            if (headerStatus != ParseStatus.COMPLETE_HEADER)
             {
                 int betweenHeaderAndData = HTTPRequest.IndexOf("\r\n\r\n");
                 if (betweenHeaderAndData > 0)
                 {
-                    headerStatus = STATUS.COMPLETE_HEADER;
+                    headerStatus = ParseStatus.COMPLETE_HEADER;
                     //found the boundary between header and data
                     headerSoFar += HTTPRequest.Substring(0, betweenHeaderAndData);
                     parseHeader(headerSoFar);
@@ -167,18 +166,18 @@ namespace Uml.Robotics.XmlRpc
                 else
                 {
                     headerSoFar += HTTPRequest;
-                    headerStatus = STATUS.PARTIAL_HEADER;
+                    headerStatus = ParseStatus.PARTIAL_HEADER;
                     parseHeader(headerSoFar);
                     return headerStatus;
                 }
             }
 
-            if (headerStatus == STATUS.COMPLETE_HEADER)
+            if (headerStatus == ParseStatus.COMPLETE_HEADER)
             {
                 if (ContentComplete)
                 {
                     //this isn't right... restart with empty header and see if it works
-                    headerStatus = STATUS.UNINITIALIZED;
+                    headerStatus = ParseStatus.UNINITIALIZED;
                     Data = new byte[0];
                     DataString = "";
                     headerSoFar = "";

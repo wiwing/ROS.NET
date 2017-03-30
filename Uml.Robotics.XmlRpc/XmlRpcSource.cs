@@ -8,15 +8,13 @@ namespace Uml.Robotics.XmlRpc
     {
         private const int READ_BUFFER_LENGTH = 4096;
 
-        private bool _deleteOnClose;
-
         // In the client, keep connections open if you intend to make multiple calls.
-        private bool _keepOpen;
+        private bool keepOpen;
 
         public bool KeepOpen
         {
-            get { return _keepOpen; }
-            set { _keepOpen = value; }
+            get { return keepOpen; }
+            set { keepOpen = value; }
         }
 
         public virtual NetworkStream getStream()
@@ -39,18 +37,6 @@ namespace Uml.Robotics.XmlRpc
             throw new NotImplementedException();
         }
 
-        //! Return whether the file descriptor should be kept open if it is no longer monitored.
-        public bool getKeepOpen()
-        {
-            return _keepOpen;
-        }
-
-        //! Specify whether the file descriptor should be kept open if it is no longer monitored.
-        public void setKeepOpen(bool b = true)
-        {
-            _keepOpen = b;
-        }
-
         internal virtual bool readHeader(ref HttpHeader header)
         {
             // Read available data
@@ -71,10 +57,10 @@ namespace Uml.Robotics.XmlRpc
                 if (header == null)
                 {
                     header = new HttpHeader(Encoding.ASCII.GetString(data, 0, dataLen));
-                    if (header.HeaderStatus == HttpHeader.STATUS.UNINITIALIZED)
+                    if (header.HeaderStatus == HttpHeader.ParseStatus.UNINITIALIZED)
                         return false; //should only happen if the constructor's invocation of Append did not happen as desired
                 }
-                else if (header.Append(Encoding.ASCII.GetString(data, 0, dataLen)) == HttpHeader.STATUS.PARTIAL_HEADER)
+                else if (header.Append(Encoding.ASCII.GetString(data, 0, dataLen)) == HttpHeader.ParseStatus.PARTIAL_HEADER)
                     return true; //if we successfully append a piece of the header, return true, but DO NOT change states
             }
             catch (SocketException ex)
@@ -88,7 +74,7 @@ namespace Uml.Robotics.XmlRpc
                 return false;
             }
 
-            if (header.HeaderStatus != HttpHeader.STATUS.COMPLETE_HEADER)
+            if (header.HeaderStatus != HttpHeader.ParseStatus.COMPLETE_HEADER)
                 return false;
 
             return true;

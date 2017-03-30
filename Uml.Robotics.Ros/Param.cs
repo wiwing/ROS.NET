@@ -208,7 +208,7 @@ namespace Uml.Robotics.Ros
             return payload;
         }
 
-        private static bool safeGet<T>(string key, ref T dest, object def = null)
+        private static bool safeGet<T>(string key, ref T dest, T def = default(T))
         {
             try
             {
@@ -217,10 +217,32 @@ namespace Uml.Robotics.Ros
                 {
                     if (def == null)
                         return false;
-                    dest = (T) def;
+                    dest = def;
                     return true;
                 }
-                dest = v.Get<T>();
+
+                // TODO: Change this....
+                if (typeof(T) == typeof(int))
+                {
+                    dest = (T)(object)v.GetInt();
+                }
+                else if (typeof(T) == typeof(string))
+                {
+                    dest = (T)(object)v.GetString();
+                }
+                else if (typeof(T) == typeof(bool))
+                {
+                    dest = (T)(object)v.GetBool();
+                }
+                else if (typeof(T) == typeof(int))
+                {
+                    dest = (T)(object)v.GetInt();
+                }
+                else if (typeof(T) == typeof(XmlRpcValue))
+                {
+                    dest = (T)(object)v;
+                }
+
                 return true;
             }
             catch
@@ -302,7 +324,7 @@ namespace Uml.Robotics.Ros
                 return false;
             if (result.Size != 3 || result[0].GetInt() != 1 || result[2].Type != XmlRpcValue.ValueType.Boolean)
                 return false;
-            return result[2].asBool;
+            return result[2].GetBool();
         }
 
         /// <summary>
@@ -423,7 +445,7 @@ namespace Uml.Robotics.Ros
             val.Set(2, 0);
             //update(XmlRpcValue.LookUp(parm)[1].Get<string>(), XmlRpcValue.LookUp(parm)[2]);
             /// TODO: check carefully this stuff. It looks strange
-            update(val[1].Get<string>(), val[2]);
+            update(val[1].GetString(), val[2]);
         }
 
         public static bool getImpl(string key, ref XmlRpcValue v, bool use_cache)
