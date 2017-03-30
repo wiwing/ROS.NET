@@ -5,6 +5,7 @@ using Uml.Robotics.Ros;
 using Uml.Robotics.Ros.ActionLib;
 using Messages.xamlamoveit;
 using Messages.control_msgs;
+using System.Collections.Generic;
 
 namespace ActionClientSample
 {
@@ -54,45 +55,80 @@ namespace ActionClientSample
             Console.WriteLine("Start ROS");
             ROS.Init(new string[0], "ActionClient");
 
-            NodeHandle clientNodeHandle = new NodeHandle();
+            NodeHandle clientNodeHandle = ROS.GlobalNodeHandle;
 
             Console.WriteLine("Create client");
-            var actionClient = new ActionClient<moveJGoal, moveJResult,
-                moveJFeedback>("moveJ_action", clientNodeHandle);
+            var actionClient = new ActionClient<Messages.actionlib.TestGoal, Messages.actionlib.TestResult,
+                Messages.actionlib.TestFeedback>("test_action", clientNodeHandle);
 
             Console.WriteLine("Wait for client and server to negotiate connection");
-            bool started = actionClient.WaitForActionServerToStart(new TimeSpan(0, 0, 10));
+            bool started = actionClient.WaitForActionServerToStart(new TimeSpan(0, 0, 3));
 
 
-            if (started || true)
+            if (started)
             {
-                var goal = new moveJGoal();
-                goal.group_name.data = "manipulator";
-                goal.goal.positions = new double[] {1.2658,
-                                        -1.9922,
-                                        2.3327,
-                                        -3.0303,
-                                        -1.6643,
-                                        2.3804
-                };
+                int counter = 0;
+                var dict = new Dictionary<int, Messages.actionlib.TestGoal>();
+                var semaphore = new Semaphore(10, 10);
 
-                Console.WriteLine("Send goal from client");
-                var transition = false;
-                actionClient.SendGoal(goal,
-                    (goalHandle) => { Console.WriteLine($"Transition: {goalHandle.State.ToString()}"); transition = true; },
-                    (goalHandle, feedback) => { Console.WriteLine($"Feedback: {feedback}"); });
+                while (!Console.KeyAvailable)
+                {
+                    var now = DateTime.Now;
+                    semaphore.WaitOne();
+                    Console.WriteLine($"Waited: {DateTime.Now - now}");
+                    var goal = new Messages.actionlib.TestGoal();
+                    goal.goal = counter;
+                    dict[counter] = goal;
+                    counter += 1;
 
+                    Console.WriteLine($"Send goal {goal.goal} from client");
+                    actionClient.SendGoal(goal,
+                        (goalHandle) => {
+                            if (goalHandle.State == CommunicationState.DONE)
+                            {
+                                semaphore.Release();
+                                int g = goalHandle.Goal.Goal.goal;
+                                var result = goalHandle.Result;
+                                if (result != null)
+                                {
+                                    Console.WriteLine($"Got Result for goal {g}: {goalHandle.Result.result}");
+                                } else
+                                {
+                                    Console.WriteLine($"Result for goal {g} is NULL!");
+                                }
+                                dict.Remove(g);
+                            }
+                        },
+                        (goalHandle, feedback) => {
+                            Console.WriteLine($"Feedback: {feedback}");
+                        }
+                    );
+                }
 
-                Console.WriteLine("Wait for action client to receive transition");
-                while (!transition)
+                Console.WriteLine("Wait for 15s for open goals");
+                var timeOut = new TimeSpan(0, 0, 15);
+                var start = DateTime.Now;
+                while ((DateTime.Now - start <= timeOut) && (dict.Count > 0))
                 {
                     Thread.Sleep(1);
+                }
+                if (dict.Count == 0)
+                {
+                    Console.WriteLine("All goals have been reached!");
+                } else
+                {
+                    Console.WriteLine("TIMEOUT: There are still open goals");
                 }
             }
             else
             {
                 Console.WriteLine("Negotiation with server failed!");
             }
+
+            Console.WriteLine("Shutdown ROS");
+            actionClient.Shutdown();
+            clientNodeHandle.shutdown();
+            ROS.shutdown();
         }
     }
 }

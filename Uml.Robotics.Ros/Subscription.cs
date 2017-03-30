@@ -379,7 +379,7 @@ namespace Uml.Robotics.Ros
                         t.Serialized = null;
                         bool was_full = false;
                         bool nonconst_need_copy = callbacks.Count > 1;
-                        info.subscription_queue.pushitgood(info.helper, t, nonconst_need_copy, ref was_full, receipt_time);
+                        info.subscription_queue.AddToCallbackQueue(info.helper, t, nonconst_need_copy, ref was_full, receipt_time);
                         if (was_full)
                             ++drops;
                         else
@@ -425,7 +425,7 @@ namespace Uml.Robotics.Ros
 
             lock (callbacks_mutex)
             {
-                CallbackInfo<M> info = new CallbackInfo<M> {helper = helper, callback = queue, subscription_queue = new Callback<M>(helper.Callback.func, topiclol, queue_size, allow_concurrent_callbacks)};
+                CallbackInfo<M> info = new CallbackInfo<M> {helper = helper, callback = queue, subscription_queue = new Callback<M>(helper.Callback.SendEvent, topiclol, queue_size, allow_concurrent_callbacks)};
                 //if (!helper.isConst())
                 //{
                 ++nonconst_callbacks;
@@ -447,7 +447,7 @@ namespace Uml.Robotics.Ros
                                     LatchInfo latch_info = latched_messages[link];
                                     bool was_full = false;
                                     bool nonconst_need_copy = callbacks.Count > 1;
-                                    info.subscription_queue.pushitgood(info.helper, latched_messages[link].message, nonconst_need_copy, ref was_full, ROS.GetTime().data);
+                                    info.subscription_queue.AddToCallbackQueue(info.helper, latched_messages[link].message, nonconst_need_copy, ref was_full, ROS.GetTime().data);
                                     if (!was_full)
                                         info.callback.addCallback(info.subscription_queue, info.Get());
                                 }
@@ -467,7 +467,7 @@ namespace Uml.Robotics.Ros
                 {
                     if (info.helper == helper)
                     {
-                        info.subscription_queue.clear();
+                        info.subscription_queue.Clear();
                         info.callback.removeByID(info.Get());
                         callbacks.Remove(info);
                         //if (!helper.isConst())
@@ -534,7 +534,7 @@ namespace Uml.Robotics.Ros
 
             public UInt64 Get()
             {
-                return subscription_queue.Get();
+                return subscription_queue.Uid;
             }
         }
 

@@ -300,7 +300,7 @@ namespace Uml.Robotics.Ros
 
         public void peerConnect(SubscriberLink sub_link)
         {
-            //Logger.LogDebug("PEER CONNECT: ["+sub_link.topic+"]");
+            //Logger.LogDebug($"PEER CONNECT: Id: {sub_link.connection_id} Dest: {sub_link.destination_caller_id} Topic: {sub_link.topic}");
             foreach (SubscriberCallbacks cbs in callbacks)
             {
                 if (cbs.connect != null && cbs.Callback != null)
@@ -365,8 +365,9 @@ namespace Uml.Robotics.Ros
 
     public class PeerConnDisconnCallback : CallbackInterface
     {
-        public SubscriberStatusCallback callback;
-        public SubscriberLink sub_link;
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<PeerConnDisconnCallback>();
+        private SubscriberStatusCallback callback;
+        private SubscriberLink sub_link;
 
         public PeerConnDisconnCallback(SubscriberStatusCallback callback, SubscriberLink sub_link)
         {
@@ -374,12 +375,23 @@ namespace Uml.Robotics.Ros
             this.sub_link = sub_link;
         }
 
-        public virtual CallResult call()
+        internal override CallResult Call()
         {
             ROS.Debug()("Called PeerConnDisconnCallback");
             SingleSubscriberPublisher pub = new SingleSubscriberPublisher(sub_link);
+            Logger.LogDebug($"Callback: Name: {pub.subscriber_name} Topic: {pub.topic}");
             callback(pub);
             return CallResult.Success;
+        }
+
+        public override void AddToCallbackQueue(ISubscriptionCallbackHelper helper, RosMessage msg, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Clear()
+        {
+            throw new NotImplementedException();
         }
     }
 

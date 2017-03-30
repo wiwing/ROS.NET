@@ -87,7 +87,7 @@ namespace Uml.Robotics.Ros
 
         /// <summary>
         ///     gets/sets this nodehandle's callbackqueue
-        ///     get : if the private _callback is null, a new one is created and enabled
+        ///     get : if the private _callback is null it is set to ROS.GlobalCallbackQueue
         /// </summary>
         public CallbackQueue Callback
         {
@@ -95,8 +95,7 @@ namespace Uml.Robotics.Ros
             {
                 if (_callback == null)
                 {
-                    _callback = new CallbackQueue();
-                    _callback.Enable();
+                    _callback = ROS.GlobalCallbackQueue;
                 }
 
                 return _callback;
@@ -277,7 +276,7 @@ namespace Uml.Robotics.Ros
             {
                 _callback = ROS.GlobalCallbackQueue;
             }
-            SubscribeOptions<M> ops = new SubscribeOptions<M>(topic, queue_size, cb.func)
+            SubscribeOptions<M> ops = new SubscribeOptions<M>(topic, queue_size, cb.SendEvent)
             {callback_queue = _callback, allow_concurrent_callbacks=allow_concurrent_callbacks};
             ops.callback_queue.addCallback(cb);
             return subscribe(ops);
