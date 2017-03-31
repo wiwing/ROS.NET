@@ -35,6 +35,8 @@ namespace ActionClientTestbed
             ROS.Init(new string[0], "ActionClient");
 
             NodeHandle clientNodeHandle = ROS.GlobalNodeHandle;
+            //var asyncSpinner = new AsyncSpinner(ROS.GlobalCallbackQueue);
+            //asyncSpinner.Start();
 
             Console.WriteLine("Create client");
             actionClient = new ActionClient<Messages.actionlib.TestGoal, Messages.actionlib.TestResult,

@@ -153,7 +153,7 @@ namespace Uml.Robotics.Ros.ActionLib
         public bool WaitForActionServerToStart(TimeSpan timeout)
         {
             var tic = DateTime.Now;
-            var spinner = new SingleThreadSpinner();
+            //var spinner = new SingleThreadSpinner();
             while (ROS.ok) {
                 if (IsServerConnected())
                 {

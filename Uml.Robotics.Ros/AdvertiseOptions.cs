@@ -72,7 +72,7 @@ namespace Uml.Robotics.Ros
         }
 
         public static AdvertiseOptions<M> Create<M>(string topic, int q_size, SubscriberStatusCallback connectcallback,
-            SubscriberStatusCallback disconnectcallback, CallbackQueue queue)
+            SubscriberStatusCallback disconnectcallback, ICallbackQueue queue)
             where M : RosMessage, new()
         {
             return new AdvertiseOptions<M>(topic, q_size, connectcallback, disconnectcallback) {callback_queue = queue};

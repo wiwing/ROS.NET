@@ -1,14 +1,15 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
-    public class CallbackQueue : ICallbackQueue
+    public class CallbackQueueThreaded : ICallbackQueue, IDisposable
     {
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<CallbackQueue>();
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<CallbackQueueThreaded>();
         private int count;
         private int calling;
         private Thread callbackThread;
@@ -84,7 +85,7 @@ namespace Uml.Robotics.Ros
 
         public void AddCallback(CallbackInterface cb, UInt64 owner_id)
         {
-            CallbackInfo info = new CallbackInfo { Callback = cb, RemovalId = owner_id };
+            CallbackInfo info = new CallbackInfo {Callback = cb, RemovalId = owner_id};
             //Logger.LogDebug($"CallbackQueue@{cbthread.ManagedThreadId}: Add callback owner: {owner_id} {cb.ToString()}");
 
             lock (mutex)
@@ -99,7 +100,7 @@ namespace Uml.Robotics.Ros
             {
                 if (!idInfo.ContainsKey(owner_id))
                 {
-                    idInfo.Add(owner_id, new IDInfo { calling_rw_mutex = new object(), id = owner_id });
+                    idInfo.Add(owner_id, new IDInfo {calling_rw_mutex = new object(), id = owner_id});
                 }
             }
             NotifyOne();
@@ -135,17 +136,49 @@ namespace Uml.Robotics.Ros
         }
 
 
+        private void ThreadFunc()
+        {
+            TimeSpan wallDuration = new TimeSpan(0, 0, 0, 0, ROS.WallDuration);
+            while (ROS.ok)
+            {
+                DateTime begin = DateTime.Now;
+                if (!CallAvailable(ROS.WallDuration))
+                    break;
+                DateTime end = DateTime.Now;
+                if (wallDuration.Subtract(end.Subtract(begin)).Ticks > 0)
+                    Thread.Sleep(wallDuration.Subtract(end.Subtract(begin)));
+            }
+            Logger.LogDebug("CallbackQueue thread broke out!");
+        }
+
+
         public void Enable()
         {
-            Logger.LogError($"This CallbackQueue does not support Threading. Use a Spinner class to invoke callbacks or use" +
-                $"CallbackQueueThreaded for a callback queue running in an own thread.");
+            lock (mutex)
+            {
+                enabled = true;
+            }
+            NotifyAll();
+            if (callbackThread == null)
+            {
+                callbackThread = new Thread(ThreadFunc);
+                callbackThread.Start();
+            }
         }
 
 
         public void Disable()
         {
-            Logger.LogError($"This CallbackQueue does not support Threading. Use a Spinner class to invoke callbacks or use" +
-                $"CallbackQueueThreaded for a callback queue running in an own thread.");
+            lock (mutex)
+            {
+                enabled = false;
+            }
+            NotifyAll();
+            if (callbackThread != null)
+            {
+                callbackThread.Join();
+                callbackThread = null;
+            }
         }
 
 
