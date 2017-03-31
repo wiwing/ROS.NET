@@ -28,11 +28,11 @@ namespace Uml.Robotics.Ros
         private ILogger Logger { get; set; } = ApplicationLogging.CreateLogger<MessageTypeRegistry>();
 
 
-        public RosMessage CreateMessage(string typeName)
+        public RosMessage CreateMessage(string rosMessageType)
         {
             RosMessage result = null;
             Type type = null;
-            bool typeExist = TypeRegistry.TryGetValue(typeName, out type);
+            bool typeExist = TypeRegistry.TryGetValue(rosMessageType, out type);
             if (typeExist)
             {
                 result = Activator.CreateInstance(type) as RosMessage;
@@ -127,6 +127,19 @@ namespace Uml.Robotics.Ros
                 if (!TypeRegistry.ContainsKey(message.MessageType))
                 {
                     TypeRegistry.Add(message.MessageType, message.GetType());
+                } else
+                {
+                    var messageFromRegistry = CreateMessage(message.MessageType);
+                    if (messageFromRegistry.MD5Sum() != message.MD5Sum())
+                    {
+                        throw new InvalidOperationException($"The message of type {message.MessageType} has already been " +
+                            $"registered and the MD5 sums do not match. Already registered: {messageFromRegistry.MD5Sum()} " +
+                            $"new message: {message.MD5Sum()}.");
+                    } else
+                    {
+                        Logger.LogWarning($"The message of type {message.MessageType} has already been registered. Since the" +
+                            "MD5 sums do match, the new message is ignored.");
+                    }
                 }
             }
         }

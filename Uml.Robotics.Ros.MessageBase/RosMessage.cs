@@ -7,12 +7,12 @@ namespace Uml.Robotics.Ros
     public class RosMessage
     {
 
-        public static RosMessage generate(string t)
+        public static RosMessage generate(string rosMessageType)
         {
-            var result = MessageTypeRegistry.Default.CreateMessage(t);
+            var result = MessageTypeRegistry.Default.CreateMessage(rosMessageType);
             if (result == null)
             {
-                throw new ArgumentException($"Could not find a RosMessage for {t}", nameof(t));
+                throw new ArgumentException($"Could not find a RosMessage for {rosMessageType}", nameof(rosMessageType));
             }
 
             return result;
@@ -24,6 +24,9 @@ namespace Uml.Robotics.Ros
         public virtual bool IsMetaType() { return false; }
         public virtual string MessageDefinition() { return ""; }
         public byte[] Serialized;
+        /// <summary>
+        /// ROS message type
+        /// </summary>
         public virtual string MessageType { get { return "xamla/unkown"; } }
         public virtual bool IsServiceComponent() { return false; }
         public IDictionary<string, string> connection_header;

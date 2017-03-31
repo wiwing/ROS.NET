@@ -363,7 +363,7 @@ namespace Uml.Robotics.Ros
             if (!initialized)
             {
                 // Load RosMessages from MessageBase assembly
-                MessageTypeRegistry.Default.ParseAssemblyAndRegisterRosMessages(MessageTypeRegistry.Default.GetType().GetTypeInfo().Assembly);
+                MessageTypeRegistry.Default.ParseAssemblyAndRegisterRosMessages(typeof(RosMessage).GetTypeInfo().Assembly);
                 // Load RosMessages from all assemblies that depend on MessageBase
                 var candidates = MessageTypeRegistry.Default.GetCandidateAssemblies("Uml.Robotics.Ros.MessageBase");
                 foreach (var assembly in candidates)
