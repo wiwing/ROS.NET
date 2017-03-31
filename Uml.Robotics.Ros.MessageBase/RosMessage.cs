@@ -9,7 +9,7 @@ namespace Uml.Robotics.Ros
 
         public static RosMessage generate(string t)
         {
-            var result = MessageTypeRegistry.Instance.CreateMessage(t);
+            var result = MessageTypeRegistry.Default.CreateMessage(t);
             if (result == null)
             {
                 throw new ArgumentException($"Could not find a RosMessage for {t}", nameof(t));

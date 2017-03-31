@@ -334,18 +334,6 @@ namespace Uml.Robotics.Ros
         /// <param name="options"> options? </param>
         internal static void Init(IDictionary<string, string> remapping_args, string name, int options)
         {
-            MessageTypeRegistry.Instance.ParseAssemblyAndRegisterRosMessages(MessageTypeRegistry.Instance.GetType().GetTypeInfo().Assembly);
-            var assemblyPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            var messageDllPath = Path.Combine(assemblyPath, "Messages.dll");
-            if (!File.Exists(messageDllPath))
-            {
-                throw new InvalidOperationException("ROS.NET depends on Messages.dll");
-            }
-            Logger.LogInformation($"Loading ROS message types from {messageDllPath}");
-            var messageDll = AssemblyLoadContext.Default.LoadFromAssemblyPath(messageDllPath);
-            MessageTypeRegistry.Instance.ParseAssemblyAndRegisterRosMessages(messageDll);
-
-
             // if we haven't sunk our fangs into the processes jugular so we can tell
             //    when it has stopped kicking, do so now
             if (!atexit_registered)
@@ -374,6 +362,16 @@ namespace Uml.Robotics.Ros
             // kick the tires and light the fires
             if (!initialized)
             {
+                // Load RosMessages from MessageBase assembly
+                MessageTypeRegistry.Default.ParseAssemblyAndRegisterRosMessages(MessageTypeRegistry.Default.GetType().GetTypeInfo().Assembly);
+                // Load RosMessages from all assemblies that depend on MessageBase
+                var candidates = MessageTypeRegistry.Default.GetCandidateAssemblies("Uml.Robotics.Ros.MessageBase");
+                foreach (var assembly in candidates)
+                {
+                    Logger.LogDebug($"Parse assembly: {assembly.Location}");
+                    MessageTypeRegistry.Default.ParseAssemblyAndRegisterRosMessages(assembly);
+                }
+
                 init_options = options;
                 _ok = true;
                 network.init(remapping_args);

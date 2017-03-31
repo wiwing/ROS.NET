@@ -34,7 +34,7 @@ namespace YAMLParser
             ApplicationLogging.LoggerFactory = loggerFactory;
             Logger = ApplicationLogging.CreateLogger("Program");
 
-            MessageTypeRegistry.Instance.ParseAssemblyAndRegisterRosMessages(MessageTypeRegistry.Instance.GetType().GetTypeInfo().Assembly);
+            MessageTypeRegistry.Default.ParseAssemblyAndRegisterRosMessages(MessageTypeRegistry.Default.GetType().GetTypeInfo().Assembly);
 
             /*System.Console.WriteLine($"Process ID: {System.Diagnostics.Process.GetCurrentProcess().Id}");
             while (!System.Diagnostics.Debugger.IsAttached)
@@ -97,7 +97,7 @@ namespace YAMLParser
             }
 
             // first pass: create all msg files (and register them in static resolver dictionary)
-            var baseTypes = MessageTypeRegistry.Instance.GetTypeNames().ToList();
+            var baseTypes = MessageTypeRegistry.Default.GetTypeNames().ToList();
             foreach (MsgFileLocation path in paths)
             {
                 var typeName = $"{path.package}/{path.basename}";

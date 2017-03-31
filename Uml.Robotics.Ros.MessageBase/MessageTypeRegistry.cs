@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.Extensions.DependencyModel;
+using System.Linq;
+using System.Runtime.Loader;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     public class MessageTypeRegistry
     {
-        public static MessageTypeRegistry Instance {
+        public static MessageTypeRegistry Default {
             get
             {
                 if (instance == null)
@@ -16,10 +20,12 @@ namespace Uml.Robotics.Ros
                 return instance;
             }
         }
-        //private Dictionary<string, Func<string, RosMessage>> constructors = new Dictionary<string, Func<string, RosMessage>>();
+
         public Dictionary<string, Type> TypeRegistry { get; } = new Dictionary<string, Type>();
         public List<string> PackageNames { get; } = new List<string>();
+
         private static MessageTypeRegistry instance;
+        private ILogger Logger { get; set; } = ApplicationLogging.CreateLogger<MessageTypeRegistry>();
 
 
         public RosMessage CreateMessage(string typeName)
@@ -39,6 +45,24 @@ namespace Uml.Robotics.Ros
         public IEnumerable<string> GetTypeNames()
         {
             return TypeRegistry.Keys;
+        }
+
+
+        public IEnumerable<Assembly> GetCandidateAssemblies(params string[] tagAssemblies)
+        {
+            if (tagAssemblies == null)
+                throw new ArgumentNullException(nameof(tagAssemblies));
+            if (tagAssemblies.Length == 0)
+                throw new ArgumentException("At least one tag assembly name must be specified.", nameof(tagAssemblies));
+
+            var context = DependencyContext.Load(Assembly.GetEntryAssembly());
+            var loadContext = AssemblyLoadContext.Default;
+
+            var referenceAssemblies = new HashSet<string>(tagAssemblies, StringComparer.OrdinalIgnoreCase);
+            return context.RuntimeLibraries
+                .Where(x => x.Dependencies.Any(d => referenceAssemblies.Contains(d.Name)))
+                .SelectMany(x => x.GetDefaultAssemblyNames(context))
+                .Select(x => loadContext.LoadFromAssemblyName(x));
         }
 
 
@@ -99,19 +123,12 @@ namespace Uml.Robotics.Ros
                     PackageNames.Add(packageName);
                 }
 
-                Console.WriteLine($"Register {message.MessageType}");
+                Logger.LogDebug($"Register {message.MessageType}");
                 if (!TypeRegistry.ContainsKey(message.MessageType))
                 {
                     TypeRegistry.Add(message.MessageType, message.GetType());
                 }
-                /*if (!constructors.ContainsKey(message.MessageType))
-                {
-                    constructors.Add(message.MessageType, T => Activator.CreateInstance(_typeregistry[T]) as RosMessage);
-                }*/
             }
         }
-
-
-
     }
 }
