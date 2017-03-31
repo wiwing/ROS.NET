@@ -3,52 +3,50 @@ using System.Collections.Generic;
 using System.Text;
 using System.Security.Cryptography;
 using System.Linq;
+using std_msgs = Messages.std_msgs;
+using actionlib_msgs = Messages.actionlib_msgs;
 
 namespace Uml.Robotics.Ros
 {
     [IgnoreRosMessage]
     public class WrappedFeedbackMessage<T> : RosMessage where T : InnerActionMessage, new()
     {
-        public Messages.std_msgs.Header Header { get; set; }
-        public Messages.actionlib_msgs.GoalStatus GoalStatus { get; set; }
-        protected T Content { get; set; }
+        public std_msgs.Header Header { get; set; } = new std_msgs.Header();
+        public actionlib_msgs.GoalStatus GoalStatus { get; set; } = new actionlib_msgs.GoalStatus();
+        protected T Content { get; set; } = new T();
 
-
-        public WrappedFeedbackMessage() : base()
+        public WrappedFeedbackMessage()
+            : base()
         {
         }
-
 
         public WrappedFeedbackMessage(byte[] serializedMessage)
         {
             Deserialize(serializedMessage);
         }
 
-
         public WrappedFeedbackMessage(byte[] serializedMessage, ref int currentIndex)
         {
             Deserialize(serializedMessage, ref currentIndex);
         }
 
-
         public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
-            Header = new Messages.std_msgs.Header(serializedMessage, ref currentIndex);
-            GoalStatus = new Messages.actionlib_msgs.GoalStatus(serializedMessage, ref currentIndex);
+            Header = new std_msgs.Header(serializedMessage, ref currentIndex);
+            GoalStatus = new actionlib_msgs.GoalStatus(serializedMessage, ref currentIndex);
             Content = (T)Activator.CreateInstance(typeof(T), serializedMessage, currentIndex);
         }
-
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
             List<byte[]> pieces = new List<byte[]>();
 
             if (Header == null)
-                Header = new Messages.std_msgs.Header();
+                Header = new std_msgs.Header();
             pieces.Add(Header.Serialize(true));
 
             if (GoalStatus == null)
-                GoalStatus = new Messages.actionlib_msgs.GoalStatus();
+                GoalStatus = new actionlib_msgs.GoalStatus();
             pieces.Add(GoalStatus.Serialize(true));
 
             if (Content == null)
@@ -67,7 +65,6 @@ namespace Uml.Robotics.Ros
             return __a_b__d;
         }
 
-
         public bool Equals(WrappedFeedbackMessage<T> message)
         {
             if (message == null)
@@ -79,10 +76,20 @@ namespace Uml.Robotics.Ros
             result &= Header.Equals(message.Header);
             result &= GoalStatus.Equals(message.GoalStatus);
             result &= Content.Equals(message.Content);
-
             return result;
         }
 
+        public override bool Equals(RosMessage msg)
+        {
+            return Equals(msg as WrappedFeedbackMessage<T>);
+        }
+
+        public override void Randomize()
+        {
+            Header.Randomize();
+            GoalStatus.Randomize();
+            Content.Randomize();
+        }
 
         protected string CalcMd5(string hashText)
         {
@@ -90,12 +97,12 @@ namespace Uml.Robotics.Ros
             using (var md5 = MD5.Create())
             {
                 var md5Hash = md5.ComputeHash(Encoding.ASCII.GetBytes(hashText));
-                StringBuilder hashBuilder = new StringBuilder();
+                var sb = new StringBuilder();
                 for (int i = 0; i < md5Hash.Length; i++)
                 {
-                    hashBuilder.Append(md5Hash[i].ToString("x2"));
+                    sb.Append(md5Hash[i].ToString("x2"));
                 }
-                md5sum = hashBuilder.ToString();
+                md5sum = sb.ToString();
             }
 
             return md5sum;

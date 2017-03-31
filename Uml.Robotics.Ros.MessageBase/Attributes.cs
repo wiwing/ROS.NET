@@ -6,24 +6,17 @@ namespace Uml.Robotics.Ros
 {
     public class ActionGoalMessageAttribute : Attribute
     {
-
     }
-
 
     public class ActionResultMessageAttribute : Attribute
     {
-
     }
-
 
     public class ActionFeedbackMessageAttribute : Attribute
     {
-
     }
-
 
     public class IgnoreRosMessageAttribute : Attribute
     {
-
     }
 }

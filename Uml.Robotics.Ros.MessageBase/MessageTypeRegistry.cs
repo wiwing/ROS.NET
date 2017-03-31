@@ -1,32 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using Microsoft.Extensions.DependencyModel;
-using System.Linq;
-using System.Runtime.Loader;
+﻿using Microsoft.Extensions.DependencyModel;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Loader;
+using System.Threading;
 
 namespace Uml.Robotics.Ros
 {
     public class MessageTypeRegistry
     {
-        public static MessageTypeRegistry Default {
-            get
-            {
-                if (instance == null)
-                {
-                    instance = new MessageTypeRegistry();
-                }
-                return instance;
-            }
+        private static Lazy<MessageTypeRegistry> instance = new Lazy<MessageTypeRegistry>(LazyThreadSafetyMode.ExecutionAndPublication);
+
+        public static MessageTypeRegistry Default
+        {
+            get { return instance.Value; }
         }
 
+        private ILogger Logger { get; set; } = ApplicationLogging.CreateLogger<MessageTypeRegistry>();
         public Dictionary<string, Type> TypeRegistry { get; } = new Dictionary<string, Type>();
         public List<string> PackageNames { get; } = new List<string>();
-
-        private static MessageTypeRegistry instance;
-        private ILogger Logger { get; set; } = ApplicationLogging.CreateLogger<MessageTypeRegistry>();
-
 
         public RosMessage CreateMessage(string rosMessageType)
         {
@@ -41,12 +35,10 @@ namespace Uml.Robotics.Ros
             return result;
         }
 
-
         public IEnumerable<string> GetTypeNames()
         {
             return TypeRegistry.Keys;
         }
-
 
         public IEnumerable<Assembly> GetCandidateAssemblies(params string[] tagAssemblies)
         {
@@ -64,7 +56,6 @@ namespace Uml.Robotics.Ros
                 .SelectMany(x => x.GetDefaultAssemblyNames(context))
                 .Select(x => loadContext.LoadFromAssemblyName(x));
         }
-
 
         public void ParseAssemblyAndRegisterRosMessages(Assembly assembly)
         {

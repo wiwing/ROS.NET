@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using std_msgs = Messages.std_msgs;
+using actionlib_msgs = Messages.actionlib_msgs;
 
 namespace Uml.Robotics.Ros
 {
     [IgnoreRosMessage]
     public class GoalActionMessage<TGoal> : RosMessage where TGoal : InnerActionMessage, new()
     {
-        public Messages.std_msgs.Header Header { get; set; }
-        public Messages.actionlib_msgs.GoalID GoalId { get; set; }
-        public TGoal Goal { get; set; }
+        public std_msgs.Header Header { get; set; } = new std_msgs.Header();
+        public actionlib_msgs.GoalID GoalId { get; set; } = new actionlib_msgs.GoalID();
+        public TGoal Goal { get; set; } = new TGoal();
         public override string MessageType
         {
             get
@@ -24,23 +26,20 @@ namespace Uml.Robotics.Ros
             }
         }
 
-
-        public GoalActionMessage() : base()
+        public GoalActionMessage()
+            : base()
         {
         }
-
 
         public GoalActionMessage(byte[] serializedMessage)
         {
             Deserialize(serializedMessage);
         }
 
-
         public GoalActionMessage(byte[] serializedMessage, ref int currentIndex)
         {
             Deserialize(serializedMessage, ref currentIndex);
         }
-
 
         public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
@@ -49,14 +48,12 @@ namespace Uml.Robotics.Ros
             Goal = (TGoal)Activator.CreateInstance(typeof(TGoal), serializedMessage, currentIndex);
         }
 
-
         public override string MessageDefinition()
         {
             var definition = $"Header header\nactionlib_msgs/GoalID goal_id\n{this.MessageType} goal";
 
             return definition;
         }
-
 
         public override string MD5Sum()
         {
@@ -69,7 +66,6 @@ namespace Uml.Robotics.Ros
             var md5sum = CalcMd5(hashText);
             return md5sum;
         }
-
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
@@ -99,6 +95,12 @@ namespace Uml.Robotics.Ros
             return __a_b__d;
         }
 
+        public override void Randomize()
+        {
+            Header.Randomize();
+            GoalId.Randomize();
+            Goal.Randomize();
+        }
 
         public bool Equals(GoalActionMessage<TGoal> message)
         {
@@ -115,6 +117,10 @@ namespace Uml.Robotics.Ros
             return result;
         }
 
+        public override bool Equals(RosMessage msg)
+        {
+            return Equals(msg as GoalActionMessage<TGoal>);
+        }
 
         private string CalcMd5(string hashText)
         {
@@ -122,12 +128,12 @@ namespace Uml.Robotics.Ros
             using (var md5 = MD5.Create())
             {
                 var md5Hash = md5.ComputeHash(Encoding.ASCII.GetBytes(hashText));
-                StringBuilder hashBuilder = new StringBuilder();
+                var sb = new StringBuilder();
                 for (int i = 0; i < md5Hash.Length; i++)
                 {
-                    hashBuilder.Append(md5Hash[i].ToString("x2"));
+                    sb.Append(md5Hash[i].ToString("x2"));
                 }
-                md5sum = hashBuilder.ToString();
+                md5sum = sb.ToString();
             }
 
             return md5sum;
