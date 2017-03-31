@@ -219,27 +219,27 @@ namespace Uml.Robotics.XmlRpc
         }
 
         // Run the method, generate _response string
-        public string executeRequest(string _request)
+        public string executeRequest(string request)
         {
-            string _response = "";
+            string response = "";
             XmlRpcValue parms = new XmlRpcValue(), resultValue = new XmlRpcValue();
-            string methodName = parseRequest(parms, _request);
+            string methodName = parseRequest(parms, request);
             XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.WARNING, "XmlRpcServerConnection::executeRequest: server calling method '{0}'", methodName);
 
             try
             {
                 if (!executeMethod(methodName, parms, resultValue) &&
                     !executeMulticall(methodName, parms, resultValue))
-                    _response = generateFaultResponse(methodName + ": unknown method name");
+                    response = generateFaultResponse(methodName + ": unknown method name");
                 else
-                    _response = generateResponse(resultValue.ToXml());
+                    response = generateResponse(resultValue.ToXml());
             }
             catch (XmlRpcException fault)
             {
                 XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.WARNING, "XmlRpcServerConnection::executeRequest: fault {0}.", fault.Message);
-                _response = generateFaultResponse(fault.Message, fault.ErrorCode);
+                response = generateFaultResponse(fault.Message, fault.ErrorCode);
             }
-            return _response;
+            return response;
         }
 
         // Execute a named method with the specified params.
@@ -272,30 +272,31 @@ namespace Uml.Robotics.XmlRpc
         }
 
         // Parse the method name and the argument values from the request.
-        private string parseRequest(XmlRpcValue parms, string _request)
+        private string parseRequest(XmlRpcValue parms, string request)
         {
             string methodName = "unknown";
 
-            var requestDocument = XDocument.Parse(_request);
-            var methodNameElement = requestDocument.Element("methodName");
-            if (methodNameElement != null)   
+            var requestDocument = XDocument.Parse(request);
+            var methodCallElement = requestDocument.Element("methodCall");
+            if (methodCallElement == null)
+                throw new XmlRpcException("Expected <methodCall> element of XML-RPC is missing.");
+
+            var methodNameElement = methodCallElement.Element("methodName");
+            if (methodNameElement != null)
                 methodName = methodNameElement.Value;
-            
-            var xmlParameters = requestDocument.Elements("param").ToList();
-            
-            if (xmlParameters.Count == 0)
-            {
-                XmlRpcUtil.error("Error in XmlRpcServer::parseRequest: Invalid request - no methodResponse. Request:\n{0}", _request);
-                return null;
-            }
 
-            parms.SetArray(xmlParameters.Count);
+            var xmlParameters = methodCallElement.Element("params").Elements("param").ToList();
 
-            for (int i = 0; i < xmlParameters.Count; i++)
+            if (xmlParameters.Count > 0)
             {
-                var value = new XmlRpcValue();
-                value.FromXElement(xmlParameters[i].Element("value"));
-                parms.Set(i, value);
+                parms.SetArray(xmlParameters.Count);
+
+                for (int i = 0; i < xmlParameters.Count; i++)
+                {
+                    var value = new XmlRpcValue();
+                    value.FromXElement(xmlParameters[i].Element("value"));
+                    parms.Set(i, value);
+                }
             }
 
             return methodName;

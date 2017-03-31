@@ -573,7 +573,7 @@ namespace Uml.Robotics.XmlRpc
             var methodResponseElement = responseDocument.Element("methodResponse");
             if (methodResponseElement == null)
                 throw new XmlRpcException("Expected <methodResponse> element missing. Response:\n" + response);
-            
+
             var paramsElement = methodResponseElement.Element("params");
             var faultElement = methodResponseElement.Element("fault");
 

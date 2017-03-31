@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RosoutSample": {
+      "commandName": "Project",
+      "commandLineArgs": "__master:=http://XamlaMobyVM:11311"
+    }
+  }
+}

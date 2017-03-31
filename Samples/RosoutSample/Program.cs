@@ -35,7 +35,7 @@ namespace Uml.Robotics.Ros.Samples
                     level = 0;
                 }
                 Console.WriteLine("Using verbose level " + level);
-                var rosoutDebug = new RosoutDebug(level);
+                var rosoutDebug = new RosoutDebug(level, args);
 
                 if (filterOption.HasValue())
                 {
@@ -60,10 +60,10 @@ namespace Uml.Robotics.Ros.Samples
         private List<string> filter = new List<string>();
 
 
-        public RosoutDebug(int verboseLevel)
+        public RosoutDebug(int verboseLevel, string[] args)
         {
             this.verboseLevel = verboseLevel;
-            ROS.Init(new string[0], "RosoutDebug");
+            ROS.Init(args, "RosoutDebug");
             ROS.WaitForMaster();
             nodeHandle = new NodeHandle();
             Init();
