@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Diagnostics;
 using System.Threading;
-using m = Messages.std_msgs;
-using gm = Messages.geometry_msgs;
-using nm = Messages.nav_msgs;
-using System.Linq;
 using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
@@ -62,7 +57,7 @@ namespace Uml.Robotics.Ros
                     SignalEvent -= signal;
                 }
                 catch { }
-               
+
                Method = value.GetMethodInfo();
                Target = value.Target;
                 _op = value;
@@ -96,7 +91,7 @@ namespace Uml.Robotics.Ros
             }
             thread = null;
         }
-        
+
         internal static void Signal()
         {
             if (SignalEvent != null) SignalEvent.Invoke();

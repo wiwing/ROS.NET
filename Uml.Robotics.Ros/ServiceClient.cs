@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using Messages;
 using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros

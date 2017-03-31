@@ -5,6 +5,7 @@ using System.Text;
 using System.IO;
 using System.Runtime.InteropServices;
 using uint8 = System.Byte;
+using Uml.Robotics.Ros;
 
 namespace Messages
 {

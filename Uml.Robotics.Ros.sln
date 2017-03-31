@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YAMLParser", "YAMLParser\YA
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uml.Robotics.Ros", "Uml.Robotics.Ros\Uml.Robotics.Ros.csproj", "{765D1079-C12B-4F10-9B52-C580B6DD597C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Messages", "Messages\Messages.csproj", "{94C4DF5B-1566-4ACC-9BD3-167AAC83F9FD}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uml.Robotics.Ros.Transforms", "Uml.Robotics.Ros.Transforms\Uml.Robotics.Ros.Transforms.csproj", "{DD9EFA90-09A4-45C9-BBF0-CB146507EAE8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Talker", "Samples\Talker\Talker.csproj", "{A9D30AAC-7EE5-4A93-AFA9-AAF85F14B293}"
@@ -37,6 +35,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActionClientSample", "Actio
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActionClientTestbed", "Samples\ActionClientTestbed\ActionClientTestbed.csproj", "{353EDE41-B3E9-4CFE-BD24-EFA47018E0FD}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uml.Robotics.Ros.MessageBase", "Uml.Robotics.Ros.MessageBase\Uml.Robotics.Ros.MessageBase.csproj", "{61409C4D-4855-4A73-8B37-8445E2638D5D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Messages", "Messages\Messages.csproj", "{0183095B-098C-4773-ACEA-272C45D587AA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,10 +57,6 @@ Global
 		{765D1079-C12B-4F10-9B52-C580B6DD597C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{765D1079-C12B-4F10-9B52-C580B6DD597C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{765D1079-C12B-4F10-9B52-C580B6DD597C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{94C4DF5B-1566-4ACC-9BD3-167AAC83F9FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{94C4DF5B-1566-4ACC-9BD3-167AAC83F9FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{94C4DF5B-1566-4ACC-9BD3-167AAC83F9FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{94C4DF5B-1566-4ACC-9BD3-167AAC83F9FD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DD9EFA90-09A4-45C9-BBF0-CB146507EAE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DD9EFA90-09A4-45C9-BBF0-CB146507EAE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DD9EFA90-09A4-45C9-BBF0-CB146507EAE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -103,6 +101,14 @@ Global
 		{353EDE41-B3E9-4CFE-BD24-EFA47018E0FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{353EDE41-B3E9-4CFE-BD24-EFA47018E0FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{353EDE41-B3E9-4CFE-BD24-EFA47018E0FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61409C4D-4855-4A73-8B37-8445E2638D5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61409C4D-4855-4A73-8B37-8445E2638D5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61409C4D-4855-4A73-8B37-8445E2638D5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61409C4D-4855-4A73-8B37-8445E2638D5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0183095B-098C-4773-ACEA-272C45D587AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0183095B-098C-4773-ACEA-272C45D587AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0183095B-098C-4773-ACEA-272C45D587AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0183095B-098C-4773-ACEA-272C45D587AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

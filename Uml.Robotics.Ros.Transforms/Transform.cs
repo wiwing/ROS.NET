@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using Messages;
 using Messages.std_msgs;
-using Messages.tf;
-using geometry_msgs = Messages.geometry_msgs;
 
 namespace Uml.Robotics.Ros.Transforms
 {
@@ -23,7 +20,7 @@ namespace Uml.Robotics.Ros.Transforms
         {
         }
 
-        public Transform(geometry_msgs.TransformStamped msg)
+        public Transform(Messages.geometry_msgs.TransformStamped msg)
             : this(new Quaternion(msg.transform.rotation), new Vector3(msg.transform.translation), msg.header.stamp, msg.header.frame_id, msg.child_frame_id)
         {
         }

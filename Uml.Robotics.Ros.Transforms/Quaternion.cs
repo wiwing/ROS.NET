@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using geometry_msgs = Messages.geometry_msgs;
 
 namespace Uml.Robotics.Ros.Transforms
 {
@@ -9,7 +8,7 @@ namespace Uml.Robotics.Ros.Transforms
     {
         public double w, x, y, z;
 
-        public Quaternion() 
+        public Quaternion()
             : this(0, 0, 0, 1)
         {
         }
@@ -27,14 +26,14 @@ namespace Uml.Robotics.Ros.Transforms
         {
         }
 
-        public Quaternion(geometry_msgs.Quaternion shallow)
+        public Quaternion(Messages.geometry_msgs.Quaternion shallow)
             : this(shallow.x, shallow.y, shallow.z, shallow.w)
         {
         }
 
-        public geometry_msgs.Quaternion ToMsg()
+        public Messages.geometry_msgs.Quaternion ToMsg()
         {
-            return new geometry_msgs.Quaternion { w = w, x = x, y = y, z = z };
+            return new Messages.geometry_msgs.Quaternion { w = w, x = x, y = y, z = z };
         }
 
         public static Quaternion operator +(Quaternion v1, Quaternion v2)

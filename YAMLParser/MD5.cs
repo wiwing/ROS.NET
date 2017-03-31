@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using FauxMessages;
 using Microsoft.Extensions.Logging;
+using Uml.Robotics.Ros;
 
 namespace YAMLParser
 {
@@ -139,12 +140,35 @@ namespace YAMLParser
                     }
                     ms = irm.Stuff[i].Definer;
                 }
+                string sum = null;
                 if (ms == null)
                 {
-                    Logger.LogDebug("NEEDS ANOTHER PASS: " + irm.Name + " B/C OF " + irm.Stuff[i].Type);
-                    return null;
+                    RosMessage rosMessage = null;
+                    var packages = MessageTypeRegistry.Default.PackageNames;
+                    foreach (var package in packages)
+                    {
+                        try
+                        {
+                            var name = irm.Stuff[i].Type;
+                            Console.WriteLine($"generate {package}/{name}");
+                            rosMessage = RosMessage.generate($"{package}/{name}");
+                            sum = rosMessage.MD5Sum();
+                            break;
+                        }
+                        catch
+                        {
+                        }
+                    }
+                    if (rosMessage == null)
+                    {
+                        Logger.LogDebug("NEEDS ANOTHER PASS: " + irm.Name + " B/C OF " + irm.Stuff[i].Type);
+                        return null;
+                    }
                 }
-                string sum = MD5.Sum(ms);
+                else
+                {
+                    sum = MD5.Sum(ms);
+                }
                 if (sum == null)
                 {
                     Logger.LogDebug("STILL NEEDS ANOTHER PASS: " + irm.Name + " B/C OF " + irm.Stuff[i].Type);

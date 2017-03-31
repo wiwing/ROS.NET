@@ -7,6 +7,8 @@ using System.Threading;
 using FauxMessages;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
+using System.Reflection;
+using Uml.Robotics.Ros;
 
 namespace YAMLParser
 {
@@ -32,12 +34,13 @@ namespace YAMLParser
             ApplicationLogging.LoggerFactory = loggerFactory;
             Logger = ApplicationLogging.CreateLogger("Program");
 
+            MessageTypeRegistry.Default.ParseAssemblyAndRegisterRosMessages(MessageTypeRegistry.Default.GetType().GetTypeInfo().Assembly);
+
             /*System.Console.WriteLine($"Process ID: {System.Diagnostics.Process.GetCurrentProcess().Id}");
             while (!System.Diagnostics.Debugger.IsAttached)
             {
                 System.Threading.Thread.Sleep(1);
             }*/
-
 
             string solutiondir;
             bool interactive = false; //wait for ENTER press when complete
@@ -94,9 +97,18 @@ namespace YAMLParser
             }
 
             // first pass: create all msg files (and register them in static resolver dictionary)
+            var baseTypes = MessageTypeRegistry.Default.GetTypeNames().ToList();
             foreach (MsgFileLocation path in paths)
             {
-                msgsFiles.Add(new MsgsFile(path));
+                var typeName = $"{path.package}/{path.basename}";
+                if (baseTypes.Contains(typeName))
+                {
+                    Logger.LogInformation($"Skip file {path} because MessageBase already contains this message");
+                }
+                else
+                {
+                    msgsFiles.Add(new MsgsFile(path));
+                }
             }
             Logger.LogDebug($"Added {msgsFiles.Count} message files");
 
@@ -300,7 +312,6 @@ namespace YAMLParser
 
         public static void GenerateProject(List<MsgsFile> files, List<SrvsFile> srvfiles)
         {
-            File.WriteAllText(Path.Combine(outputdir, "Interfaces.cs"), Templates.Interfaces);
             string[] lines = Templates.MessagesProj.Split('\n');
             string output = "";
             for (int i = 0; i < lines.Length; i++)

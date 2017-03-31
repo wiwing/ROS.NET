@@ -5,8 +5,7 @@ using System.Text;
 using System.Threading;
 using Messages.std_msgs;
 using Messages.tf;
-using Uml.Robotics.Ros;
-using gm=Messages.geometry_msgs;
+using Messages.geometry_msgs;
 
 namespace Uml.Robotics.Ros.Transforms
 {
@@ -43,7 +42,7 @@ namespace Uml.Robotics.Ros.Transforms
 
         private void Update(tfMessage msg)
         {
-            foreach (gm.TransformStamped tf in msg.transforms)
+            foreach (TransformStamped tf in msg.transforms)
                 if (!setTransform(new Transform(tf)))
                     ROS.Warn()("Failed to setTransform in transformer update function");
         }
@@ -178,13 +177,14 @@ namespace Uml.Robotics.Ros.Transforms
             stamped_out.frame_id = target_frame;
         }
 
-        public void transformQuaternion(string target_frame, Stamped<gm.Quaternion> stamped_in, ref Stamped<gm.Quaternion> stamped_out)
+        public void transformQuaternion(string target_frame, Stamped<Messages.geometry_msgs.Quaternion> stamped_in,
+            ref Stamped<Messages.geometry_msgs.Quaternion> stamped_out)
         {
             Stamped<Quaternion> quatin = new Stamped<Quaternion>(stamped_in.stamp, stamped_in.frame_id, new Quaternion(stamped_in.data));
             Stamped<Quaternion> quatout = new Stamped<Quaternion>(stamped_out.stamp, stamped_out.frame_id, new Quaternion(stamped_out.data));
             transformQuaternion(target_frame, quatin, ref quatout);
             if (stamped_out == null)
-                stamped_out = new Stamped<gm.Quaternion>();
+                stamped_out = new Stamped<Messages.geometry_msgs.Quaternion>();
             stamped_out.stamp = quatout.stamp;
             stamped_out.data = quatout.data.ToMsg();
             stamped_out.frame_id = quatout.frame_id;
@@ -204,13 +204,14 @@ namespace Uml.Robotics.Ros.Transforms
             stamped_out.frame_id = target_frame;
         }
 
-        public void transformVector(string target_frame, Stamped<gm.Vector3> stamped_in, ref Stamped<gm.Vector3> stamped_out)
+        public void transformVector(string target_frame, Stamped<Messages.geometry_msgs.Vector3> stamped_in,
+            ref Stamped<Messages.geometry_msgs.Vector3> stamped_out)
         {
             Stamped<Vector3> vecin = new Stamped<Vector3>(stamped_in.stamp, stamped_in.frame_id, new Vector3(stamped_in.data));
             Stamped<Vector3> vecout = new Stamped<Vector3>(stamped_out.stamp, stamped_out.frame_id, new Vector3(stamped_out.data));
             transformVector(target_frame, vecin, ref vecout);
             if (stamped_out == null)
-                stamped_out = new Stamped<gm.Vector3>();
+                stamped_out = new Stamped<Messages.geometry_msgs.Vector3>();
             stamped_out.stamp = vecout.stamp;
             stamped_out.data = vecout.data.ToMsg();
             stamped_out.frame_id = vecout.frame_id;
