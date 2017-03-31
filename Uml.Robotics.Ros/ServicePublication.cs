@@ -10,7 +10,7 @@ namespace Uml.Robotics.Ros
     {
         public ServiceCallbackHelper<MReq, MRes> helper;
 
-        public ServicePublication(string name, string md5Sum, string datatype, string reqDatatype, string resDatatype, ServiceCallbackHelper<MReq, MRes> helper, CallbackQueueInterface callback, object trackedObject)
+        public ServicePublication(string name, string md5Sum, string datatype, string reqDatatype, string resDatatype, ServiceCallbackHelper<MReq, MRes> helper, ICallbackQueue callback, object trackedObject)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentNullException(nameof(name));
@@ -32,7 +32,7 @@ namespace Uml.Robotics.Ros
         public override void processRequest(ref byte[] buf, int num_bytes, IServiceClientLink link)
         {
             CallbackInterface cb = new ServiceCallback(this, helper, buf, num_bytes, link, has_tracked_object, tracked_object);
-            callback.addCallback(cb, ROS.getPID());
+            callback.AddCallback(cb, ROS.getPID());
         }
 
         internal override void addServiceClientLink(IServiceClientLink iServiceClientLink)
@@ -119,7 +119,7 @@ namespace Uml.Robotics.Ros
 
     public class IServicePublication
     {
-        internal CallbackQueueInterface callback;
+        internal ICallbackQueue callback;
         internal List<IServiceClientLink> client_links = new List<IServiceClientLink>();
         protected object client_links_mutex = new object();
         internal string datatype;
@@ -138,7 +138,7 @@ namespace Uml.Robotics.Ros
                 isDropped = true;
             }
             dropAllConnections();
-            callback.removeByID(ROS.getPID());
+            callback.RemoveById(ROS.getPID());
         }
 
         private void dropAllConnections()

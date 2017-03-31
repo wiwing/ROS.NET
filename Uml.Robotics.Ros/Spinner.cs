@@ -37,7 +37,7 @@ namespace Uml.Robotics.Ros
             NodeHandle spinnerhandle = new NodeHandle();
             while (spinnerhandle.ok)
             {
-                callbackInterface.callAvailable(ROS.WallDuration);
+                callbackInterface.CallAvailable(ROS.WallDuration);
             }
         }
 
@@ -77,7 +77,7 @@ namespace Uml.Robotics.Ros
             throw new NotImplementedException();
         }
 
-        public AsyncSpinner(int tc, CallbackQueueInterface queue)
+        public AsyncSpinner(int tc, ICallbackQueue queue)
         {
             throw new NotImplementedException();
         }

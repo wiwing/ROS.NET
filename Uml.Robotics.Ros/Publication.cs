@@ -216,7 +216,7 @@ namespace Uml.Robotics.Ros
                         {
                             CallbackInterface cb = new PeerConnDisconnCallback(callbacks.connect, i);
 
-                            callbacks.Callback.addCallback(cb, callbacks.Get());
+                            callbacks.Callback.AddCallback(cb, callbacks.Get());
                         }
                     }
                 }
@@ -227,7 +227,7 @@ namespace Uml.Robotics.Ros
         {
             lock (callbacks_mutex)
             {
-                callbacks.Callback.removeByID(callbacks.Get());
+                callbacks.Callback.RemoveById(callbacks.Get());
                 if (this.callbacks.Contains(callbacks))
                     this.callbacks.Remove(callbacks);
             }
@@ -304,7 +304,7 @@ namespace Uml.Robotics.Ros
                 if (cbs.connect != null && cbs.Callback != null)
                 {
                     CallbackInterface cb = new PeerConnDisconnCallback(cbs.connect, sub_link);
-                    cbs.Callback.addCallback(cb, cbs.Get());
+                    cbs.Callback.AddCallback(cb, cbs.Get());
                 }
             }
         }
@@ -317,7 +317,7 @@ namespace Uml.Robotics.Ros
                 if (cbs.disconnect != null && cbs.Callback != null)
                 {
                     CallbackInterface cb = new PeerConnDisconnCallback(cbs.disconnect, sub_link);
-                    cbs.Callback.addCallback(cb, cbs.Get());
+                    cbs.Callback.AddCallback(cb, cbs.Get());
                 }
             }
         }

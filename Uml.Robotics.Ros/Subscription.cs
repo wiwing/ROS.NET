@@ -378,7 +378,7 @@ namespace Uml.Robotics.Ros
                         if (was_full)
                             ++drops;
                         else
-                            info.callback.addCallback(info.subscription_queue, info.Get());
+                            info.callback.AddCallback(info.subscription_queue, info.Get());
                     }
                 }
             }
@@ -406,7 +406,7 @@ namespace Uml.Robotics.Ros
             shutdown();
         }
 
-        internal bool addCallback<M>(SubscriptionCallbackHelper<M> helper, string md5sum, CallbackQueueInterface queue,
+        internal bool addCallback<M>(SubscriptionCallbackHelper<M> helper, string md5sum, ICallbackQueue queue,
             uint queue_size, bool allow_concurrent_callbacks, string topiclol) where M : RosMessage, new()
         {
             lock (md5sum_mutex)
@@ -444,7 +444,7 @@ namespace Uml.Robotics.Ros
                                     bool nonconst_need_copy = callbacks.Count > 1;
                                     info.subscription_queue.AddToCallbackQueue(info.helper, latched_messages[link].message, nonconst_need_copy, ref was_full, ROS.GetTime().data);
                                     if (!was_full)
-                                        info.callback.addCallback(info.subscription_queue, info.Get());
+                                        info.callback.AddCallback(info.subscription_queue, info.Get());
                                 }
                             }
                         }
@@ -463,7 +463,7 @@ namespace Uml.Robotics.Ros
                     if (info.helper == helper)
                     {
                         info.subscription_queue.Clear();
-                        info.callback.removeByID(info.Get());
+                        info.callback.RemoveById(info.Get());
                         callbacks.Remove(info);
                         //if (!helper.isConst())
                         --nonconst_callbacks;
@@ -523,7 +523,7 @@ namespace Uml.Robotics.Ros
 
         public class ICallbackInfo
         {
-            public CallbackQueueInterface callback;
+            public ICallbackQueue callback;
             public ISubscriptionCallbackHelper helper;
             public CallbackInterface subscription_queue;
 

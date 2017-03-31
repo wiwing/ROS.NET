@@ -17,7 +17,7 @@ namespace Uml.Robotics.Ros
                     _loggerFactory = new LoggerFactory();
                     _loggerFactory.AddProvider(
                         new ConsoleLoggerProvider(
-                            (string text, LogLevel logLevel) => { return logLevel > LogLevel.Debug;}, true)
+                            (string text, LogLevel logLevel) => { return logLevel >= LogLevel.Debug;}, true)
                     );
                 }
                 return _loggerFactory;

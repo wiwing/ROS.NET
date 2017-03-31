@@ -6,7 +6,7 @@ namespace Uml.Robotics.Ros
 {
     public class AdvertiseOptions<T> where T : RosMessage, new()
     {
-        public CallbackQueueInterface callback_queue;
+        public ICallbackQueue callback_queue;
         public SubscriberStatusCallback connectCB;
         public string datatype = "";
         public SubscriberStatusCallback disconnectCB;
