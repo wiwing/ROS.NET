@@ -1,23 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
-using System.Threading;
-using Messages;
-using Messages.custom_msgs;
 using Uml.Robotics.Ros;
-using Int32 = Messages.std_msgs.Int32;
-using String = Messages.std_msgs.String;
-using m = Messages.std_msgs;
-using gm = Messages.geometry_msgs;
-using nm = Messages.nav_msgs;
-using sm = Messages.sensor_msgs;
-using System.Text;
+using std_msgs = Messages.std_msgs;
 
 namespace Listener
 {
     public class Program
     {
-        private static void chatterCallback(m.String s)
+        private static void chatterCallback(std_msgs.String s)
         {
             ROS.Info()("RECEIVED: " + s.data);
             Console.WriteLine($"Received: " + s.data);
@@ -27,7 +17,7 @@ namespace Listener
             Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
             ROS.Init(args, "Listener");
             NodeHandle node = new NodeHandle();
-            Subscriber<m.String> Subscriber = node.subscribe<m.String>("/chatter", 1, chatterCallback);
+            Subscriber<std_msgs.String> Subscriber = node.subscribe<std_msgs.String>("/chatter", 1, chatterCallback);
             ROS.waitForShutdown();
         }
     }

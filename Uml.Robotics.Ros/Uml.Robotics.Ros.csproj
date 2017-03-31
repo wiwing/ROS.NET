@@ -10,7 +10,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Messages\Messages.csproj" />
     <ProjectReference Include="..\Uml.Robotics.Ros.MessageBase\Uml.Robotics.Ros.MessageBase.csproj" />
     <ProjectReference Include="..\Uml.Robotics.XmlRpc\Uml.Robotics.XmlRpc.csproj" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="1.1.1" />

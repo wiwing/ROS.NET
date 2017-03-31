@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using geometry_msgs = Messages.geometry_msgs;
+
 
 namespace Uml.Robotics.Ros.Transforms
 {
@@ -23,19 +23,19 @@ namespace Uml.Robotics.Ros.Transforms
             z = Z;
         }
 
-        public Vector3(Vector3 shallow) 
+        public Vector3(Vector3 shallow)
             : this(shallow.x, shallow.y, shallow.z)
         {
         }
 
-        public Vector3(geometry_msgs.Vector3 shallow) 
+        public Vector3(Messages.geometry_msgs.Vector3 shallow)
             : this(shallow.x, shallow.y, shallow.z)
         {
         }
 
-        public geometry_msgs.Vector3 ToMsg()
+        public Messages.geometry_msgs.Vector3 ToMsg()
         {
-            return new geometry_msgs.Vector3 { x = x, y = y, z = z };
+            return new Messages.geometry_msgs.Vector3 { x = x, y = y, z = z };
         }
 
         public static Vector3 operator +(Vector3 v1, Vector3 v2)
