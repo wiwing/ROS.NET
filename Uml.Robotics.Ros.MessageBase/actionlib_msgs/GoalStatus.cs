@@ -3,27 +3,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
-
 using Uml.Robotics.Ros;
+
 namespace Messages.actionlib_msgs
 {
     public class GoalStatus : RosMessage
     {
+        public const byte PENDING         = 0;
+        public const byte ACTIVE          = 1;
+        public const byte PREEMPTED       = 2;
+        public const byte SUCCEEDED       = 3;
+        public const byte ABORTED         = 4;
+        public const byte REJECTED        = 5;
+        public const byte PREEMPTING      = 6;
+        public const byte RECALLING       = 7;
+        public const byte RECALLED        = 8;
+        public const byte LOST            = 9;
 
-            public const byte PENDING         = 0;
-            public const byte ACTIVE          = 1;
-            public const byte PREEMPTED       = 2;
-            public const byte SUCCEEDED       = 3;
-            public const byte ABORTED         = 4;
-            public const byte REJECTED        = 5;
-            public const byte PREEMPTING      = 6;
-            public const byte RECALLING       = 7;
-            public const byte RECALLED        = 8;
-            public const byte LOST            = 9;
-            public Messages.actionlib_msgs.GoalID goal_id = new Messages.actionlib_msgs.GoalID();
-            public byte status = new byte();
-            public string text = "";
-
+        public Messages.actionlib_msgs.GoalID goal_id = new Messages.actionlib_msgs.GoalID();
+        public byte status = new byte();
+        public string text = "";
 
         public override string MD5Sum() { return "d388f9b87b3c471f784434d671988d4a"; }
         public override bool HasHeader() { return false; }
@@ -46,7 +45,6 @@ string text"; }
 
         public GoalStatus()
         {
-
         }
 
         public GoalStatus(byte[] SERIALIZEDSTUFF)
@@ -59,16 +57,9 @@ string text"; }
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
 
-
-
         public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
-            int arraylength = -1;
-            bool hasmetacomponents = false;
-            object __thing;
             int piecesize = 0;
-            byte[] thischunk, scratch1, scratch2;
-            IntPtr h;
 
             //goal_id
             goal_id = new Messages.actionlib_msgs.GoalID(SERIALIZEDSTUFF, ref currentIndex);
@@ -84,11 +75,8 @@ string text"; }
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
-            int currentIndex=0, length=0;
-            bool hasmetacomponents = false;
             byte[] thischunk, scratch1, scratch2;
             List<byte[]> pieces = new List<byte[]>();
-            GCHandle h;
 
             //goal_id
             if (goal_id == null)
@@ -119,7 +107,6 @@ string text"; }
 
         public override void Randomize()
         {
-            int arraylength = -1;
             Random rand = new Random();
             int strlength;
             byte[] strbuf, myByte;

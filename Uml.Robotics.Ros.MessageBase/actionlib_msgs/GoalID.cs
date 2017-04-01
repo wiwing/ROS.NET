@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
-
 using Uml.Robotics.Ros;
 using Messages.std_msgs;
 
@@ -11,10 +10,8 @@ namespace Messages.actionlib_msgs
 {
     public class GoalID : RosMessage
     {
-
-            public Time stamp = new Time();
-            public string id = "";
-
+        public Time stamp = new Time();
+        public string id = "";
 
         public override string MD5Sum() { return "302881f31927c1df708a2dbab0e80ee8"; }
         public override bool HasHeader() { return false; }
@@ -26,7 +23,6 @@ string id"; }
 
         public GoalID()
         {
-
         }
 
         public GoalID(byte[] SERIALIZEDSTUFF)
@@ -39,16 +35,9 @@ string id"; }
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
 
-
-
         public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
-            int arraylength = -1;
-            bool hasmetacomponents = false;
-            object __thing;
             int piecesize = 0;
-            byte[] thischunk, scratch1, scratch2;
-            IntPtr h;
 
             //stamp
             stamp = new Time(new TimeData(
@@ -65,11 +54,8 @@ string id"; }
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
-            int currentIndex=0, length=0;
-            bool hasmetacomponents = false;
             byte[] thischunk, scratch1, scratch2;
             List<byte[]> pieces = new List<byte[]>();
-            GCHandle h;
 
             //stamp
             pieces.Add(BitConverter.GetBytes(stamp.data.sec));
@@ -97,10 +83,9 @@ string id"; }
 
         public override void Randomize()
         {
-            int arraylength = -1;
             Random rand = new Random();
             int strlength;
-            byte[] strbuf, myByte;
+            byte[] strbuf;
 
             //stamp
             stamp = new Time(new TimeData(

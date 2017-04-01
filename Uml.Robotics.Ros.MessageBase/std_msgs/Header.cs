@@ -10,11 +10,9 @@ namespace Messages.std_msgs
 {
     public class Header : RosMessage
     {
-
-            public uint seq = new uint();
-            public Time stamp = new Time();
-            public string frame_id = "";
-
+        public uint seq = new uint();
+        public Time stamp = new Time();
+        public string frame_id = "";
 
         public override string MD5Sum() { return "2176decaecbce78abc3b96ef049fabed"; }
         public override bool HasHeader() { return false; }
@@ -27,7 +25,6 @@ string frame_id"; }
 
         public Header()
         {
-
         }
 
         public Header(byte[] SERIALIZEDSTUFF)
@@ -40,15 +37,9 @@ string frame_id"; }
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
 
-
-
         public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
-            int arraylength = -1;
-            bool hasmetacomponents = false;
-            object __thing;
-            int piecesize = 0;
-            byte[] thischunk, scratch1, scratch2;
+            int piecesize;
             IntPtr h;
 
             //seq
@@ -59,7 +50,8 @@ string frame_id"; }
                 h = Marshal.AllocHGlobal(piecesize);
                 Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
             }
-            if (h == IntPtr.Zero) throw new Exception("Memory allocation failed");
+            if (h == IntPtr.Zero)
+                throw new Exception("Memory allocation failed");
             seq = (uint)Marshal.PtrToStructure(h, typeof(uint));
             Marshal.FreeHGlobal(h);
             currentIndex+= piecesize;
@@ -78,8 +70,6 @@ string frame_id"; }
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
-            int currentIndex=0, length=0;
-            bool hasmetacomponents = false;
             byte[] thischunk, scratch1, scratch2;
             List<byte[]> pieces = new List<byte[]>();
             GCHandle h;
@@ -116,10 +106,9 @@ string frame_id"; }
 
         public override void Randomize()
         {
-            int arraylength = -1;
             Random rand = new Random();
             int strlength;
-            byte[] strbuf, myByte;
+            byte[] strbuf;
 
             //seq
             seq = (uint)rand.Next();

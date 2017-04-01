@@ -9,10 +9,8 @@ namespace Messages.actionlib_msgs
 {
     public class GoalStatusArray : RosMessage
     {
-
-            public Header header = new Header();
-            public GoalStatus[] status_list;
-
+        public Header header = new Header();
+        public GoalStatus[] status_list;
 
         public override string MD5Sum() { return "8b2b82f13216d0a8ea88bd3af735e619"; }
         public override bool HasHeader() { return true; }
@@ -24,7 +22,6 @@ GoalStatus[] status_list"; }
 
         public GoalStatusArray()
         {
-
         }
 
         public GoalStatusArray(byte[] SERIALIZEDSTUFF)
@@ -37,16 +34,10 @@ GoalStatus[] status_list"; }
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
 
-
-
         public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
             int arraylength = -1;
             bool hasmetacomponents = false;
-            object __thing;
-            int piecesize = 0;
-            byte[] thischunk, scratch1, scratch2;
-            IntPtr h;
 
             //header
             header = new Header(SERIALIZEDSTUFF, ref currentIndex);
@@ -66,11 +57,8 @@ GoalStatus[] status_list"; }
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
-            int currentIndex=0, length=0;
             bool hasmetacomponents = false;
-            byte[] thischunk, scratch1, scratch2;
             List<byte[]> pieces = new List<byte[]>();
-            GCHandle h;
 
             //header
             if (header == null)
@@ -103,8 +91,6 @@ GoalStatus[] status_list"; }
         {
             int arraylength = -1;
             Random rand = new Random();
-            int strlength;
-            byte[] strbuf, myByte;
 
             //header
             header = new Header();

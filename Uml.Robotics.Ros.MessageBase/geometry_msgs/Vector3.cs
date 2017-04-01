@@ -9,11 +9,9 @@ namespace Messages.geometry_msgs
 {
     public class Vector3 : RosMessage
     {
-
-            public double x = new double();
-            public double y = new double();
-            public double z = new double();
-
+        public double x;
+        public double y;
+        public double z;
 
         public override string MD5Sum() { return "4a842b65f413084dc2b10fb484ea7f17"; }
         public override bool HasHeader() { return false; }
@@ -26,7 +24,6 @@ float64 z"; }
 
         public Vector3()
         {
-
         }
 
         public Vector3(byte[] SERIALIZEDSTUFF)
@@ -39,15 +36,9 @@ float64 z"; }
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
 
-
-
         public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
-            int arraylength = -1;
-            bool hasmetacomponents = false;
-            object __thing;
             int piecesize = 0;
-            byte[] thischunk, scratch1, scratch2;
             IntPtr h;
 
             //x
@@ -90,9 +81,7 @@ float64 z"; }
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
-            int currentIndex=0, length=0;
-            bool hasmetacomponents = false;
-            byte[] thischunk, scratch1, scratch2;
+            byte[] scratch1;
             List<byte[]> pieces = new List<byte[]>();
             GCHandle h;
 
@@ -128,10 +117,7 @@ float64 z"; }
 
         public override void Randomize()
         {
-            int arraylength = -1;
             Random rand = new Random();
-            int strlength;
-            byte[] strbuf, myByte;
 
             //x
             x = (rand.Next() + rand.NextDouble());

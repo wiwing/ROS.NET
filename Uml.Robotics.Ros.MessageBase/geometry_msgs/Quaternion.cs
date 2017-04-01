@@ -4,17 +4,14 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Uml.Robotics.Ros;
 
-
 namespace Messages.geometry_msgs
 {
     public class Quaternion : RosMessage
     {
-
-            public double x = new double();
-            public double y = new double();
-            public double z = new double();
-            public double w = new double();
-
+        public double x = new double();
+        public double y = new double();
+        public double z = new double();
+        public double w = new double();
 
         public override string MD5Sum() { return "a779879fadf0160734f906b8c19c7004"; }
         public override bool HasHeader() { return false; }
@@ -28,7 +25,6 @@ float64 w"; }
 
         public Quaternion()
         {
-
         }
 
         public Quaternion(byte[] SERIALIZEDSTUFF)
@@ -41,15 +37,9 @@ float64 w"; }
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
 
-
-
         public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
-            int arraylength = -1;
-            bool hasmetacomponents = false;
-            object __thing;
             int piecesize = 0;
-            byte[] thischunk, scratch1, scratch2;
             IntPtr h;
 
             //x
@@ -60,10 +50,11 @@ float64 w"; }
                 h = Marshal.AllocHGlobal(piecesize);
                 Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
             }
-            if (h == IntPtr.Zero) throw new Exception("Memory allocation failed");
+            if (h == IntPtr.Zero)throw new Exception("Memory allocation failed");
             x = (double)Marshal.PtrToStructure(h, typeof(double));
             Marshal.FreeHGlobal(h);
-            currentIndex+= piecesize;
+            currentIndex += piecesize;
+
             //y
             piecesize = Marshal.SizeOf(typeof(double));
             h = IntPtr.Zero;
@@ -72,10 +63,12 @@ float64 w"; }
                 h = Marshal.AllocHGlobal(piecesize);
                 Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
             }
-            if (h == IntPtr.Zero) throw new Exception("Memory allocation failed");
+            if (h == IntPtr.Zero)
+                throw new Exception("Memory allocation failed");
             y = (double)Marshal.PtrToStructure(h, typeof(double));
             Marshal.FreeHGlobal(h);
-            currentIndex+= piecesize;
+            currentIndex += piecesize;
+            
             //z
             piecesize = Marshal.SizeOf(typeof(double));
             h = IntPtr.Zero;
@@ -84,10 +77,12 @@ float64 w"; }
                 h = Marshal.AllocHGlobal(piecesize);
                 Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
             }
-            if (h == IntPtr.Zero) throw new Exception("Memory allocation failed");
+            if (h == IntPtr.Zero)
+                throw new Exception("Memory allocation failed");
             z = (double)Marshal.PtrToStructure(h, typeof(double));
             Marshal.FreeHGlobal(h);
-            currentIndex+= piecesize;
+            currentIndex += piecesize;
+
             //w
             piecesize = Marshal.SizeOf(typeof(double));
             h = IntPtr.Zero;
@@ -96,7 +91,8 @@ float64 w"; }
                 h = Marshal.AllocHGlobal(piecesize);
                 Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
             }
-            if (h == IntPtr.Zero) throw new Exception("Memory allocation failed");
+            if (h == IntPtr.Zero)
+                throw new Exception("Memory allocation failed");
             w = (double)Marshal.PtrToStructure(h, typeof(double));
             Marshal.FreeHGlobal(h);
             currentIndex+= piecesize;
@@ -104,9 +100,7 @@ float64 w"; }
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
-            int currentIndex=0, length=0;
-            bool hasmetacomponents = false;
-            byte[] thischunk, scratch1, scratch2;
+            byte[] scratch1;
             List<byte[]> pieces = new List<byte[]>();
             GCHandle h;
 
@@ -116,24 +110,28 @@ float64 w"; }
             Marshal.StructureToPtr(x, h.AddrOfPinnedObject(), false);
             h.Free();
             pieces.Add(scratch1);
+
             //y
             scratch1 = new byte[Marshal.SizeOf(typeof(double))];
             h = GCHandle.Alloc(scratch1, GCHandleType.Pinned);
             Marshal.StructureToPtr(y, h.AddrOfPinnedObject(), false);
             h.Free();
             pieces.Add(scratch1);
+
             //z
             scratch1 = new byte[Marshal.SizeOf(typeof(double))];
             h = GCHandle.Alloc(scratch1, GCHandleType.Pinned);
             Marshal.StructureToPtr(z, h.AddrOfPinnedObject(), false);
             h.Free();
             pieces.Add(scratch1);
+
             //w
             scratch1 = new byte[Marshal.SizeOf(typeof(double))];
             h = GCHandle.Alloc(scratch1, GCHandleType.Pinned);
             Marshal.StructureToPtr(w, h.AddrOfPinnedObject(), false);
             h.Free();
             pieces.Add(scratch1);
+
             // combine every array in pieces into one array and return it
             int __a_b__f = pieces.Sum((__a_b__c)=>__a_b__c.Length);
             int __a_b__e=0;
@@ -148,10 +146,7 @@ float64 w"; }
 
         public override void Randomize()
         {
-            int arraylength = -1;
             Random rand = new Random();
-            int strlength;
-            byte[] strbuf, myByte;
 
             //x
             x = (rand.Next() + rand.NextDouble());

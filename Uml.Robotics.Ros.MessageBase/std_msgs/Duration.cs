@@ -9,9 +9,7 @@ namespace Messages.std_msgs
 {
     public class Duration : RosMessage
     {
-
-            public TimeData data = new TimeData();
-
+        public TimeData data = new TimeData();
 
         public override string MD5Sum() { return "3e286caf4241d664e55f3ad380e2ae46"; }
         public override bool HasHeader() { return false; }
@@ -22,7 +20,6 @@ namespace Messages.std_msgs
 
         public Duration()
         {
-
         }
 
         public Duration(byte[] SERIALIZEDSTUFF)
@@ -35,22 +32,13 @@ namespace Messages.std_msgs
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
 
-
         public Duration(TimeData d)
         {
             data = d;
         }
 
-
         public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
-            int arraylength = -1;
-            bool hasmetacomponents = false;
-            object __thing;
-            int piecesize = 0;
-            byte[] thischunk, scratch1, scratch2;
-            IntPtr h;
-
             //data
             data.sec = BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex);
             currentIndex += Marshal.SizeOf(typeof(System.Int32));
@@ -60,11 +48,7 @@ namespace Messages.std_msgs
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
-            int currentIndex=0, length=0;
-            bool hasmetacomponents = false;
-            byte[] thischunk, scratch1, scratch2;
             List<byte[]> pieces = new List<byte[]>();
-            GCHandle h;
 
             //data
             pieces.Add(BitConverter.GetBytes(data.sec));
@@ -83,10 +67,7 @@ namespace Messages.std_msgs
 
         public override void Randomize()
         {
-            int arraylength = -1;
             Random rand = new Random();
-            int strlength;
-            byte[] strbuf, myByte;
 
             //data
             data.sec = Convert.ToUInt32(rand.Next());

@@ -4,14 +4,11 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Uml.Robotics.Ros;
 
-
 namespace Messages.tf
 {
     public class tfMessage : RosMessage
     {
-
-            public Messages.geometry_msgs.TransformStamped[] transforms;
-
+        public Messages.geometry_msgs.TransformStamped[] transforms;
 
         public override string MD5Sum() { return "94810edda583a504dfda3829e70d7eec"; }
         public override bool HasHeader() { return false; }
@@ -22,7 +19,6 @@ namespace Messages.tf
 
         public tfMessage()
         {
-
         }
 
         public tfMessage(byte[] SERIALIZEDSTUFF)
@@ -35,16 +31,10 @@ namespace Messages.tf
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
 
-
-
         public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
             int arraylength = -1;
             bool hasmetacomponents = false;
-            object __thing;
-            int piecesize = 0;
-            byte[] thischunk, scratch1, scratch2;
-            IntPtr h;
 
             //transforms
             hasmetacomponents |= true;
@@ -62,11 +52,8 @@ namespace Messages.tf
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
-            int currentIndex=0, length=0;
             bool hasmetacomponents = false;
-            byte[] thischunk, scratch1, scratch2;
             List<byte[]> pieces = new List<byte[]>();
-            GCHandle h;
 
             //transforms
             hasmetacomponents |= true;
@@ -95,8 +82,6 @@ namespace Messages.tf
         {
             int arraylength = -1;
             Random rand = new Random();
-            int strlength;
-            byte[] strbuf, myByte;
 
             //transforms
             arraylength = rand.Next(10);

@@ -10,9 +10,7 @@ namespace Messages.std_msgs
 {
     public class String : RosMessage
     {
-
-            public string data = "";
-
+        public string data = "";
 
         public override string MD5Sum() { return "992ce8a1687cec8c8bd883ec73ca41d1"; }
         public override bool HasHeader() { return false; }
@@ -23,9 +21,6 @@ namespace Messages.std_msgs
 
         public String()
         {
-            if (data == null)
-            data = "";
-
         }
 
         public String(byte[] SERIALIZEDSTUFF)
@@ -38,21 +33,14 @@ namespace Messages.std_msgs
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
 
-
         public String(string d)
         {
             data = d;
         }
 
-
         public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
-            int arraylength = -1;
-            bool hasmetacomponents = false;
-            object __thing;
             int piecesize = 0;
-            byte[] thischunk, scratch1, scratch2;
-            IntPtr h;
 
             //data
             data = "";
@@ -64,11 +52,8 @@ namespace Messages.std_msgs
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
-            int currentIndex=0, length=0;
-            bool hasmetacomponents = false;
             byte[] thischunk, scratch1, scratch2;
             List<byte[]> pieces = new List<byte[]>();
-            GCHandle h;
 
             //data
             if (data == null)
@@ -93,10 +78,9 @@ namespace Messages.std_msgs
 
         public override void Randomize()
         {
-            int arraylength = -1;
             Random rand = new Random();
             int strlength;
-            byte[] strbuf, myByte;
+            byte[] strbuf;
 
             //data
             strlength = rand.Next(100) + 1;

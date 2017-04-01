@@ -11,9 +11,7 @@ namespace Messages.rosgraph_msgs
 {
     public class Clock : RosMessage
     {
-
-            public Time clock = new Time();
-
+        public Time clock = new Time();
 
         public override string MD5Sum() { return "a9c97c1d230cfc112e270351a944ee47"; }
         public override bool HasHeader() { return false; }
@@ -24,7 +22,6 @@ namespace Messages.rosgraph_msgs
 
         public Clock()
         {
-
         }
 
         public Clock(byte[] SERIALIZEDSTUFF)
@@ -37,17 +34,8 @@ namespace Messages.rosgraph_msgs
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
 
-
-
         public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
-            int arraylength = -1;
-            bool hasmetacomponents = false;
-            object __thing;
-            int piecesize = 0;
-            byte[] thischunk, scratch1, scratch2;
-            IntPtr h;
-
             //clock
             clock = new Time(new TimeData(
                     BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex),
@@ -57,12 +45,8 @@ namespace Messages.rosgraph_msgs
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
-            int currentIndex=0, length=0;
-            bool hasmetacomponents = false;
-            byte[] thischunk, scratch1, scratch2;
             List<byte[]> pieces = new List<byte[]>();
-            GCHandle h;
-
+         
             //clock
             pieces.Add(BitConverter.GetBytes(clock.data.sec));
             pieces.Add(BitConverter.GetBytes(clock.data.nsec));
@@ -80,10 +64,7 @@ namespace Messages.rosgraph_msgs
 
         public override void Randomize()
         {
-            int arraylength = -1;
             Random rand = new Random();
-            int strlength;
-            byte[] strbuf, myByte;
 
             //clock
             clock = new Time(new TimeData(

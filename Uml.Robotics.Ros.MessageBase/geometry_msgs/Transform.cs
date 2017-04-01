@@ -9,10 +9,8 @@ namespace Messages.geometry_msgs
 {
     public class Transform : RosMessage
     {
-
-			public Messages.geometry_msgs.Vector3 translation = new Messages.geometry_msgs.Vector3();
-			public Messages.geometry_msgs.Quaternion rotation = new Messages.geometry_msgs.Quaternion();
-
+		public Messages.geometry_msgs.Vector3 translation = new Messages.geometry_msgs.Vector3();
+		public Messages.geometry_msgs.Quaternion rotation = new Messages.geometry_msgs.Quaternion();
 
         public override string MD5Sum() { return "ac9eff44abf714214112b05d54a3cf9b"; }
         public override bool HasHeader() { return false; }
@@ -24,7 +22,6 @@ Quaternion rotation"; }
 
         public Transform()
         {
-
         }
 
         public Transform(byte[] SERIALIZEDSTUFF)
@@ -37,17 +34,8 @@ Quaternion rotation"; }
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
 
-
-
         public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
-            int arraylength = -1;
-            bool hasmetacomponents = false;
-            object __thing;
-            int piecesize = 0;
-            byte[] thischunk, scratch1, scratch2;
-            IntPtr h;
-
             //translation
             translation = new Messages.geometry_msgs.Vector3(SERIALIZEDSTUFF, ref currentIndex);
             //rotation
@@ -56,11 +44,7 @@ Quaternion rotation"; }
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
-            int currentIndex=0, length=0;
-            bool hasmetacomponents = false;
-            byte[] thischunk, scratch1, scratch2;
             List<byte[]> pieces = new List<byte[]>();
-            GCHandle h;
 
             //translation
             if (translation == null)
@@ -84,10 +68,7 @@ Quaternion rotation"; }
 
         public override void Randomize()
         {
-            int arraylength = -1;
             Random rand = new Random();
-            int strlength;
-            byte[] strbuf, myByte;
 
             //translation
             translation = new Messages.geometry_msgs.Vector3();

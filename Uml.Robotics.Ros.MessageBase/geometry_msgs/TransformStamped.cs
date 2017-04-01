@@ -6,16 +6,13 @@ using System.Runtime.InteropServices;
 using Uml.Robotics.Ros;
 using Messages.std_msgs;
 
-
 namespace Messages.geometry_msgs
 {
     public class TransformStamped : RosMessage
     {
-
-            public Header header = new Header();
-            public string child_frame_id = "";
-            public Messages.geometry_msgs.Transform transform = new Messages.geometry_msgs.Transform();
-
+        public Header header = new Header();
+        public string child_frame_id = "";
+        public Messages.geometry_msgs.Transform transform = new Messages.geometry_msgs.Transform();
 
         public override string MD5Sum() { return "b5764a33bfeb3588febc2682852579b0"; }
         public override bool HasHeader() { return true; }
@@ -28,7 +25,6 @@ Transform transform"; }
 
         public TransformStamped()
         {
-
         }
 
         public TransformStamped(byte[] SERIALIZEDSTUFF)
@@ -41,16 +37,9 @@ Transform transform"; }
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
 
-
-
         public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
-            int arraylength = -1;
-            bool hasmetacomponents = false;
-            object __thing;
             int piecesize = 0;
-            byte[] thischunk, scratch1, scratch2;
-            IntPtr h;
 
             //header
             header = new Header(SERIALIZEDSTUFF, ref currentIndex);
@@ -66,11 +55,8 @@ Transform transform"; }
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
-            int currentIndex=0, length=0;
-            bool hasmetacomponents = false;
             byte[] thischunk, scratch1, scratch2;
             List<byte[]> pieces = new List<byte[]>();
-            GCHandle h;
 
             //header
             if (header == null)
@@ -103,10 +89,9 @@ Transform transform"; }
 
         public override void Randomize()
         {
-            int arraylength = -1;
             Random rand = new Random();
             int strlength;
-            byte[] strbuf, myByte;
+            byte[] strbuf;
 
             //header
             header = new Header();

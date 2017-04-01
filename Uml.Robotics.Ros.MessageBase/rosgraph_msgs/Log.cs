@@ -11,21 +11,20 @@ namespace Messages.rosgraph_msgs
 {
     public class Log : RosMessage
     {
+        public const byte DEBUG = 1;
+        public const byte INFO = 2;
+        public const byte WARN = 4;
+        public const byte ERROR = 8;
+        public const byte FATAL = 16;
 
-            public const byte DEBUG = 1;
-            public const byte INFO = 2;
-            public const byte WARN = 4;
-            public const byte ERROR = 8;
-            public const byte FATAL = 16;
-            public Header header = new Header();
-            public byte level = new byte();
-            public string name = "";
-            public string msg = "";
-            public string file = "";
-            public string function = "";
-            public uint line = new uint();
-            public string[] topics;
-
+        public Header header = new Header();
+        public byte level = new byte();
+        public string name = "";
+        public string msg = "";
+        public string file = "";
+        public string function = "";
+        public uint line = new uint();
+        public string[] topics;
 
         public override string MD5Sum() { return "acffd30cd6b6de30f120938c17c593fb"; }
         public override bool HasHeader() { return true; }
@@ -48,7 +47,6 @@ string[] topics"; }
 
         public Log()
         {
-
         }
 
         public Log(byte[] SERIALIZEDSTUFF)
@@ -61,15 +59,11 @@ string[] topics"; }
             Deserialize(SERIALIZEDSTUFF, ref currentIndex);
         }
 
-
-
         public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
         {
             int arraylength = -1;
             bool hasmetacomponents = false;
-            object __thing;
             int piecesize = 0;
-            byte[] thischunk, scratch1, scratch2;
             IntPtr h;
 
             //header
@@ -108,7 +102,8 @@ string[] topics"; }
                 h = Marshal.AllocHGlobal(piecesize);
                 Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
             }
-            if (h == IntPtr.Zero) throw new Exception("Memory allocation failed");
+            if (h == IntPtr.Zero)
+                throw new Exception("Memory allocation failed");
             line = (uint)Marshal.PtrToStructure(h, typeof(uint));
             Marshal.FreeHGlobal(h);
             currentIndex+= piecesize;
@@ -132,7 +127,6 @@ string[] topics"; }
 
         public override byte[] Serialize(bool partofsomethingelse)
         {
-            int currentIndex=0, length=0;
             bool hasmetacomponents = false;
             byte[] thischunk, scratch1, scratch2;
             List<byte[]> pieces = new List<byte[]>();
