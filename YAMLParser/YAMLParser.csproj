@@ -12,13 +12,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="TemplateProject\**" />
-    <EmbeddedResource Remove="TemplateProject\**" />
-    <None Remove="TemplateProject\**" />
+    <Compile Remove="GenerationGuts.tmp.cs" />
+    <Compile Remove="TemplateProject\String.cs" />
+    <Compile Remove="TemplateProject\Time.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="GenerationGuts.tmp.cs" />
+    <None Include="TemplateProject\Messages._csproj" />
+    <None Include="TemplateProject\String.cs" />
+    <None Include="TemplateProject\Time.cs" />
   </ItemGroup>
 
   <ItemGroup>

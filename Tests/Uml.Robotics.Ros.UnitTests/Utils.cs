@@ -23,11 +23,12 @@ namespace Uml.Robotics.Ros.UnitTests
                 var basePath = Path.GetDirectoryName(typeof(Utils).GetTypeInfo().Assembly.Location);
 
                 var path = "TestData";
-                for (int i = 0; i < 3; i++)
+                for (int i = 0; i < 4; i++)
                 {
-                    if (Directory.Exists(Path.Combine(basePath, path)))
-                        return Path.GetFullPath(path);
-                    path = Path.Combine(@"..\", path);
+                    var fullPath = Path.Combine(basePath, path);
+                    if (Directory.Exists(fullPath))
+                        return fullPath;
+                    path = Path.Combine("..", path);
                 }
 
                 throw new Exception("TestData directory not found");

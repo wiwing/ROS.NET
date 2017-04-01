@@ -16,20 +16,19 @@ namespace YAMLParser
         public static Dictionary<string, string> srvmd5memo = new Dictionary<string, string>();
         private static ILogger Logger { get; } = ApplicationLogging.CreateLogger("MD5");
 
-
-        public static string Sum(SrvsFile m)
+        public static string Sum(SrvFile srvFile)
         {
-            if (!srvmd5memo.ContainsKey(m.Name))
+            if (!srvmd5memo.ContainsKey(srvFile.Name))
             {
-                Sum(m.Request);
-                Sum(m.Response);
-                string hashablereq = PrepareToHash(m.Request);
-                string hashableres = PrepareToHash(m.Response);
-                if (hashablereq == null || hashableres == null)
+                Sum(srvFile.Request);
+                Sum(srvFile.Response);
+                string hashableReq = PrepareToHash(srvFile.Request);
+                string hashableRes = PrepareToHash(srvFile.Response);
+                if (hashableReq == null || hashableRes == null)
                     return null;
 
-                byte[] req = Encoding.ASCII.GetBytes(hashablereq);
-                byte[] res = Encoding.ASCII.GetBytes(hashableres);
+                byte[] req = Encoding.ASCII.GetBytes(hashableReq);
+                byte[] res = Encoding.ASCII.GetBytes(hashableRes);
 
                 var md5 = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.MD5);
                 md5.AppendData(req);
@@ -41,23 +40,22 @@ namespace YAMLParser
                 {
                     sb.AppendFormat("{0:x2}", hash[i]);
                 }
-                srvmd5memo.Add(m.Name, sb.ToString());
+                srvmd5memo.Add(srvFile.Name, sb.ToString());
             }
-            return srvmd5memo[m.Name];
+            return srvmd5memo[srvFile.Name];
         }
 
         public static string Sum(MsgsFile m)
         {
             if (!md5memo.ContainsKey(m.Name))
             {
-                string hashme = PrepareToHash(m);
-                if (hashme == null)
+                string hashText = PrepareToHash(m);
+                if (hashText == null)
                     return null;
-                md5memo[m.Name] = Sum(hashme);
+                md5memo[m.Name] = Sum(hashText);
             }
             return md5memo[m.Name];
         }
-
 
         public static string Sum(ActionFile actionFile)
         {
@@ -92,16 +90,15 @@ namespace YAMLParser
             return srvmd5memo[actionFile.Name];
         }
 
-
-        private static string PrepareToHash(MsgsFile irm)
+        private static string PrepareToHash(MsgsFile msgFile)
         {
-            string hashme = irm.Definition.Trim('\n', '\t', '\r', ' ');
-            while (hashme.Contains("  "))
-                hashme = hashme.Replace("  ", " ");
-            while (hashme.Contains("\r\n"))
-                hashme = hashme.Replace("\r\n", "\n");
-            hashme = hashme.Trim();
-            string[] lines = hashme.Split('\n');
+            string hashText = msgFile.Definition.Trim('\n', '\t', '\r', ' ');
+            while (hashText.Contains("  "))
+                hashText = hashText.Replace("  ", " ");
+            while (hashText.Contains("\r\n"))
+                hashText = hashText.Replace("\r\n", "\n");
+            hashText = hashText.Trim();
+            string[] lines = hashText.Split('\n');
 
             var haves = new Queue<string>();
             var havenots = new Queue<string>();
@@ -110,7 +107,7 @@ namespace YAMLParser
                 string l = lines[i];
                 if (l.Contains("="))
                 {
-                    //condense spaces on either side of =
+                    // condense spaces on either side of =
                     string[] ls = l.Split('=');
                     haves.Enqueue(ls[0].Trim() + "=" + ls[1].Trim());
                 }
@@ -119,26 +116,32 @@ namespace YAMLParser
                     havenots.Enqueue(l.Trim());
                 }
             }
-            hashme = "";
+
+            hashText = "";
             while (haves.Count + havenots.Count > 0)
-                hashme += (haves.Count > 0 ? haves.Dequeue() : havenots.Dequeue()) + (haves.Count + havenots.Count >= 1 ? "\n" : "");
-            Dictionary<string, MsgFieldInfo> mfis = MessageFieldHelper.Instantiate(irm.Stuff);
+            {
+                hashText += (haves.Count > 0 ? haves.Dequeue() : havenots.Dequeue()) + (haves.Count + havenots.Count >= 1 ? "\n" : "");
+            }
+
+            Dictionary<string, MsgFieldInfo> mfis = MessageFieldHelper.Instantiate(msgFile.Stuff);
             MsgFieldInfo[] fields = mfis.Values.ToArray();
             for (int i = 0; i < fields.Length; i++)
             {
-                if (fields[i].IsLiteral)
+                var field = fields[i];
+                if (field.IsPrimitive)
                 {
                     continue;
                 }
-                MsgsFile ms = irm.Stuff[i].Definer;
+
+                MsgsFile ms = msgFile.Stuff[i].Definer;
                 if (ms == null)
                 {
-                    KnownStuff.WhatItIs(irm, irm.Stuff[i]);
-                    if (irm.Stuff[i].Type.Contains("/"))
+                    KnownStuff.WhatItIs(msgFile, msgFile.Stuff[i]);
+                    if (msgFile.Stuff[i].Type.Contains("/"))
                     {
-                        irm.resolve(irm.Stuff[i]);
+                        msgFile.resolve(msgFile.Stuff[i]);
                     }
-                    ms = irm.Stuff[i].Definer;
+                    ms = msgFile.Stuff[i].Definer;
                 }
                 string sum = null;
                 if (ms == null)
@@ -149,7 +152,7 @@ namespace YAMLParser
                     {
                         try
                         {
-                            var name = irm.Stuff[i].Type;
+                            var name = msgFile.Stuff[i].Type;
                             Console.WriteLine($"generate {package}/{name}");
                             rosMessage = RosMessage.Generate($"{package}/{name}");
                             sum = rosMessage.MD5Sum();
@@ -161,7 +164,7 @@ namespace YAMLParser
                     }
                     if (rosMessage == null)
                     {
-                        Logger.LogDebug("NEEDS ANOTHER PASS: " + irm.Name + " B/C OF " + irm.Stuff[i].Type);
+                        Logger.LogDebug("NEEDS ANOTHER PASS: " + msgFile.Name + " B/C OF " + msgFile.Stuff[i].Type);
                         return null;
                     }
                 }
@@ -171,32 +174,13 @@ namespace YAMLParser
                 }
                 if (sum == null)
                 {
-                    Logger.LogDebug("STILL NEEDS ANOTHER PASS: " + irm.Name + " B/C OF " + irm.Stuff[i].Type);
+                    Logger.LogDebug("STILL NEEDS ANOTHER PASS: " + msgFile.Name + " B/C OF " + msgFile.Stuff[i].Type);
                     return null;
                 }
-                Regex findCurrentFieldType = new Regex("\\b" + fields[i].Type + "\\b");
-                string[] BLADAMN = findCurrentFieldType.Replace(hashme, sum).Split('\n');
-                hashme = "";
-                for (int x = 0; x < BLADAMN.Length; x++)
-                {
-                    if (BLADAMN[x].Contains(fields[i].Name.Replace("@", "")))
-                    {
-                        if (BLADAMN[x].Contains("/"))
-                        {
-                            BLADAMN[x] = BLADAMN[x].Split('/')[1];
-                        }
 
-                        if (BLADAMN[x].Contains("[]") && !fields[i].IsLiteral)
-                        {
-                            BLADAMN[x] = BLADAMN[x].Replace("[]", "");
-                        }
-                    }
-                    hashme += BLADAMN[x];
-                    if (x < BLADAMN.Length - 1)
-                        hashme += "\n";
-                }
+                hashText = Regex.Replace(hashText, @"^(.*/)?\b" + fields[i].Type + @"\b(\s*\[\s*\])?", sum, RegexOptions.Multiline);
             }
-            return hashme;
+            return hashText;
         }
 
         public static string Sum(params string[] str)

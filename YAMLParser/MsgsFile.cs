@@ -640,7 +640,7 @@ namespace FauxMessages
             else
             {
                 ret += string.Format(@"
-{0}arraylength = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+{0}arraylength = BitConverter.ToInt32(serializedMessage, currentIndex);
 {0}currentIndex += Marshal.SizeOf(typeof(System.Int32));", leadingWhitespace);
             }
             ret += string.Format(@"
@@ -653,7 +653,7 @@ namespace FauxMessages
             if (st.Type == "byte")
             {
                 ret += string.Format(@"
-{0}Array.Copy(SERIALIZEDSTUFF, currentIndex, {1}, 0, {1}.Length);
+{0}Array.Copy(serializedMessage, currentIndex, {1}, 0, {1}.Length);
 {0}currentIndex += {1}.Length;", leadingWhitespace, st.Name);
             }
             else
@@ -676,38 +676,38 @@ namespace FauxMessages
                 return string.Format(@"
 {0}//{1}
 {0}{1} = new {2}(new TimeData(
-{0}        BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex),
-{0}        BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex+Marshal.SizeOf(typeof(System.Int32)))));
+{0}        BitConverter.ToUInt32(serializedMessage, currentIndex),
+{0}        BitConverter.ToUInt32(serializedMessage, currentIndex+Marshal.SizeOf(typeof(System.Int32)))));
 {0}currentIndex += 2*Marshal.SizeOf(typeof(System.Int32));", leadingWhitespace, name, pt);
             }
             else if (type == "TimeData")
                 return string.Format(@"
 {0}//{1}
-{0}{1}.sec = BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex);
+{0}{1}.sec = BitConverter.ToUInt32(serializedMessage, currentIndex);
 {0}currentIndex += Marshal.SizeOf(typeof(System.Int32));
-{0}{1}.nsec  = BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex);
+{0}{1}.nsec  = BitConverter.ToUInt32(serializedMessage, currentIndex);
 {0}currentIndex += Marshal.SizeOf(typeof(System.Int32));", leadingWhitespace, name);
             else if (type == "byte")
             {
                 return string.Format(@"
 {0}//{1}
-{0}{1}=SERIALIZEDSTUFF[currentIndex++];", leadingWhitespace, name);
+{0}{1}=serializedMessage[currentIndex++];", leadingWhitespace, name);
             }
             else if (type == "string")
             {
                 return string.Format(@"
 {0}//{1}
 {0}{1} = """";
-{0}piecesize = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+{0}piecesize = BitConverter.ToInt32(serializedMessage, currentIndex);
 {0}currentIndex += 4;
-{0}{1} = Encoding.ASCII.GetString(SERIALIZEDSTUFF, currentIndex, piecesize);
+{0}{1} = Encoding.ASCII.GetString(serializedMessage, currentIndex, piecesize);
 {0}currentIndex += piecesize;", leadingWhitespace, name);
             }
             else if (type == "bool")
             {
                 return string.Format(@"
 {0}//{1}
-{0}{1} = SERIALIZEDSTUFF[currentIndex++]==1;", leadingWhitespace, name);
+{0}{1} = serializedMessage[currentIndex++]==1;", leadingWhitespace, name);
             }
             else if (st.IsLiteral)
             {
@@ -715,10 +715,10 @@ namespace FauxMessages
 {0}//{2}
 {0}piecesize = Marshal.SizeOf(typeof({1}));
 {0}h = IntPtr.Zero;
-{0}if (SERIALIZEDSTUFF.Length - currentIndex != 0)
+{0}if (serializedMessage.Length - currentIndex != 0)
 {0}{{
 {0}    h = Marshal.AllocHGlobal(piecesize);
-{0}    Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
+{0}    Marshal.Copy(serializedMessage, currentIndex, h, piecesize);
 {0}}}
 {0}if (h == IntPtr.Zero) throw new Exception(""Memory allocation failed"");
 {0}{2} = ({1})Marshal.PtrToStructure(h, typeof({1}));
@@ -731,7 +731,7 @@ namespace FauxMessages
             {
                 return string.Format(@"
 {0}//{1}
-{0}{1} = new {2}(SERIALIZEDSTUFF, ref currentIndex);", leadingWhitespace, name, pt);
+{0}{1} = new {2}(serializedMessage, ref currentIndex);", leadingWhitespace, name, pt);
             }
         }
 

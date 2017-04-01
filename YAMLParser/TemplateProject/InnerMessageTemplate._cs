@@ -39,7 +39,6 @@
             int piecesize = 0;
             byte[] thischunk, scratch1, scratch2;
             IntPtr h;
-            var SERIALIZEDSTUFF = serializedMessage;
 
             $DESERIALIZATIONCODE
         }

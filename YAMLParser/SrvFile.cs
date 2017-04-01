@@ -8,7 +8,7 @@ using YAMLParser;
 
 namespace FauxMessages
 {
-    public class SrvsFile
+    public class SrvFile
     {
         private string GUTS;
         public string GeneratedDictHelper;
@@ -22,7 +22,6 @@ namespace FauxMessages
         private List<string> def = new List<string>();
         public string dimensions = "";
         public string fronthalf;
-        private string memoizedcontent;
         private bool meta;
         public string requestbackhalf;
         public string requestfronthalf;
@@ -31,20 +30,23 @@ namespace FauxMessages
 
         internal MsgFileLocation msgfilelocation;
 
-        public SrvsFile(MsgFileLocation filename)
+        public SrvFile(MsgFileLocation filename)
         {
             msgfilelocation = filename;
-            //read in srv file
-            string[] lines = File.ReadAllLines(filename.Path);
+            // read in srv file
+            var lines = File.ReadAllLines(filename.Path);
             classname = filename.basename;
             Namespace += "." + filename.package;
             Name = filename.package + "." + filename.basename;
-            //def is the list of all lines in the file
+            
+            // def is the list of all lines in the file
             def = new List<string>();
             int mid = 0;
             bool found = false;
-            List<string> request = new List<string>(), response = new List<string>();
-            //Search through for the "---" separator between request and response
+            var request = new List<string>();
+            var response = new List<string>();
+            
+            // Search through for the "---" separator between request and response
             for (; mid < lines.Length; mid++)
             {
                 lines[mid] = lines[mid].Replace("\"", "\\\"");
@@ -68,7 +70,8 @@ namespace FauxMessages
                 else
                     request.Add(lines[mid]);
             }
-            //treat request and response like 2 message files, each with a partial definition and extra stuff tagged on to the classname
+
+            // treat request and response like 2 message files, each with a partial definition and extra stuff tagged on to the classname
             Request = new MsgsFile(new MsgFileLocation(filename.Path.Replace(".srv", ".msg"), filename.searchroot), true, request, "\t");
             Response = new MsgsFile(new MsgFileLocation(filename.Path.Replace(".srv", ".msg"), filename.searchroot), false, response, "\t");
         }

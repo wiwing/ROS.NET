@@ -28,19 +28,19 @@ namespace Messages
             $NULLCONSTBODY
         }
 
-        public $WHATAMI(byte[] SERIALIZEDSTUFF)
+        public $WHATAMI(byte[] serializedMessage)
         {
-            Deserialize(SERIALIZEDSTUFF);
+            Deserialize(serializedMessage);
         }
 
-        public $WHATAMI(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public $WHATAMI(byte[] serializedMessage, ref int currentIndex)
         {
-            Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+            Deserialize(serializedMessage, ref currentIndex);
         }
 
 $EXTRACONSTRUCTOR
 
-        public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
             int arraylength = -1;
             bool hasmetacomponents = false;

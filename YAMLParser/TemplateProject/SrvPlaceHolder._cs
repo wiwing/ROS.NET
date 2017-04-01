@@ -50,19 +50,19 @@ namespace Messages
                 $REQUESTNULLCONSTBODY
             }
 
-            public Request(byte[] SERIALIZEDSTUFF)
+            public Request(byte[] serializedMessage)
             {
-                Deserialize(SERIALIZEDSTUFF);
+                Deserialize(serializedMessage);
             }
 
-            public Request(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+            public Request(byte[] serializedMessage, ref int currentIndex)
             {
-                Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+                Deserialize(serializedMessage, ref currentIndex);
             }
 
     $REQUESTEXTRACONSTRUCTOR
 
-            public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+            public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
             {
                 int arraylength=-1;
                 bool hasmetacomponents = false;
@@ -129,23 +129,23 @@ namespace Messages
                 $RESPONSENULLCONSTBODY
             }
 
-            public Response(byte[] SERIALIZEDSTUFF)
+            public Response(byte[] serializedMessage)
             {
-                Deserialize(SERIALIZEDSTUFF);
+                Deserialize(serializedMessage);
             }
 
-            public Response(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+            public Response(byte[] serializedMessage, ref int currentIndex)
             {
-                Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+                Deserialize(serializedMessage, ref currentIndex);
             }
 
-    $RESPONSEEXTRACONSTRUCTOR
+	$RESPONSEEXTRACONSTRUCTOR
 
-            public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+            public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
             {
-                int arraylength=-1;
+                int arraylength = -1;
                 bool hasmetacomponents = false;
-                int piecesize=0;
+                int piecesize = 0;
                 byte[] thischunk, scratch1, scratch2;
                 IntPtr h;
                 object __thing;
@@ -174,7 +174,7 @@ namespace Messages
 
             public override void Randomize()
             {
-                int arraylength=-1;
+                int arraylength = -1;
                 Random rand = new Random();
                 int strlength;
                 byte[] strbuf, myByte;

@@ -11,27 +11,23 @@ namespace FauxMessages
         public string ConstVal;
         public bool IsArray;
         public bool IsConst;
-        public bool IsLiteral;
-        public bool IsMetaType;
+        public bool IsPrimitive;
+        public bool IsComplexType;
         public int Length = -1;
         public string Name;
         public string Type;
 
-#if !TRACE
-        [DebuggerStepThrough]
-#endif
-        public MsgFieldInfo(string name, bool isliteral, string type, bool isconst, string constval, bool isarray,
-            string lengths, bool meta)
+        public MsgFieldInfo(string name, bool isPrimitive, string type, bool isConst, string constVal, bool isArray,
+            string lengths, bool complexType)
         {
             Name = name;
-            IsArray = isarray;
+            IsArray = isArray;
             Type = type;
-            IsLiteral = isliteral;
-            IsMetaType = meta;
-            IsConst = isconst;
-            ConstVal = constval;
-            if (lengths == null) return;
-            if (lengths.Length > 0)
+            IsPrimitive = isPrimitive;
+            IsComplexType = complexType;
+            IsConst = isConst;
+            ConstVal = constVal;
+            if (!string.IsNullOrWhiteSpace(lengths))
             {
                 Length = int.Parse(lengths);
             }
