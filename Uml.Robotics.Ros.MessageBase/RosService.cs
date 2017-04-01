@@ -44,7 +44,7 @@ namespace Uml.Robotics.Ros
         internal static Dictionary<string, Func<string, RosService>> constructors = new Dictionary<string, Func<string, RosService>>();
         private static Dictionary<string, Type> _typeregistry = new Dictionary<string, Type>();
 
-        public static RosService generate(string t)
+        public static RosService Generate(string t)
         {
             lock (constructors)
             {
@@ -67,8 +67,8 @@ namespace Uml.Robotics.Ros
                             _typeregistry.Add(srv.ServiceType, srv.GetType());
                         if (!constructors.ContainsKey(srv.ServiceType))
                             constructors.Add(srv.ServiceType, T => Activator.CreateInstance(_typeregistry[T]) as RosService);
-                        srv.RequestMessage = RosMessage.generate(srv.ServiceType + "__Request");
-                        srv.ResponseMessage = RosMessage.generate(srv.ServiceType + "__Response");
+                        srv.RequestMessage = RosMessage.Generate(srv.ServiceType + "__Request");
+                        srv.ResponseMessage = RosMessage.Generate(srv.ServiceType + "__Response");
                     }
                 }
 

@@ -6,10 +6,8 @@ using System;
 using System.IO;
 using FauxMessages;
 
-
-namespace Uml.Robotics.Ros.Tests
+namespace Uml.Robotics.Ros.UnitTests
 {
-
     public class StaticResolverFixture : IDisposable
     {
         public StaticResolverFixture()

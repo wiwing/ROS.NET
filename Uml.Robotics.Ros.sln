@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26228.4
+VisualStudioVersion = 15.0.26228.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uml.Robotics.XmlRpc", "Uml.Robotics.XmlRpc\Uml.Robotics.XmlRpc.csproj", "{89241CC9-5E28-4B95-B682-37A0AC58D306}"
 EndProject
@@ -23,7 +23,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransformsSample", "Samples
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{EEE8759B-47AD-455B-8F32-0A36EAE2512B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "Tests\Transform\UnitTests.csproj", "{1845BA08-91C1-411D-B1F5-7DF2344498C3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Uml.Robotics.Ros.UnitTests", "Tests\Transform\Uml.Robotics.Ros.UnitTests.csproj", "{1845BA08-91C1-411D-B1F5-7DF2344498C3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RosoutSample", "Samples\RosoutSample\RosoutSample.csproj", "{F41BDC33-84FA-4E26-BC6C-187044E49BD6}"
 EndProject

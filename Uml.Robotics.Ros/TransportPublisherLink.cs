@@ -163,7 +163,7 @@ namespace Uml.Robotics.Ros
             if (!success || conn == null || conn != connection) return false;
             if (success)
             {
-                RosMessage msg = RosMessage.generate(parent.msgtype);
+                RosMessage msg = RosMessage.Generate(parent.msgtype);
                 msg.Serialized = buffer;
                 msg.connection_header = getHeader().Values;
                 handleMessage(msg, true, false);

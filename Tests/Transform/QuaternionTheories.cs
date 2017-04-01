@@ -5,13 +5,11 @@ using System.Collections.Generic;
 using Xunit.Extensions;
 using System;
 
-namespace Uml.Robotics.Ros.Tests
+namespace Uml.Robotics.Ros.UnitTests
 {
-
     public class QuaternionTheories
     {
         [Theory, MemberData(nameof(QuaternionData))]
-
         public void Should_QuaternionToRPYToQuaternion(tf.Quaternion quaternion, tf.Vector3 expectedResult = null)        
         {
            //Utils.WaitForDebugger();
@@ -45,7 +43,6 @@ namespace Uml.Robotics.Ros.Tests
                 Assert.InRange(Math.Abs(rpy.z-expectedResult.z), 0.0, tolerance);
             }   
         }
-
 
         public static IEnumerable<object[]> QuaternionData
         {

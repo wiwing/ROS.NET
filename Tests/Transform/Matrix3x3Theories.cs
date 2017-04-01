@@ -5,9 +5,8 @@ using System.Collections.Generic;
 using Xunit.Extensions;
 using System;
 
-namespace Uml.Robotics.Ros.Tests
+namespace Uml.Robotics.Ros.UnitTests
 {
-
     public class Matrix3x3Theories
     {
         [Theory, MemberData(nameof(RotationData))]                

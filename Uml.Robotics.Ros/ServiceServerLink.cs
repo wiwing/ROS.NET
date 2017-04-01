@@ -76,7 +76,7 @@ namespace Uml.Robotics.Ros
 
             IDictionary<string, string> dict = new Dictionary<string, string>();
             dict["service"] = name;
-            dict["md5sum"] = RosService.generate(RequestType.Replace("__Request", "").Replace("__Response", "")).MD5Sum();
+            dict["md5sum"] = RosService.Generate(RequestType.Replace("__Request", "").Replace("__Response", "")).MD5Sum();
             dict["callerid"] = this_node.Name;
             dict["persistent"] = persistent ? "1" : "0";
             if (header_values != null)
@@ -311,7 +311,7 @@ namespace Uml.Robotics.Ros
             if (resp == null)
             {
                 //instantiate null response IN CASE this call succeeds
-                resp = RosMessage.generate(req.MessageType.Replace("Request", "Response"));
+                resp = RosMessage.Generate(req.MessageType.Replace("Request", "Response"));
             }
 
             CallInfo info = new CallInfo {req = req, resp = resp, success = false, finished = false};

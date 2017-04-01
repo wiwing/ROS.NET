@@ -198,7 +198,7 @@ namespace Uml.Robotics.Ros
         /// <returns> A message of that type </returns>
         internal static RosMessage MakeMessage(string type)
         {
-            return RosMessage.generate(type);
+            return RosMessage.Generate(type);
         }
 
         public class ONLY_AUTO_PARAMS

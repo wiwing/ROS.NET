@@ -4,7 +4,7 @@ using System.Text;
 using Uml.Robotics.Ros;
 using Xunit;
 
-namespace Uml.Robotics.Ros.Tests
+namespace Uml.Robotics.Ros.UnitTests
 {
     /// <summary>
     /// This class contains a xUnit collection, which is created before any of the members of the collection and
@@ -15,13 +15,11 @@ namespace Uml.Robotics.Ros.Tests
     {
         public const string ROS_COLLECTION = "ROS collection";
 
-
         public RosFixture()
         {
             Console.WriteLine("Init ROS");
             ROS.Init(new string[0], "RosFixture");
         }
-
 
         public void Dispose()
         {
@@ -30,9 +28,8 @@ namespace Uml.Robotics.Ros.Tests
         }
     }
 
-
     [CollectionDefinition(RosFixture.ROS_COLLECTION)]
-    public class RosCollection : ICollectionFixture<RosFixture>
+    public class RosCollection: ICollectionFixture<RosFixture>
     {
         // This class has no code, and is never created. Its purpose is simply
         // to be the place to apply [CollectionDefinition] and all the

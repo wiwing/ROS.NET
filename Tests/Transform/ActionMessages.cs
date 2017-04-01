@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Uml.Robotics.Ros;
 using Xunit;
 
-using Uml.Robotics.Ros.ActionLib;
-using Messages;
-
-namespace Uml.Robotics.Ros.Tests
+namespace Uml.Robotics.Ros.UnitTests
 {
     public class ActionMessages
     {

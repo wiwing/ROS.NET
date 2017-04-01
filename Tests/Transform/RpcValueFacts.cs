@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Uml.Robotics.XmlRpc;
 using Xunit;
 
-namespace UnitTests
+namespace Uml.Robotics.Ros.UnitTests
 {
     public class RpcValueFacts
     {
@@ -17,7 +14,7 @@ namespace UnitTests
             v[0].Set(-456);
             v[1].Set(true);
             v[2].Set(123.0);
-            v[3].Set(new byte[] { 0,9,8,7,6,5,4,3,2,1 });
+            v[3].Set(new byte[] { 0, 9, 8, 7, 6, 5, 4, 3, 2, 1 });
             v[4].Set(now);
             v[5].Set("Test String");
 
@@ -96,6 +93,27 @@ namespace UnitTests
             Assert.Equal(XmlRpcType.Struct, w["memberStruct"].Type);
             Assert.Equal(4, w["memberArray"].Count);
             Assert.Equal(7, w["memberStruct"].Count);
+
+            Action<XmlRpcValue> checkValueOneLevel = (XmlRpcValue value) =>
+            {
+                Assert.Equal(789, value["memberInt"].GetInt());
+                Assert.Equal(true, value["memberBool"].GetBool());
+                Assert.Equal(765.678, value["memberDouble"].GetDouble(), 3);
+                Assert.Equal(new byte[] { 0, 2, 4, 6, 8, 10, 12 }, value["memberBinary"].GetBinary());
+                Assert.Equal("qwerty", value["memberString"].GetString());
+                Assert.True(Math.Abs((today - value["memberDate"].GetDateTime()).TotalSeconds) < 1);
+
+                var a = value["memberArray"];
+                Assert.Equal(4, a.Count);
+                Assert.Equal(XmlRpcType.Array, a.Type);
+                Assert.Equal(1, a[0].GetInt());
+                Assert.Equal(2.0, a[1].GetDouble());
+                Assert.Equal("three", a[2].GetString());
+                Assert.True(Math.Abs((today - a[3].GetDateTime()).TotalSeconds) < 1);
+            };
+
+            checkValueOneLevel(w);
+            checkValueOneLevel(w["memberStruct"]);
         }
     }
 }

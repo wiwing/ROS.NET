@@ -6,7 +6,7 @@ namespace Uml.Robotics.Ros
 {
     public class RosMessage
     {
-        public static RosMessage generate(string rosMessageType)
+        public static RosMessage Generate(string rosMessageType)
         {
             var result = MessageTypeRegistry.Default.CreateMessage(rosMessageType);
             if (result == null)

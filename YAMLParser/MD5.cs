@@ -151,7 +151,7 @@ namespace YAMLParser
                         {
                             var name = irm.Stuff[i].Type;
                             Console.WriteLine($"generate {package}/{name}");
-                            rosMessage = RosMessage.generate($"{package}/{name}");
+                            rosMessage = RosMessage.Generate($"{package}/{name}");
                             sum = rosMessage.MD5Sum();
                             break;
                         }

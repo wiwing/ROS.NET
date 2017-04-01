@@ -32,7 +32,7 @@ namespace Uml.Robotics.Ros
             res_datatype = new MRes().MessageType.Replace("/Response", "__Response");
             srvtype = req_datatype.Replace("__Request", "");
             datatype = srvtype;
-            md5sum = RosService.generate(srvtype).MD5Sum();
+            md5sum = RosService.Generate(srvtype).MD5Sum();
         }
     }
 }
