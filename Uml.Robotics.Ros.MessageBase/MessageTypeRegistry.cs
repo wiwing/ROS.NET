@@ -10,6 +10,7 @@ using System.Threading;
 namespace Uml.Robotics.Ros
 {
     public class MessageTypeRegistry
+        : TypeRegistryBase
     {
         private static Lazy<MessageTypeRegistry> instance = new Lazy<MessageTypeRegistry>(LazyThreadSafetyMode.ExecutionAndPublication);
 
@@ -17,44 +18,15 @@ namespace Uml.Robotics.Ros
         {
             get { return instance.Value; }
         }
-
-        private ILogger Logger { get; set; } = ApplicationLogging.CreateLogger<MessageTypeRegistry>();
-        public Dictionary<string, Type> TypeRegistry { get; } = new Dictionary<string, Type>();
-        public List<string> PackageNames { get; } = new List<string>();
+        
+        public MessageTypeRegistry()
+            : base(ApplicationLogging.CreateLogger<MessageTypeRegistry>())
+        {
+        }
 
         public RosMessage CreateMessage(string rosMessageType)
         {
-            RosMessage result = null;
-            Type type = null;
-            bool typeExist = TypeRegistry.TryGetValue(rosMessageType, out type);
-            if (typeExist)
-            {
-                result = Activator.CreateInstance(type) as RosMessage;
-            }
-
-            return result;
-        }
-
-        public IEnumerable<string> GetTypeNames()
-        {
-            return TypeRegistry.Keys;
-        }
-
-        public IEnumerable<Assembly> GetCandidateAssemblies(params string[] tagAssemblies)
-        {
-            if (tagAssemblies == null)
-                throw new ArgumentNullException(nameof(tagAssemblies));
-            if (tagAssemblies.Length == 0)
-                throw new ArgumentException("At least one tag assembly name must be specified.", nameof(tagAssemblies));
-
-            var context = DependencyContext.Load(Assembly.GetEntryAssembly());
-            var loadContext = AssemblyLoadContext.Default;
-
-            var referenceAssemblies = new HashSet<string>(tagAssemblies, StringComparer.OrdinalIgnoreCase);
-            return context.RuntimeLibraries
-                .Where(x => x.Dependencies.Any(d => referenceAssemblies.Contains(d.Name)))
-                .SelectMany(x => x.GetDefaultAssemblyNames(context))
-                .Select(x => loadContext.LoadFromAssemblyName(x));
+            return base.Create<RosMessage>(rosMessageType);
         }
 
         public void ParseAssemblyAndRegisterRosMessages(Assembly assembly)
@@ -118,7 +90,8 @@ namespace Uml.Robotics.Ros
                 if (!TypeRegistry.ContainsKey(message.MessageType))
                 {
                     TypeRegistry.Add(message.MessageType, message.GetType());
-                } else
+                }
+                else
                 {
                     var messageFromRegistry = CreateMessage(message.MessageType);
                     if (messageFromRegistry.MD5Sum() != message.MD5Sum())

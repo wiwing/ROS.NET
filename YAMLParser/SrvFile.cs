@@ -15,7 +15,8 @@ namespace FauxMessages
         public bool HasHeader;
         public string Name;
         public string Namespace = "Messages";
-        public MsgsFile Request, Response;
+        public MsgFile Request;
+        public MsgFile Response;
         public List<SingleType> Stuff = new List<SingleType>();
         public string backhalf;
         public string classname;
@@ -72,8 +73,8 @@ namespace FauxMessages
             }
 
             // treat request and response like 2 message files, each with a partial definition and extra stuff tagged on to the classname
-            Request = new MsgsFile(new MsgFileLocation(filename.Path.Replace(".srv", ".msg"), filename.searchroot), true, request, "\t");
-            Response = new MsgsFile(new MsgFileLocation(filename.Path.Replace(".srv", ".msg"), filename.searchroot), false, response, "\t");
+            Request = new MsgFile(new MsgFileLocation(filename.Path.Replace(".srv", ".msg"), filename.searchroot), true, request, "\t");
+            Response = new MsgFile(new MsgFileLocation(filename.Path.Replace(".srv", ".msg"), filename.searchroot), false, response, "\t");
         }
 
         public void ParseAndResolveTypes()

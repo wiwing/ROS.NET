@@ -11,12 +11,12 @@ namespace FauxMessages
     public class ActionFile
     {
         public string Name { get; private set; }
-        public MsgsFile GoalMessage { get; private set; }
-        public MsgsFile ResultMessage { get; private set; }
-        public MsgsFile FeedbackMessage { get; private set; }
-        public MsgsFile GoalActionMessage { get; private set; }
-        public MsgsFile ResultActionMessage { get; private set; }
-        public MsgsFile FeedbackActionMessage { get; private set; }
+        public MsgFile GoalMessage { get; private set; }
+        public MsgFile ResultMessage { get; private set; }
+        public MsgFile FeedbackMessage { get; private set; }
+        public MsgFile GoalActionMessage { get; private set; }
+        public MsgFile ResultActionMessage { get; private set; }
+        public MsgFile FeedbackActionMessage { get; private set; }
 
         private string fileNamespace = "Messages";
         private List<SingleType> stuff = new List<SingleType>();
@@ -68,7 +68,7 @@ namespace FauxMessages
         /// <summary>
         /// Loads the template for a single message and replaces all the $placeholders with appropriate content
         /// </summary>
-        public string GenerateMessageFromTemplate(string template, MsgsFile message, MsgsFile childMessage)
+        public string GenerateMessageFromTemplate(string template, MsgFile message, MsgFile childMessage)
         {
             var properties = message.GenerateProperties();
             template = template.Replace("$CLASS_NAME", message.classname);
@@ -147,9 +147,9 @@ namespace FauxMessages
         /// <summary>
         /// Wrapper to create a MsgsFile
         /// </summary>
-        private MsgsFile CreateMessageFile(MsgFileLocation messageLocation, List<string> parameters, string suffix)
+        private MsgFile CreateMessageFile(MsgFileLocation messageLocation, List<string> parameters, string suffix)
         {
-            var result = new MsgsFile(new MsgFileLocation(
+            var result = new MsgFile(new MsgFileLocation(
                 messageLocation.Path, messageLocation.searchroot),
                 parameters,
                 suffix
@@ -293,12 +293,12 @@ namespace FauxMessages
 
     class MessageTemplateInfo
     {
-        public MsgsFile OuterMessage { get; }
-        public MsgsFile InnerMessage { get; }
+        public MsgFile OuterMessage { get; }
+        public MsgFile InnerMessage { get; }
         public string OuterMessagePlaceHoder { get; }
         public string InnerMessagePlaceHolder { get; }
 
-        public MessageTemplateInfo(MsgsFile OuterMessage, MsgsFile InnerMessage, string OuterMessagePlaceHoder,
+        public MessageTemplateInfo(MsgFile OuterMessage, MsgFile InnerMessage, string OuterMessagePlaceHoder,
             string InnerMessagePlaceHolder)
         {
             this.OuterMessage = OuterMessage;

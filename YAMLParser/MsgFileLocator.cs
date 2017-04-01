@@ -50,7 +50,7 @@ namespace YAMLParser
             get { return path; }
         }
 
-        public MsgFileLocation(string path,string root)
+        public MsgFileLocation(string path, string root)
         {
             this.path = path;
             searchroot = root;

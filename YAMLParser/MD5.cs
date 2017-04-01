@@ -18,10 +18,9 @@ namespace YAMLParser
 
         public static string Sum(SrvFile srvFile)
         {
+            
             if (!srvmd5memo.ContainsKey(srvFile.Name))
             {
-                Sum(srvFile.Request);
-                Sum(srvFile.Response);
                 string hashableReq = PrepareToHash(srvFile.Request);
                 string hashableRes = PrepareToHash(srvFile.Response);
                 if (hashableReq == null || hashableRes == null)
@@ -35,7 +34,7 @@ namespace YAMLParser
                 md5.AppendData(res);
                 var hash = md5.GetHashAndReset();
 
-                StringBuilder sb = new StringBuilder();
+                var sb = new StringBuilder();
                 for (int i = 0; i < hash.Length; i++)
                 {
                     sb.AppendFormat("{0:x2}", hash[i]);
@@ -45,7 +44,7 @@ namespace YAMLParser
             return srvmd5memo[srvFile.Name];
         }
 
-        public static string Sum(MsgsFile m)
+        public static string Sum(MsgFile m)
         {
             if (!md5memo.ContainsKey(m.Name))
             {
@@ -90,7 +89,7 @@ namespace YAMLParser
             return srvmd5memo[actionFile.Name];
         }
 
-        private static string PrepareToHash(MsgsFile msgFile)
+        private static string PrepareToHash(MsgFile msgFile)
         {
             string hashText = msgFile.Definition.Trim('\n', '\t', '\r', ' ');
             while (hashText.Contains("  "))
@@ -133,7 +132,7 @@ namespace YAMLParser
                     continue;
                 }
 
-                MsgsFile ms = msgFile.Stuff[i].Definer;
+                MsgFile ms = msgFile.Stuff[i].Definer;
                 if (ms == null)
                 {
                     KnownStuff.WhatItIs(msgFile, msgFile.Stuff[i]);

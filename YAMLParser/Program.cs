@@ -14,7 +14,7 @@ namespace YAMLParser
 {
     internal class Program
     {
-        public static List<MsgsFile> msgsFiles = new List<MsgsFile>();
+        public static List<MsgFile> msgsFiles = new List<MsgFile>();
         public static List<SrvFile> srvFiles = new List<SrvFile>();
         public static List<ActionFile> actionFiles = new List<ActionFile>();
         public static string backhalf;
@@ -107,7 +107,7 @@ namespace YAMLParser
                 }
                 else
                 {
-                    msgsFiles.Add(new MsgsFile(path));
+                    msgsFiles.Add(new MsgFile(path));
                 }
             }
             Logger.LogDebug($"Added {msgsFiles.Count} message files");
@@ -216,15 +216,15 @@ namespace YAMLParser
             }
         }
 
-        public static void GenerateFiles(List<MsgsFile> files, List<SrvFile> srvfiles, List<ActionFile> actionFiles)
+        public static void GenerateFiles(List<MsgFile> files, List<SrvFile> srvfiles, List<ActionFile> actionFiles)
         {
-            List<MsgsFile> mresolved = new List<MsgsFile>();
+            List<MsgFile> mresolved = new List<MsgFile>();
             List<SrvFile> sresolved = new List<SrvFile>();
             List<ActionFile> actionFilesResolved = new List<ActionFile>();
             while (files.Except(mresolved).Any())
             {
                 Debug.WriteLine("MSG: Running for " + files.Count + "/" + mresolved.Count + "\n" + files.Except(mresolved).Aggregate("\t", (o, n) => "" + o + "\n\t" + n.Name));
-                foreach (MsgsFile m in files.Except(mresolved))
+                foreach (MsgFile m in files.Except(mresolved))
                 {
                     string md5 = null;
                     string typename = null;
@@ -295,7 +295,7 @@ namespace YAMLParser
                     Logger.LogDebug("ACTION: Rerunning sums for remaining " + actionFiles.Except(actionFilesResolved).Count() + " definitions");
                 }
             }
-            foreach (MsgsFile file in files)
+            foreach (MsgFile file in files)
             {
                 file.Write(outputdir);
             }
@@ -310,7 +310,7 @@ namespace YAMLParser
             File.WriteAllText(Path.Combine(outputdir, "MessageTypes.cs"), ToString().Replace("FauxMessages", "Messages"));
         }
 
-        public static void GenerateProject(List<MsgsFile> files, List<SrvFile> srvfiles)
+        public static void GenerateProject(List<MsgFile> files, List<SrvFile> srvfiles)
         {
             string[] lines = Templates.MessagesProj.Split('\n');
             string output = "";
@@ -406,7 +406,7 @@ namespace YAMLParser
                     backhalf = "\n}";
                 }
 
-                List<MsgsFile> everything = new List<MsgsFile>(msgsFiles);
+                List<MsgFile> everything = new List<MsgFile>(msgsFiles);
                 foreach (SrvFile sf in srvFiles)
                 {
                     everything.Add(sf.Request);

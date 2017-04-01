@@ -16,6 +16,7 @@ namespace Uml.Robotics.Ros.UnitTests
         {
             MessageTypeRegistry.Default.ParseAssemblyAndRegisterRosMessages(typeof(RosMessage).GetTypeInfo().Assembly);
             MessageTypeRegistry.Default.ParseAssemblyAndRegisterRosMessages(typeof(sensor_msgs.Image).GetTypeInfo().Assembly);
+            ServiceTypeRegistry.Default.ParseAssemblyAndRegisterRosServices(typeof(sensor_msgs.Image).GetTypeInfo().Assembly);
         }
 
         [Fact]
@@ -66,8 +67,7 @@ namespace Uml.Robotics.Ros.UnitTests
         public void CheckSrvMD5()
         {
             var srvSums = srvSumsLazy.Value;
-            var typeRegistry = MessageTypeRegistry.Default.TypeRegistry;
-            throw new Exception("Fixme: Service registry?");
+            var typeRegistry = ServiceTypeRegistry.Default.TypeRegistry;
             foreach (var key in srvSums.Keys.Where(typeRegistry.ContainsKey))
             {
                 var srv = RosService.Generate(key);

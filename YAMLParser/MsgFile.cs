@@ -15,17 +15,17 @@ namespace FauxMessages
         Response
     }
 
-    public class MsgsFile
+    public class MsgFile
     {
         private const string stfmat = "\tname: {0}\n\t\ttype: {1}\n\t\ttrostype: {2}\n\t\tisliteral: {3}\n\t\tisconst: {4}\n\t\tconstvalue: {5}\n\t\tisarray: {6}\n\t\tlength: {7}\n\t\tismeta: {8}";
 
         public class ResolvedMsg
         {
             public string OtherType;
-            public MsgsFile Definer;
+            public MsgFile Definer;
         }
 
-        internal MsgFileLocation msgfilelocation;
+        internal MsgFileLocation msgFileLocation;
 
         public static Dictionary<string, Dictionary<string, List<ResolvedMsg>>> resolver = new Dictionary<string, Dictionary<string, List<ResolvedMsg>>>();
 
@@ -54,12 +54,12 @@ namespace FauxMessages
         public bool meta;
         public ServiceMessageType serviceMessageType = ServiceMessageType.Not;
 
-        public MsgsFile(MsgFileLocation filename)
+        public MsgFile(MsgFileLocation filename)
             : this(filename, "")
         {
         }
 
-        public MsgsFile(MsgFileLocation filename, string extraindent)
+        public MsgFile(MsgFileLocation filename, string extraindent)
         {
             if (filename == null)
                 throw new ArgumentNullException(nameof(filename));
@@ -67,7 +67,7 @@ namespace FauxMessages
             if (!filename.Path.Contains(".msg"))
                 throw new ArgumentException($"'{filename}' is not a valid .msg file name.", nameof(filename));
 
-            this.msgfilelocation = filename;
+            this.msgFileLocation = filename;
             this.extraindent = extraindent;
 
             if (resolver == null)
@@ -96,28 +96,28 @@ namespace FauxMessages
             this.lines = lines.Where(s => s.Trim().Length > 0).ToList();
         }
 
-        public MsgsFile(MsgFileLocation filename, bool isrequest, List<string> lines)
-            : this(filename, isrequest, lines, string.Empty)
+        public MsgFile(MsgFileLocation filename, bool isRequest, List<string> lines)
+            : this(filename, isRequest, lines, string.Empty)
         {
         }
 
         //specifically for SRV halves
-        public MsgsFile(MsgFileLocation filename, bool isrequest, List<string> lines, string extraindent)
+        public MsgFile(MsgFileLocation filename, bool isRequest, List<string> lines, string extraIndent)
         {
-            this.msgfilelocation = filename;
-            this.extraindent = extraindent;
+            this.msgFileLocation = filename;
+            this.extraindent = extraIndent;
             this.lines = lines;
 
             if (resolver == null)
                 resolver = new Dictionary<string, Dictionary<string, List<ResolvedMsg>>>();
 
-            serviceMessageType = isrequest ? ServiceMessageType.Request : ServiceMessageType.Response;
-            //Parse The file name to get the classname
+            serviceMessageType = isRequest ? ServiceMessageType.Request : ServiceMessageType.Response;
+            // Parse The file name to get the classname
             classname = filename.basename;
-            //Parse for the Namespace
+            // Parse for the Namespace
             Namespace += "." + filename.package;
             Name = filename.package + "." + classname;
-            classname += (isrequest ? "Request" : "Response");
+            classname += (isRequest ? "Request" : "Response");
             Namespace = Namespace.Trim('.');
             Package = filename.package;
             if (!resolver.Keys.Contains(Package))
@@ -132,14 +132,14 @@ namespace FauxMessages
         /// <summary>
         /// Create a non SRV MsgsFile from a list of strings. Use suffix to prepend a string to the classname.
         /// </summary>
-        public MsgsFile (MsgFileLocation filename, List<string> lines, string suffix)
+        public MsgFile (MsgFileLocation filename, List<string> lines, string suffix)
         {
             if (filename == null)
             {
                 throw new ArgumentNullException(nameof(filename));
             }
 
-            this.msgfilelocation = filename;
+            this.msgFileLocation = filename;
 
             if (resolver == null)
                 resolver = new Dictionary<string, Dictionary<string, List<ResolvedMsg>>>();
@@ -182,7 +182,7 @@ namespace FauxMessages
             }
         }
 
-        public static void Resolve(MsgsFile parent, SingleType st)
+        public static void Resolve(MsgFile parent, SingleType st)
         {
             if (st.Type == null)
             {

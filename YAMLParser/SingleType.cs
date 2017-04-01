@@ -33,7 +33,7 @@ namespace FauxMessages
         public bool meta;
         public string output;
         public string rostype = "";
-        public MsgsFile Definer;
+        public MsgFile Definer;
 
         public SingleType(string s)
             : this("", s, "")
@@ -76,7 +76,7 @@ namespace FauxMessages
             }
         }
 
-        public static void Finalize(MsgsFile parent, SingleType thing)
+        public static void Finalize(MsgFile parent, SingleType thing)
         {
             string[] parts = thing.input.Split(' ');
             thing.rostype = parts[0];
@@ -90,7 +90,7 @@ namespace FauxMessages
             thing.Finalize(parent, parts, true);
         }
 
-        public void Finalize(MsgsFile parent, string[] s, bool isliteral)
+        public void Finalize(MsgFile parent, string[] s, bool isliteral)
         {
             backup = new string[s.Length];
             Array.Copy(s, backup, s.Length);
@@ -206,7 +206,7 @@ namespace FauxMessages
             }
         }
 
-        public void refinalize(MsgsFile parent, string REALTYPE)
+        public void refinalize(MsgFile parent, string REALTYPE)
         {
             bool isconst = false;
             Type = REALTYPE;

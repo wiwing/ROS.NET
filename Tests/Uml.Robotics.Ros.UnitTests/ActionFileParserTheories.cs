@@ -13,43 +13,43 @@ namespace Uml.Robotics.Ros.UnitTests
         public StaticResolverFixture()
         {
             // Add stubs of standard messages to resolver
-            var msgsStub = new MsgsFile(new MsgFileLocation(@"common_msgs\std_msgs\msg\Header.msg", "."),
+            var msgsStub = new MsgFile(new MsgFileLocation(@"common_msgs\std_msgs\msg\Header.msg", "."),
                 new List<string> { "uint32 seq", "time stamp", "string frame_id" }, "");
             msgsStub.ParseAndResolveTypes();
 
-            msgsStub = new MsgsFile(new MsgFileLocation(@"common_msgs\std_msgs\msg\String.msg", "."),
+            msgsStub = new MsgFile(new MsgFileLocation(@"common_msgs\std_msgs\msg\String.msg", "."),
                 new List<string> { "string data" }, "");
             msgsStub.ParseAndResolveTypes();
 
-            msgsStub = new MsgsFile(new MsgFileLocation(@"common_msgs\std_msgs\msg\Duration.msg", "."),
+            msgsStub = new MsgFile(new MsgFileLocation(@"common_msgs\std_msgs\msg\Duration.msg", "."),
                 new List<string> { "duration data" }, "");
             msgsStub.ParseAndResolveTypes();
 
-            msgsStub = new MsgsFile(new MsgFileLocation(@"common_msgs\trajectory_msgs\msg\JointTrajectoryPoint.msg", "."),
+            msgsStub = new MsgFile(new MsgFileLocation(@"common_msgs\trajectory_msgs\msg\JointTrajectoryPoint.msg", "."),
                 new List<string> { "float64[] positions", "float64[] velocities", "float64[] accelerations", "float64[] effort",
                 "duration time_from_start"}, "");
             msgsStub.ParseAndResolveTypes();
 
-            msgsStub = new MsgsFile(new MsgFileLocation(@"common_msgs\trajectory_msgs\msg\JointTrajectory.msg", "."),
+            msgsStub = new MsgFile(new MsgFileLocation(@"common_msgs\trajectory_msgs\msg\JointTrajectory.msg", "."),
                 new List<string> { "std_msgs/Header header", "string[] joint_names", "JointTrajectoryPoint[] points" }, "");
             msgsStub.ParseAndResolveTypes();
 
-            msgsStub = new MsgsFile(new MsgFileLocation(@"common_msgs\control_msgs\msg\JointTolerance.msg", "."),
+            msgsStub = new MsgFile(new MsgFileLocation(@"common_msgs\control_msgs\msg\JointTolerance.msg", "."),
                 new List<string> { "string name", "float64 position", "float64 velocity", "float64 acceleration" }, "");
             msgsStub.ParseAndResolveTypes();
 
-            msgsStub = new MsgsFile(new MsgFileLocation(@"common_msgs\actionlib_msgs\GoalID.msg", "."),
+            msgsStub = new MsgFile(new MsgFileLocation(@"common_msgs\actionlib_msgs\GoalID.msg", "."),
                 new List<string> { "time stamp", "string id" }, "");
             msgsStub.ParseAndResolveTypes();
 
-            msgsStub = new MsgsFile(new MsgFileLocation(@"common_msgs\actionlib_msgs\GoalStatus.msg", "."),
+            msgsStub = new MsgFile(new MsgFileLocation(@"common_msgs\actionlib_msgs\GoalStatus.msg", "."),
                 new List<string> { "uint8 PENDING         = 0", "uint8 ACTIVE          = 1",
                 "uint8 PREEMPTED       = 2", "uint8 SUCCEEDED       = 3", "uint8 ABORTED         = 4 ",
                 "uint8 REJECTED        = 5", "uint8 PREEMPTING      = 6 ", "uint8 RECALLING       = 7 ",
                 "uint8 RECALLED        = 8", "uint8 LOST            = 9", "GoalID goal_id", "uint8 status", "string text" }, "");
             msgsStub.ParseAndResolveTypes();
 
-            msgsStub = new MsgsFile(new MsgFileLocation(@"common_msgs\actionlib_msgs\GoalStatusArray.msg", "."),
+            msgsStub = new MsgFile(new MsgFileLocation(@"common_msgs\actionlib_msgs\GoalStatusArray.msg", "."),
                 new List<string> { "Header header", "GoalStatus[] status_list" }, "");
             msgsStub.ParseAndResolveTypes();
         }

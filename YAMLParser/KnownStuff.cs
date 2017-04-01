@@ -73,7 +73,7 @@ namespace FauxMessages
             }
         }
 
-        public static SingleType WhatItIs(MsgsFile parent, string s, string extraindent)
+        public static SingleType WhatItIs(MsgFile parent, string s, string extraindent)
         {
             string[] pieces = s.Split('/');
             string package = null;
@@ -88,7 +88,7 @@ namespace FauxMessages
             return st;
         }
 
-        public static void WhatItIs(MsgsFile parent, SingleType t)
+        public static void WhatItIs(MsgFile parent, SingleType t)
         {
             if (t.IsPrimitve)
             {

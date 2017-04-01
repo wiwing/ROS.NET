@@ -334,54 +334,62 @@ namespace Uml.Robotics.Ros
         /// <param name="options"> options? </param>
         internal static void Init(IDictionary<string, string> remapping_args, string name, int options)
         {
-            // if we haven't sunk our fangs into the processes jugular so we can tell
-            //    when it has stopped kicking, do so now
-            if (!atexit_registered)
+            lock (typeof(ROS))
             {
-                atexit_registered = true;
-                Process.GetCurrentProcess().EnableRaisingEvents = true;
-                Process.GetCurrentProcess().Exited += (o, args) =>
+                // if we haven't sunk our fangs into the processes jugular so we can tell
+                //    when it has stopped kicking, do so now
+                if (!atexit_registered)
                 {
-                    _shutdown();
-                    waitForShutdown();
-                };
-                Console.CancelKeyPress += (o, args) =>
-                {
-                    _shutdown();
-                    waitForShutdown();
-                    args.Cancel = true;
-                };
-            }
-
-            // this needs to exist for connections and stuff to happen
-            if (GlobalCallbackQueue == null)
-            {
-                GlobalCallbackQueue = new CallbackQueue();
-            }
-
-            // kick the tires and light the fires
-            if (!initialized)
-            {
-                // Load RosMessages from MessageBase assembly
-                MessageTypeRegistry.Default.ParseAssemblyAndRegisterRosMessages(typeof(RosMessage).GetTypeInfo().Assembly);
-                // Load RosMessages from all assemblies that depend on MessageBase
-                var candidates = MessageTypeRegistry.Default.GetCandidateAssemblies("Uml.Robotics.Ros.MessageBase");
-                foreach (var assembly in candidates)
-                {
-                    Logger.LogDebug($"Parse assembly: {assembly.Location}");
-                    MessageTypeRegistry.Default.ParseAssemblyAndRegisterRosMessages(assembly);
+                    atexit_registered = true;
+                    Process.GetCurrentProcess().EnableRaisingEvents = true;
+                    Process.GetCurrentProcess().Exited += (o, args) =>
+                    {
+                        _shutdown();
+                        waitForShutdown();
+                    };
+                    Console.CancelKeyPress += (o, args) =>
+                    {
+                        _shutdown();
+                        waitForShutdown();
+                        args.Cancel = true;
+                    };
                 }
 
-                init_options = options;
-                _ok = true;
-                network.init(remapping_args);
-                master.init(remapping_args);
-                this_node.Init(name, remapping_args, options);
-                Param.init(remapping_args);
-                SimTime.instance.SimTimeEvent += SimTimeCallback;
-                initialized = true;
-                GlobalNodeHandle = new NodeHandle(this_node.Namespace, remapping_args);
-                RosOutAppender.Instance.start();
+                // this needs to exist for connections and stuff to happen
+                if (GlobalCallbackQueue == null)
+                {
+                    GlobalCallbackQueue = new CallbackQueue();
+                }
+
+                // kick the tires and light the fires
+                if (!initialized)
+                {
+                    var msgRegistry = MessageTypeRegistry.Default;
+                    var srvRegistry = ServiceTypeRegistry.Default;
+
+                    // Load RosMessages from MessageBase assembly
+                    msgRegistry.ParseAssemblyAndRegisterRosMessages(typeof(RosMessage).GetTypeInfo().Assembly);
+                    
+                    // Load RosMessages from all assemblies that depend on MessageBase
+                    var candidates = MessageTypeRegistry.GetCandidateAssemblies("Uml.Robotics.Ros.MessageBase");
+                    foreach (var assembly in candidates)
+                    {
+                        Logger.LogDebug($"Parse assembly: {assembly.Location}");
+                        msgRegistry.ParseAssemblyAndRegisterRosMessages(assembly);
+                        srvRegistry.ParseAssemblyAndRegisterRosServices(assembly);
+                    }
+
+                    init_options = options;
+                    _ok = true;
+                    network.init(remapping_args);
+                    master.init(remapping_args);
+                    this_node.Init(name, remapping_args, options);
+                    Param.init(remapping_args);
+                    SimTime.instance.SimTimeEvent += SimTimeCallback;
+                    initialized = true;
+                    GlobalNodeHandle = new NodeHandle(this_node.Namespace, remapping_args);
+                    RosOutAppender.Instance.start();
+                }
             }
         }
 
