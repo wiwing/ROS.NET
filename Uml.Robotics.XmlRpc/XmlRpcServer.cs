@@ -335,10 +335,10 @@ namespace Uml.Robotics.XmlRpc
             if (methodNameRoot != SYSTEM_MULTICALL) return false;
 
             // There ought to be 1 parameter, an array of structs
-            if (parms.Length != 1 || parms[0].Type != XmlRpcType.Array)
+            if (parms.Count != 1 || parms[0].Type != XmlRpcType.Array)
                 throw new XmlRpcException(SYSTEM_MULTICALL + ": Invalid argument (expected an array)");
 
-            int nc = parms[0].Length;
+            int nc = parms[0].Count;
             result.SetArray(nc);
 
             for (int i = 0; i < nc; ++i)

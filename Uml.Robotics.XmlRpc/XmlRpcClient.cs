@@ -430,7 +430,7 @@ namespace Uml.Robotics.XmlRpc
                 body += PARAMS_TAG;
                 if (parameters.Type == XmlRpcType.Array)
                 {
-                    for (int i = 0; i < parameters.Length; ++i)
+                    for (int i = 0; i < parameters.Count; ++i)
                     {
                         body += PARAM_TAG;
                         body += parameters[i].ToXml();

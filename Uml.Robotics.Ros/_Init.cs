@@ -408,7 +408,7 @@ namespace Uml.Robotics.Ros
         {
             int num_params = 0;
             if (parms.Type == XmlRpcType.Array)
-                num_params = parms.Size;
+                num_params = parms.Count;
             if (num_params > 1)
             {
                 string reason = parms[1].GetString();

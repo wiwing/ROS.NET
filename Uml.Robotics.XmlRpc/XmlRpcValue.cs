@@ -74,7 +74,7 @@ namespace Uml.Robotics.XmlRpc
             Set(value);
         }
 
-        public int Length
+        public int Count
         {
             get
             {
@@ -89,10 +89,7 @@ namespace Uml.Robotics.XmlRpc
                     case XmlRpcType.Struct:
                         return GetStruct().Count;
                     default:
-                        XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.DEBUG, "Trying to get size of value without size (type:{0})", type);
-                        throw new XmlRpcException(
-                            $"Invalid or unkown type: {type}. Expected String, Base64, Array or Struct"
-                        );
+                        return 0;
                 }
             }
         }
@@ -110,24 +107,6 @@ namespace Uml.Robotics.XmlRpc
         public bool IsArray
         {
             get { return type == XmlRpcType.Array; }
-        }
-
-        public int Size
-        {
-            get
-            {
-                switch (type)
-                {
-                    case XmlRpcType.Array:
-                        return this.GetArray().Length;
-                    case XmlRpcType.String:
-                        return this.GetString().Length;
-                    case XmlRpcType.Struct:
-                        return this.GetStruct().Count;
-                    default:
-                        return 0;
-                }
-            }
         }
 
         public XmlRpcValue this[int index]
@@ -167,8 +146,12 @@ namespace Uml.Robotics.XmlRpc
                 Set(index, (double)value);
             else if (value is bool)
                 Set(index, (bool)value);
+            else if (value is DateTime)
+                Set(index, (DateTime)value);
+            else if (value is byte[])
+                Set(index, (byte[])value);
             else
-                throw new XmlRpcException($"Invalid type {type} or error while parsing {value.ToString()} as {type}");
+                throw new XmlRpcException($"Cannot set from object {value}.");
         }
 
         public override bool Equals(object obj)
@@ -416,21 +399,27 @@ namespace Uml.Robotics.XmlRpc
             EnsureArraySize(elementCount);
         }
 
-        public void Set(string name, string value) => this[name].Set(value);
-        public void Set(string name, int value) => this[name].Set(value);
-        public void Set(string name, bool value) => this[name].Set(value);
-        public void Set(string name, double value) => this[name].Set(value);
-        public void Set(string name, byte[] value) => this[name].Set(value);
-        public void Set(string name, XmlRpcValue value) => this[name].Set(value);
+        public void Set(string name, string value) => Get(name, true).Set(value);
+        public void Set(string name, int value) => Get(name, true).Set(value);
+        public void Set(string name, bool value) => Get(name, true).Set(value);
+        public void Set(string name, double value) => Get(name, true).Set(value);
+        public void Set(string name, byte[] value) => Get(name, true).Set(value);
+        public void Set(string name, DateTime value) => Get(name, true).Set(value);
+        public void Set(string name, XmlRpcValue value) => Get(name, true).Set(value);
 
         public void Set(int index, string value) => this[index].Set(value);
         public void Set(int index, int value) => this[index].Set(value);
         public void Set(int index, bool value) => this[index].Set(value);
         public void Set(int index, double value) => this[index].Set(value);
         public void Set(int index, byte[] value) => this[index].Set(value);
+        public void Set(int index, DateTime value) => this[index].Set(value);
         public void Set(int index, XmlRpcValue value) => this[index].Set(value);
 
-        public IDictionary<string, XmlRpcValue> GetStruct() => (IDictionary<string, XmlRpcValue>)value;
+        public IDictionary<string, XmlRpcValue> GetStruct()
+        {
+            return (IDictionary<string, XmlRpcValue>)value;
+        }
+
         public XmlRpcValue[] GetArray() => (XmlRpcValue[])value;
         public int GetInt() => (int)value;
         public string GetString() => (string)value;
@@ -475,10 +464,22 @@ namespace Uml.Robotics.XmlRpc
 
         private XmlRpcValue Get(int index) => this.GetArray()[index];
 
-        private XmlRpcValue Get(string key)
+        private XmlRpcValue Get(string key, bool createMissing = false)
         {
+            if (value == null)
+            {
+                value = new Dictionary<string, XmlRpcValue>();
+                type = XmlRpcType.Struct;
+            }
             var s = this.GetStruct();
-            return s.ContainsKey(key) ? s[key] : null;
+            if (!s.ContainsKey(key))
+            {
+                if (createMissing)
+                    s[key] = new XmlRpcValue();
+                else
+                    return null;
+            }
+            return s[key];
         }
     }
 }

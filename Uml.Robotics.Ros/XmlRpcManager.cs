@@ -133,7 +133,7 @@ namespace Uml.Robotics.Ros
         {
             if (response.Type != XmlRpcType.Array)
                 return validateFailed(method, "didn't return an array -- {0}", response);
-            if (response.Size != 3)
+            if (response.Count != 3)
                 return validateFailed(method, "didn't return a 3-element array -- {0}", response);
             if (response[0].Type != XmlRpcType.Int)
                 return validateFailed(method, "didn't return an int as the 1st element -- {0}", response);
@@ -151,7 +151,7 @@ namespace Uml.Robotics.Ros
                 case XmlRpcType.Array:
                     {
                         payload.SetArray(0);
-                        for (int i = 0; i < response[2].Length; i++)
+                        for (int i = 0; i < response[2].Count; i++)
                         {
                             payload.Set(i, response[2][i]);
                         }

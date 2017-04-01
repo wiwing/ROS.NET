@@ -198,7 +198,7 @@ namespace Uml.Robotics.Ros
                     curr_info.Set(2, "o");
                     curr_info.Set(3, "TCPROS");
                     curr_info.Set(4, Name);
-                    info.Set(info.Size, curr_info);
+                    info.Set(info.Count, curr_info);
                 }
             }
         }

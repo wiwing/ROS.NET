@@ -58,7 +58,7 @@ namespace Uml.Robotics.Ros
                 return false;
 
             topicss.Clear();
-            for (int i = 0; i < payload.Size; i++)
+            for (int i = 0; i < payload.Count; i++)
                 topicss.Add(new TopicInfo(payload[i][0].GetString(), payload[i][1].GetString()));
             topics = topicss.ToArray();
             return true;
@@ -79,12 +79,12 @@ namespace Uml.Robotics.Ros
             {
                 return false;
             }
-            for (int i = 0; i < payload.Size; i++)
+            for (int i = 0; i < payload.Count; i++)
             {
-                for (int j = 0; j < payload[i].Size; j++)
+                for (int j = 0; j < payload[i].Count; j++)
                 {
                     XmlRpcValue val = payload[i][j][1];
-                    for (int k = 0; k < val.Size; k++)
+                    for (int k = 0; k < val.Count; k++)
                     {
                         string name = val[k].GetString();
                         names.Add(name);
@@ -178,7 +178,7 @@ namespace Uml.Robotics.Ros
                     {
                         if (client.IsConnected)
                         {
-                            if (response != null && response.IsArray && response.Length >= 2)
+                            if (response != null && response.IsArray && response.Count >= 2)
                                 Logger.LogError("Execute failed: return={0}, desc={1}", response[0].GetInt(), response[1].GetString());
                             else
                                 Logger.LogError("response type == " + (response != null ? response.Type.ToString() : "null"));

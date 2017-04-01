@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Uml.Robotics.XmlRpc;
 using Xunit;
@@ -20,10 +21,10 @@ namespace UnitTests
             v[4].Set(now);
             v[5].Set("Test String");
 
-            var serialized = v.ToXml();
+            var xml = v.ToXml();
 
             var w = new XmlRpcValue();
-            w.FromXml(serialized);
+            w.FromXml(xml);
 
             Assert.Equal(XmlRpcType.Int, w[0].Type);
             Assert.Equal(v[0].GetInt(), w[0].GetInt());
@@ -48,6 +49,53 @@ namespace UnitTests
             Assert.Equal(XmlRpcType.String, w[5].Type);
             Assert.Equal(v[5].GetString(), w[5].GetString());
             Assert.Equal("Test String", w[5].GetString());
+        }
+
+        [Fact]
+        public void CheckStructRoundTrip()
+        {
+            var today = DateTime.Today;
+            var v = new XmlRpcValue();
+            v.Set("memberInt", 789);
+            v.Set("memberBool", true);
+            v.Set("memberDouble", 765.678);
+            v.Set("memberBinary", new byte[] { 0, 2, 4, 6, 8, 10, 12 });
+            v.Set("memberString", "qwerty");
+            v.Set("memberDate", today);
+
+            var innerArray = new XmlRpcValue(1, 2.0, "three", today);
+            v.Set("memberArray", innerArray);
+
+            var innerStruct = new XmlRpcValue();
+            innerStruct.Copy(v);
+            v.Set("memberStruct", innerStruct);
+
+            var xml = v.ToXml();
+
+            var w = new XmlRpcValue();
+            w.FromXml(xml);
+            Assert.Equal(8, w.Count);
+
+            Assert.Equal(XmlRpcType.Struct, w.Type);
+            Assert.True(w.HasMember("memberInt"));            
+            Assert.True(w.HasMember("memberBool"));
+            Assert.True(w.HasMember("memberDouble"));
+            Assert.True(w.HasMember("memberBinary"));
+            Assert.True(w.HasMember("memberString"));
+            Assert.True(w.HasMember("memberDate"));
+            Assert.True(w.HasMember("memberArray"));
+            Assert.True(w.HasMember("memberStruct"));
+
+            Assert.Equal(XmlRpcType.Int, w["memberInt"].Type);
+            Assert.Equal(XmlRpcType.Boolean, w["memberBool"].Type);
+            Assert.Equal(XmlRpcType.Double, w["memberDouble"].Type);
+            Assert.Equal(XmlRpcType.Base64, w["memberBinary"].Type);
+            Assert.Equal(XmlRpcType.String, w["memberString"].Type);
+            Assert.Equal(XmlRpcType.DateTime, w["memberDate"].Type);
+            Assert.Equal(XmlRpcType.Array, w["memberArray"].Type);
+            Assert.Equal(XmlRpcType.Struct, w["memberStruct"].Type);
+            Assert.Equal(4, w["memberArray"].Count);
+            Assert.Equal(7, w["memberStruct"].Count);
         }
     }
 }

@@ -433,7 +433,7 @@ namespace Uml.Robotics.Ros
 
         public bool requestTopic(string topic, XmlRpcValue protos, ref XmlRpcValue ret)
         {
-            for (int proto_idx = 0; proto_idx < protos.Size; proto_idx++)
+            for (int proto_idx = 0; proto_idx < protos.Count; proto_idx++)
             {
                 XmlRpcValue proto = protos[proto_idx];
                 if (proto.Type != XmlRpcType.Array)
@@ -481,16 +481,16 @@ namespace Uml.Robotics.Ros
         {
             string uri = XmlRpcManager.Instance.Uri;
 
-            XmlRpcValue args = new XmlRpcValue(this_node.Name, s.name, datatype, uri);
-            XmlRpcValue result = new XmlRpcValue();
-            XmlRpcValue payload = new XmlRpcValue();
+            var args = new XmlRpcValue(this_node.Name, s.name, datatype, uri);
+            var result = new XmlRpcValue();
+            var payload = new XmlRpcValue();
             if (!master.execute("registerSubscriber", args, result, payload, true))
             {
                 Logger.LogError("RPC \"registerSubscriber\" for service " + s.name + " failed.");
                 return false;
             }
-            List<string> pub_uris = new List<string>();
-            for (int i = 0; i < payload.Size; i++)
+            var pub_uris = new List<string>();
+            for (int i = 0; i < payload.Count; i++)
             {
                 XmlRpcValue load = payload[i];
                 string pubed = load.GetString();
@@ -680,7 +680,7 @@ namespace Uml.Robotics.Ros
         {
             //XmlRpcValue parm = XmlRpcValue.Create(ref parms);
             List<string> pubs = new List<string>();
-            for (int idx = 0; idx < parm[2].Size; idx++)
+            for (int idx = 0; idx < parm[2].Count; idx++)
                 pubs.Add(parm[2][idx].GetString());
             if (pubUpdate(parm[1].GetString(), pubs))
                 XmlRpcManager.Instance.responseInt(1, "", 0)(result);

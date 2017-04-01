@@ -101,7 +101,7 @@ namespace Uml.Robotics.Ros
                     curr_info.Set(4, name);
                     //Logger.LogDebug("PUB curr_info DUMP:\n\t");
                     //curr_info.Dump();
-                    info.Set(info.Size, curr_info);
+                    info.Set(info.Count, curr_info);
                 }
                 //Logger.LogDebug("SUB: outgoing info is of type: " + info.Type + " and has size: " + info.Size);
             }
@@ -285,7 +285,7 @@ namespace Uml.Robotics.Ros
                 string peer_host = conn.client.Host;
                 int peer_port = conn.client.Port;
                 string xmlrpc_uri = "http://" + peer_host + ":" + peer_port + "/";
-                if (proto.Size == 0)
+                if (proto.Count == 0)
                 {
                     Logger.LogDebug("Couldn't agree on any common protocols with [" + xmlrpc_uri + "] for topic [" + name +
                                 "]");
@@ -303,7 +303,7 @@ namespace Uml.Robotics.Ros
                 }
                 else if (proto_name == "TCPROS")
                 {
-                    if (proto.Size != 3 || proto[1].Type != XmlRpcType.String || proto[2].Type != XmlRpcType.Int)
+                    if (proto.Count != 3 || proto[1].Type != XmlRpcType.String || proto[2].Type != XmlRpcType.Int)
                     {
                         Logger.LogWarning("TcpRos Publisher should implement string, int as parameter");
                         return;
