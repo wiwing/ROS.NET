@@ -415,6 +415,13 @@ namespace Uml.Robotics.XmlRpc
         public void Set(int index, DateTime value) => this[index].Set(value);
         public void Set(int index, XmlRpcValue value) => this[index].Set(value);
 
+        public static explicit operator bool(XmlRpcValue value) => value.GetBool();
+        public static explicit operator int(XmlRpcValue value) => value.GetInt();
+        public static explicit operator double(XmlRpcValue value) => value.GetDouble();
+        public static explicit operator byte[](XmlRpcValue value) => value.GetBinary();
+        public static explicit operator DateTime (XmlRpcValue value) => value.GetDateTime();
+        public static explicit operator string(XmlRpcValue value) => value.GetString();
+
         public IDictionary<string, XmlRpcValue> GetStruct()
         {
             return (IDictionary<string, XmlRpcValue>)value;
