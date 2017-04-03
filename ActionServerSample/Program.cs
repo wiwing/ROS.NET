@@ -13,6 +13,8 @@ namespace ActionServerSample
         {
             Console.WriteLine("Start ROS");
             ROS.Init(new string[0], "ActionServer");
+            var asyncSpinner = new AsyncSpinner();
+            asyncSpinner.Start();
             NodeHandle serverNodeHandle = new NodeHandle();
             Console.WriteLine("Create server");
             var actionServer = new ActionServer<Messages.actionlib.TestGoal, Messages.actionlib.TestResult,

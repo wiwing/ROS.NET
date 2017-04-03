@@ -54,7 +54,8 @@ namespace ActionClientSample
         {
             Console.WriteLine("Start ROS");
             ROS.Init(new string[0], "ActionClient");
-
+            var asyncSpinner = new AsyncSpinner();
+            asyncSpinner.Start();
             NodeHandle clientNodeHandle = ROS.GlobalNodeHandle;
 
             Console.WriteLine("Create client");

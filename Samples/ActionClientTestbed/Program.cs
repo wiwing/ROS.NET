@@ -16,6 +16,7 @@ namespace ActionClientTestbed
         private int receivedFeedback = 0;
         private ActionClient<Messages.actionlib.TestGoal, Messages.actionlib.TestResult, Messages.actionlib.TestFeedback> actionClient;
         private List<TestParameters> TestParams = new List<TestParameters>();
+        private SingleThreadSpinner spinner;
 
         static void Main(string[] args)
         {
@@ -34,23 +35,21 @@ namespace ActionClientTestbed
             Console.WriteLine("Start ROS");
             ROS.Init(new string[0], "ActionClient");
 
-            NodeHandle clientNodeHandle = ROS.GlobalNodeHandle;
-            //var asyncSpinner = new AsyncSpinner(ROS.GlobalCallbackQueue);
-            //asyncSpinner.Start();
+            NodeHandle clientNodeHandle = new NodeHandle();
+            spinner = new SingleThreadSpinner(ROS.GlobalCallbackQueue);
 
             Console.WriteLine("Create client");
             actionClient = new ActionClient<Messages.actionlib.TestGoal, Messages.actionlib.TestResult,
                 Messages.actionlib.TestFeedback>("test_action", clientNodeHandle);
 
             Console.WriteLine("Wait for client and server to negotiate connection");
-            bool started = actionClient.WaitForActionServerToStart(new TimeSpan(0, 0, 3));
+            bool started = actionClient.WaitForActionServerToStartSpinning(new TimeSpan(0, 0, 3), spinner);
 
             TestParams.Add(new TestParameters("Reject Goal", GoalStatus.REJECTED, 0, false, null));
             TestParams.Add(new TestParameters("Cancel not yet accepted goal", GoalStatus.RECALLED, 0, true, null));
             TestParams.Add(new TestParameters("Cancel accepted goal", GoalStatus.PREEMPTED, 0, true, null));
             TestParams.Add(new TestParameters("Abort Goal", GoalStatus.ABORTED, 20, false, null));
             TestParams.Add(new TestParameters("Get Result 123", GoalStatus.SUCCEEDED, 20, false, 123));
-
 
             bool testError = false;
             if (started)
@@ -161,13 +160,14 @@ namespace ActionClientTestbed
         {
             var timeSpan = new TimeSpan(0, 0, timeOutInSeconds);
             var start = DateTime.Now;
-            while (DateTime.Now - start < timeSpan)
+            while ((DateTime.Now - start < timeSpan) && ROS.ok)
             {
                 if ((testState == TestState.Succeeded) && (receivedFeedback == expectedFeedback))
                 {
                     break;
                 }
                 Thread.Sleep(1);
+                spinner.SpinOnce();
             }
         }
 
