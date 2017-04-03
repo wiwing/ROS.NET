@@ -7,6 +7,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
+    /// <summary>
+    /// A callback queue which runs a background thread for calling callbacks. It does not need a spinner. The queue is disabled
+    /// by default. The background thread is created when the queue gets enabled.
+    /// </summary>
     public class CallbackQueueThreaded : ICallbackQueue, IDisposable
     {
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<CallbackQueueThreaded>();

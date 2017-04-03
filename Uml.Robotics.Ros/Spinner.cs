@@ -10,6 +10,20 @@ namespace Uml.Robotics.Ros
         ICallbackQueue callbackQueue;
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<SingleThreadSpinner>();
 
+
+        /// <summary>
+        /// Creats a spinner for the global ROS callback queue
+        /// </summary>
+        public SingleThreadSpinner()
+        {
+            this.callbackQueue = ROS.GlobalCallbackQueue;
+        }
+
+
+        /// <summary>
+        /// Creates a spinner for the given callback queue
+        /// </summary>
+        /// <param name="callbackQueue"></param>
         public SingleThreadSpinner(ICallbackQueue callbackQueue)
         {
             this.callbackQueue = callbackQueue;
@@ -30,7 +44,9 @@ namespace Uml.Robotics.Ros
             while (ROS.ok)
             {
                 DateTime begin = DateTime.Now;
-                if (!callbackQueue.CallAvailable(ROS.WallDuration) || (token?.IsCancellationRequested ?? false))
+                var notCallbackAvail = !callbackQueue.CallAvailable(ROS.WallDuration);
+                var cancelReq = (token?.IsCancellationRequested ?? false);
+                if ( notCallbackAvail || cancelReq )
                     break;
                 DateTime end = DateTime.Now;
                 if (wallDuration.Subtract(end.Subtract(begin)).Ticks > 0)
@@ -72,6 +88,20 @@ namespace Uml.Robotics.Ros
         private CancellationTokenSource tokenSource = new CancellationTokenSource();
         private CancellationToken token;
 
+
+        /// <summary>
+        /// Creates a spinner for the global ROS callback queue
+        /// </summary>
+        public AsyncSpinner()
+        {
+            this.callbackQueue = ROS.GlobalCallbackQueue;
+        }
+
+
+        /// <summary>
+        /// Create a spinner for the given callback queue
+        /// </summary>
+        /// <param name="callbackQueue"></param>
         public AsyncSpinner(ICallbackQueue callbackQueue)
         {
             this.callbackQueue = callbackQueue;

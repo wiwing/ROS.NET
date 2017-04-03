@@ -23,7 +23,7 @@ namespace Uml.Robotics.Ros
 
         public static TimerManager timer_manager = new TimerManager();
 
-        public static CallbackQueue GlobalCallbackQueue;
+        public static ICallbackQueue GlobalCallbackQueue;
         internal static bool initialized, started, atexit_registered, _ok;
 
         internal static bool _shutting_down, shutdown_requested;
@@ -438,6 +438,7 @@ namespace Uml.Robotics.Ros
             }
         }
 
+
         /// <summary>
         ///     Finishes intialization This is called by the first NodeHandle when it initializes
         /// </summary>
@@ -464,7 +465,6 @@ namespace Uml.Robotics.Ros
                 XmlRpcManager.Instance.Start();
 
                 //Time.Init();
-                GlobalCallbackQueue.Enable();
                 shutdown_requested = false;
                 _shutting_down = false;
                 started = true;

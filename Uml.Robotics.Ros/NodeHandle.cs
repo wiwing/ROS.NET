@@ -74,14 +74,14 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        ///     Creates a new nodehandle
+        ///     Creates a new nodehandle using the default ROS callback queue
         /// </summary>
         public NodeHandle() : this(this_node.Namespace, null)
         {
         }
 
         /// <summary>
-        ///     Creates a new nodehandle with a given CallbackQueue
+        ///     Creates a new nodehandle using the given callback queue
         /// </summary>
         public NodeHandle(ICallbackQueue callbackQueue) : this(this_node.Namespace, null)
         {

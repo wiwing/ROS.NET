@@ -138,7 +138,8 @@ namespace Uml.Robotics.Ros.ActionLib
 
 
         /// <summary>
-        /// Waits for the ActionServer to connect to this client
+        /// Waits for the ActionServer to connect to this client. Note: This expects the callback queue to be threaded, it does
+        /// not spin the callbacks.
         /// Often, it can take a second for the action server & client to negotiate
         /// a connection, thus, risking the first few goals to be dropped.This call lets
         /// the user wait until the network connection to the server is negotiated
@@ -153,7 +154,6 @@ namespace Uml.Robotics.Ros.ActionLib
         public bool WaitForActionServerToStart(TimeSpan timeout)
         {
             var tic = DateTime.Now;
-            //var spinner = new SingleThreadSpinner();
             while (ROS.ok) {
                 if (IsServerConnected())
                 {
@@ -168,8 +168,37 @@ namespace Uml.Robotics.Ros.ActionLib
                         return false;
                     }
                 }
+                Thread.Sleep(1);
+            }
 
-                // ToDo: ROS.spinOnce not implemented?
+            return false;
+        }
+
+
+        /// <summary>
+        /// Waits for the ActionServer to connect to this client. Spins the callbacks.
+        /// <seealso cref="WaitForActionServerToStart"/>
+        /// </summary>
+        public bool WaitForActionServerToStartSpinning(TimeSpan timeout, SingleThreadSpinner spinner)
+        {
+            var tic = DateTime.Now;
+            while (ROS.ok)
+            {
+                if (IsServerConnected())
+                {
+                    return true;
+                }
+
+                if (timeout != null)
+                {
+                    var toc = DateTime.Now;
+                    if (toc - tic > timeout)
+                    {
+                        return false;
+                    }
+                }
+
+                spinner.SpinOnce();
                 Thread.Sleep(1);
             }
 
