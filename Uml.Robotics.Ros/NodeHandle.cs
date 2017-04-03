@@ -8,7 +8,7 @@ namespace Uml.Robotics.Ros
     {
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<NodeHandle>();
         private string Namespace = "", UnresolvedNamespace = "";
-        private CallbackQueue _callback;
+        private ICallbackQueue _callback;
         private bool _ok = true;
         private NodeHandleBackingCollection collection = new NodeHandleBackingCollection();
         private int nh_refcount;
@@ -74,17 +74,25 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        ///     Creates a new nodehandle
+        ///     Creates a new nodehandle using the default ROS callback queue
         /// </summary>
         public NodeHandle() : this(this_node.Namespace, null)
         {
         }
 
         /// <summary>
+        ///     Creates a new nodehandle using the given callback queue
+        /// </summary>
+        public NodeHandle(ICallbackQueue callbackQueue) : this(this_node.Namespace, null)
+        {
+            Callback = callbackQueue;
+        }
+
+        /// <summary>
         ///     gets/sets this nodehandle's callbackqueue
         ///     get : if the private _callback is null it is set to ROS.GlobalCallbackQueue
         /// </summary>
-        public CallbackQueue Callback
+        public ICallbackQueue Callback
         {
             get
             {
@@ -273,7 +281,7 @@ namespace Uml.Robotics.Ros
             }
             SubscribeOptions<M> ops = new SubscribeOptions<M>(topic, queue_size, cb.SendEvent)
             {callback_queue = _callback, allow_concurrent_callbacks=allow_concurrent_callbacks};
-            ops.callback_queue.addCallback(cb);
+            ops.callback_queue.AddCallback(cb);
             return subscribe(ops);
         }
 

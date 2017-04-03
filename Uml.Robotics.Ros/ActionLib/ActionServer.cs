@@ -75,7 +75,7 @@ namespace Uml.Robotics.Ros.ActionLib
         {
             if (spinCallbackId != 0)
             {
-                ROS.GlobalCallbackQueue.removeByID(spinCallbackId);
+                ROS.GlobalCallbackQueue.RemoveById(spinCallbackId);
                 spinCallbackId = 0;
             }
             resultPublisher.shutdown();
@@ -121,7 +121,7 @@ namespace Uml.Robotics.Ros.ActionLib
                 statusInterval = new TimeSpan(0, 0, split.seconds, split.milliseconds);
                 nextStatusPublishTime = DateTime.Now + statusInterval;
                 spinCallbackId = (ulong)(DateTime.Now.Ticks + (new Random()).Next());
-                ROS.GlobalCallbackQueue.addCallback(new SpinCallbackImplementation(SpinCallback), spinCallbackId);
+                ROS.GlobalCallbackQueue.AddCallback(new SpinCallbackImplementation(SpinCallback), spinCallbackId);
             }
 
             // Message consumers

@@ -7,11 +7,13 @@ using Messages;
 using Messages.std_msgs;
 using Uml.Robotics.Ros;
 using tf = Uml.Robotics.Ros.Transforms;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros.Samples
 {
     class Program
     {
+        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger("TransformsSample");
         private static tf.Transformer tfer;
 
         private static tf.Transform testLookup(tf.Transform intendedResult)
@@ -39,7 +41,8 @@ namespace Uml.Robotics.Ros.Samples
         static void Main(string[] args)
         {
             ROS.Init(args, "tf_example");
-
+            var asyncSpinner = new AsyncSpinner();
+            asyncSpinner.Start();
             NodeHandle nh = new NodeHandle();
 
             ROS.Info()("This node will create a Transformer to compare lookup results between four source/target " +

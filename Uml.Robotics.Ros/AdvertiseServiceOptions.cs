@@ -5,7 +5,7 @@ namespace Uml.Robotics.Ros
 {
     public class AdvertiseServiceOptions<MReq, MRes> where MReq : RosMessage, new() where MRes : RosMessage, new()
     {
-        public CallbackQueueInterface callback_queue;
+        public ICallbackQueue callback_queue;
         public string datatype;
         public ServiceCallbackHelper<MReq, MRes> helper;
         public string md5sum;

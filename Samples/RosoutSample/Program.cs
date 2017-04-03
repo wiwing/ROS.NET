@@ -64,6 +64,8 @@ namespace Uml.Robotics.Ros.Samples
         {
             this.verboseLevel = verboseLevel;
             ROS.Init(args, "RosoutDebug");
+            var asyncSpinner = new AsyncSpinner();
+            asyncSpinner.Start();
             ROS.WaitForMaster();
             nodeHandle = new NodeHandle();
             Init();

@@ -3,7 +3,7 @@
     public class SubscribeOptions<T> where T : RosMessage, new()
     {
         public bool allow_concurrent_callbacks = true;
-        public CallbackQueueInterface callback_queue;
+        public ICallbackQueue callback_queue;
         public string datatype = "";
         public bool has_header;
         public SubscriptionCallbackHelper<T> helper;

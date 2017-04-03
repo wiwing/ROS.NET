@@ -2,7 +2,7 @@
 {
     public class SubscriberCallbacks
     {
-        public CallbackQueueInterface Callback;
+        public ICallbackQueue Callback;
         public SubscriberStatusCallback connect, disconnect;
 
         public SubscriberCallbacks() : this(null, null, null)
@@ -10,7 +10,7 @@
         }
 
         public SubscriberCallbacks(SubscriberStatusCallback connectCB, SubscriberStatusCallback disconnectCB,
-            CallbackQueueInterface Callback)
+            ICallbackQueue Callback)
         {
             connect = connectCB;
             disconnect = disconnectCB;

@@ -1,104 +1,134 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Uml.Robotics.Ros
 {
-    public class Spinner : IDisposable
+    public class SingleThreadSpinner
     {
-        #region IDisposable Members
+        ICallbackQueue callbackQueue;
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<SingleThreadSpinner>();
 
-        public virtual void Dispose()
+
+        /// <summary>
+        /// Creats a spinner for the global ROS callback queue
+        /// </summary>
+        public SingleThreadSpinner()
         {
-            throw new NotImplementedException();
+            this.callbackQueue = ROS.GlobalCallbackQueue;
         }
 
-        #endregion
 
-        public virtual void spin()
+        /// <summary>
+        /// Creates a spinner for the given callback queue
+        /// </summary>
+        /// <param name="callbackQueue"></param>
+        public SingleThreadSpinner(ICallbackQueue callbackQueue)
         {
-            spin(null);
+            this.callbackQueue = callbackQueue;
         }
 
-        public virtual void spin(CallbackQueue queue)
-        {
-        }
-    }
 
-    public class SingleThreadSpinner : Spinner
-    {
-        public override void spin()
+        public void Spin()
         {
-            spin(null);
+            SpinCancelable(null);
+            Logger.LogCritical("CallbackQueue thread broke out! This only can happen if ROS.ok is false.");
         }
 
-        public override void spin(CallbackQueue callbackInterface)
+
+        public void SpinCancelable(CancellationToken? token)
         {
-            if (callbackInterface == null)
-                callbackInterface = ROS.GlobalCallbackQueue;
-            NodeHandle spinnerhandle = new NodeHandle();
-            while (spinnerhandle.ok)
+            TimeSpan wallDuration = new TimeSpan(0, 0, 0, 0, ROS.WallDuration);
+            Logger.LogInformation("Start spinning");
+            while (ROS.ok)
             {
-                callbackInterface.callAvailable(ROS.WallDuration);
+                DateTime begin = DateTime.Now;
+                var notCallbackAvail = !callbackQueue.CallAvailable(ROS.WallDuration);
+                var cancelReq = (token?.IsCancellationRequested ?? false);
+                if ( notCallbackAvail || cancelReq )
+                    break;
+                DateTime end = DateTime.Now;
+                if (wallDuration.Subtract(end.Subtract(begin)).Ticks > 0)
+                    Thread.Sleep(wallDuration.Subtract(end.Subtract(begin)));
             }
         }
 
-        public override void Dispose()
+
+        public void SpinOnce()
         {
-            throw new NotImplementedException();
+            callbackQueue.CallAvailable(ROS.WallDuration);
         }
     }
 
-    public class MultiThreadSpinner : Spinner
+
+    /*public class MultiThreadSpinner
     {
-        // private int thread_count;
-
-        public MultiThreadSpinner(int tc)
-        {
-            throw new NotImplementedException();
-            //thread_count = tc;
-        }
-
-        public MultiThreadSpinner()
-            : this(0)
-        {
-            throw new NotImplementedException();
-        }
-
-
-        public override void Dispose()
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    public class AsyncSpinner : IDisposable
-    {
-        public AsyncSpinner(int tc)
-        {
-            throw new NotImplementedException();
-        }
-
-        public AsyncSpinner(int tc, CallbackQueueInterface queue)
-        {
-            throw new NotImplementedException();
-        }
-
-        #region IDisposable Members
-
         public void Dispose()
         {
             throw new NotImplementedException();
         }
 
-        #endregion
-
-        public void Start()
+        public void Spin()
         {
             throw new NotImplementedException();
         }
 
-        public void Stop()
+        public void SpinOnce()
         {
             throw new NotImplementedException();
+        }
+    }*/
+
+
+    public class AsyncSpinner : IDisposable
+    {
+        private ICallbackQueue callbackQueue;
+        private Task spinTask;
+        private CancellationTokenSource tokenSource = new CancellationTokenSource();
+        private CancellationToken token;
+
+
+        /// <summary>
+        /// Creates a spinner for the global ROS callback queue
+        /// </summary>
+        public AsyncSpinner()
+        {
+            this.callbackQueue = ROS.GlobalCallbackQueue;
+        }
+
+
+        /// <summary>
+        /// Create a spinner for the given callback queue
+        /// </summary>
+        /// <param name="callbackQueue"></param>
+        public AsyncSpinner(ICallbackQueue callbackQueue)
+        {
+            this.callbackQueue = callbackQueue;
+        }
+
+        public void Dispose()
+        {
+            tokenSource.Dispose();
+        }
+
+        public void Start()
+        {
+            spinTask = Task.Factory.StartNew(() =>
+            {
+                token = tokenSource.Token;
+                var spinner = new SingleThreadSpinner(callbackQueue);
+                spinner.SpinCancelable(token);
+            });
+        }
+
+        public void Stop()
+        {
+            if (spinTask != null)
+            {
+                tokenSource.Cancel();
+                spinTask = null;
+            }
         }
     }
 }
