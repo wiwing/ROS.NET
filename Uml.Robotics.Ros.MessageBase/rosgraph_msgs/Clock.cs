@@ -24,22 +24,22 @@ namespace Messages.rosgraph_msgs
         {
         }
 
-        public Clock(byte[] SERIALIZEDSTUFF)
+        public Clock(byte[] serializedMessage)
         {
-            Deserialize(SERIALIZEDSTUFF);
+            Deserialize(serializedMessage);
         }
 
-        public Clock(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public Clock(byte[] serializedMessage, ref int currentIndex)
         {
-            Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+            Deserialize(serializedMessage, ref currentIndex);
         }
 
-        public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
             //clock
             clock = new Time(new TimeData(
-                    BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex),
-                    BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex+Marshal.SizeOf(typeof(System.Int32)))));
+                    BitConverter.ToUInt32(serializedMessage, currentIndex),
+                    BitConverter.ToUInt32(serializedMessage, currentIndex+Marshal.SizeOf(typeof(System.Int32)))));
             currentIndex += 2*Marshal.SizeOf(typeof(System.Int32));
         }
 

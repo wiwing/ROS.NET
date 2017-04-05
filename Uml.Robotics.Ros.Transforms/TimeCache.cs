@@ -26,7 +26,7 @@ namespace Uml.Robotics.Ros.Transforms
 
         public static ulong toLong(TimeData td)
         {
-            return (ulong)ROS.ticksFromData(td);
+            return (ulong)td.Ticks;
         }
 
         private byte findClosest(ref TransformStorage one, ref TransformStorage two, ulong target_time, ref string error_str)

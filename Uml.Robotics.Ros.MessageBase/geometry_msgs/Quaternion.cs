@@ -27,17 +27,17 @@ float64 w"; }
         {
         }
 
-        public Quaternion(byte[] SERIALIZEDSTUFF)
+        public Quaternion(byte[] serializedMessage)
         {
-            Deserialize(SERIALIZEDSTUFF);
+            Deserialize(serializedMessage);
         }
 
-        public Quaternion(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public Quaternion(byte[] serializedMessage, ref int currentIndex)
         {
-            Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+            Deserialize(serializedMessage, ref currentIndex);
         }
 
-        public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
             int piecesize = 0;
             IntPtr h;
@@ -45,10 +45,10 @@ float64 w"; }
             //x
             piecesize = Marshal.SizeOf(typeof(double));
             h = IntPtr.Zero;
-            if (SERIALIZEDSTUFF.Length - currentIndex != 0)
+            if (serializedMessage.Length - currentIndex != 0)
             {
                 h = Marshal.AllocHGlobal(piecesize);
-                Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
+                Marshal.Copy(serializedMessage, currentIndex, h, piecesize);
             }
             if (h == IntPtr.Zero)throw new Exception("Memory allocation failed");
             x = (double)Marshal.PtrToStructure(h, typeof(double));
@@ -58,10 +58,10 @@ float64 w"; }
             //y
             piecesize = Marshal.SizeOf(typeof(double));
             h = IntPtr.Zero;
-            if (SERIALIZEDSTUFF.Length - currentIndex != 0)
+            if (serializedMessage.Length - currentIndex != 0)
             {
                 h = Marshal.AllocHGlobal(piecesize);
-                Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
+                Marshal.Copy(serializedMessage, currentIndex, h, piecesize);
             }
             if (h == IntPtr.Zero)
                 throw new Exception("Memory allocation failed");
@@ -72,10 +72,10 @@ float64 w"; }
             //z
             piecesize = Marshal.SizeOf(typeof(double));
             h = IntPtr.Zero;
-            if (SERIALIZEDSTUFF.Length - currentIndex != 0)
+            if (serializedMessage.Length - currentIndex != 0)
             {
                 h = Marshal.AllocHGlobal(piecesize);
-                Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
+                Marshal.Copy(serializedMessage, currentIndex, h, piecesize);
             }
             if (h == IntPtr.Zero)
                 throw new Exception("Memory allocation failed");
@@ -86,10 +86,10 @@ float64 w"; }
             //w
             piecesize = Marshal.SizeOf(typeof(double));
             h = IntPtr.Zero;
-            if (SERIALIZEDSTUFF.Length - currentIndex != 0)
+            if (serializedMessage.Length - currentIndex != 0)
             {
                 h = Marshal.AllocHGlobal(piecesize);
-                Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
+                Marshal.Copy(serializedMessage, currentIndex, h, piecesize);
             }
             if (h == IntPtr.Zero)
                 throw new Exception("Memory allocation failed");

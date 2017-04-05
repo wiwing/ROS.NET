@@ -27,17 +27,17 @@ string frame_id"; }
         {
         }
 
-        public Header(byte[] SERIALIZEDSTUFF)
+        public Header(byte[] serializedMessage)
         {
-            Deserialize(SERIALIZEDSTUFF);
+            Deserialize(serializedMessage);
         }
 
-        public Header(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public Header(byte[] serializedMessage, ref int currentIndex)
         {
-            Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+            Deserialize(serializedMessage, ref currentIndex);
         }
 
-        public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
             int piecesize;
             IntPtr h;
@@ -45,10 +45,10 @@ string frame_id"; }
             //seq
             piecesize = Marshal.SizeOf(typeof(uint));
             h = IntPtr.Zero;
-            if (SERIALIZEDSTUFF.Length - currentIndex != 0)
+            if (serializedMessage.Length - currentIndex != 0)
             {
                 h = Marshal.AllocHGlobal(piecesize);
-                Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
+                Marshal.Copy(serializedMessage, currentIndex, h, piecesize);
             }
             if (h == IntPtr.Zero)
                 throw new Exception("Memory allocation failed");
@@ -57,14 +57,14 @@ string frame_id"; }
             currentIndex+= piecesize;
             //stamp
             stamp = new Time(new TimeData(
-                    BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex),
-                    BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex+Marshal.SizeOf(typeof(System.Int32)))));
+                    BitConverter.ToUInt32(serializedMessage, currentIndex),
+                    BitConverter.ToUInt32(serializedMessage, currentIndex+Marshal.SizeOf(typeof(System.Int32)))));
             currentIndex += 2*Marshal.SizeOf(typeof(System.Int32));
             //frame_id
             frame_id = "";
-            piecesize = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+            piecesize = BitConverter.ToInt32(serializedMessage, currentIndex);
             currentIndex += 4;
-            frame_id = Encoding.ASCII.GetString(SERIALIZEDSTUFF, currentIndex, piecesize);
+            frame_id = Encoding.ASCII.GetString(serializedMessage, currentIndex, piecesize);
             currentIndex += piecesize;
         }
 

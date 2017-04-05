@@ -35,9 +35,11 @@ namespace Uml.Robotics.Ros.Samples
                     ShowUsage(0);
                     return;
                 }
-            }catch(Exception ex)
-                {
-                }
+            }
+            catch (Exception ex)
+            {
+            }
+
             if (args.Length == 1 && OP != op.list)
             {
                 ShowUsage(1);

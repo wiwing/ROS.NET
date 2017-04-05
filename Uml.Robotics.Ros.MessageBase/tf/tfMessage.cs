@@ -21,24 +21,24 @@ namespace Messages.tf
         {
         }
 
-        public tfMessage(byte[] SERIALIZEDSTUFF)
+        public tfMessage(byte[] serializedMessage)
         {
-            Deserialize(SERIALIZEDSTUFF);
+            Deserialize(serializedMessage);
         }
 
-        public tfMessage(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public tfMessage(byte[] serializedMessage, ref int currentIndex)
         {
-            Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+            Deserialize(serializedMessage, ref currentIndex);
         }
 
-        public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
             int arraylength = -1;
             bool hasmetacomponents = false;
 
             //transforms
             hasmetacomponents |= true;
-            arraylength = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+            arraylength = BitConverter.ToInt32(serializedMessage, currentIndex);
             currentIndex += Marshal.SizeOf(typeof(System.Int32));
             if (transforms == null)
                 transforms = new Messages.geometry_msgs.TransformStamped[arraylength];
@@ -46,7 +46,7 @@ namespace Messages.tf
                 Array.Resize(ref transforms, arraylength);
             for (int i=0;i<transforms.Length; i++) {
                 //transforms[i]
-                transforms[i] = new Messages.geometry_msgs.TransformStamped(SERIALIZEDSTUFF, ref currentIndex);
+                transforms[i] = new Messages.geometry_msgs.TransformStamped(serializedMessage, ref currentIndex);
             }
         }
 

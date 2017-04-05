@@ -47,29 +47,29 @@ string text"; }
         {
         }
 
-        public GoalStatus(byte[] SERIALIZEDSTUFF)
+        public GoalStatus(byte[] serializedMessage)
         {
-            Deserialize(SERIALIZEDSTUFF);
+            Deserialize(serializedMessage);
         }
 
-        public GoalStatus(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public GoalStatus(byte[] serializedMessage, ref int currentIndex)
         {
-            Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+            Deserialize(serializedMessage, ref currentIndex);
         }
 
-        public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
             int piecesize = 0;
 
             //goal_id
-            goal_id = new Messages.actionlib_msgs.GoalID(SERIALIZEDSTUFF, ref currentIndex);
+            goal_id = new Messages.actionlib_msgs.GoalID(serializedMessage, ref currentIndex);
             //status
-            status=SERIALIZEDSTUFF[currentIndex++];
+            status=serializedMessage[currentIndex++];
             //text
             text = "";
-            piecesize = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+            piecesize = BitConverter.ToInt32(serializedMessage, currentIndex);
             currentIndex += 4;
-            text = Encoding.ASCII.GetString(SERIALIZEDSTUFF, currentIndex, piecesize);
+            text = Encoding.ASCII.GetString(serializedMessage, currentIndex, piecesize);
             currentIndex += piecesize;
         }
 

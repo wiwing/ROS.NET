@@ -25,30 +25,30 @@ string id"; }
         {
         }
 
-        public GoalID(byte[] SERIALIZEDSTUFF)
+        public GoalID(byte[] serializedMessage)
         {
-            Deserialize(SERIALIZEDSTUFF);
+            Deserialize(serializedMessage);
         }
 
-        public GoalID(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public GoalID(byte[] serializedMessage, ref int currentIndex)
         {
-            Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+            Deserialize(serializedMessage, ref currentIndex);
         }
 
-        public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
             int piecesize = 0;
 
             //stamp
             stamp = new Time(new TimeData(
-                    BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex),
-                    BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex+Marshal.SizeOf(typeof(System.Int32)))));
+                    BitConverter.ToUInt32(serializedMessage, currentIndex),
+                    BitConverter.ToUInt32(serializedMessage, currentIndex+Marshal.SizeOf(typeof(System.Int32)))));
             currentIndex += 2*Marshal.SizeOf(typeof(System.Int32));
             //id
             id = "";
-            piecesize = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+            piecesize = BitConverter.ToInt32(serializedMessage, currentIndex);
             currentIndex += 4;
-            id = Encoding.ASCII.GetString(SERIALIZEDSTUFF, currentIndex, piecesize);
+            id = Encoding.ASCII.GetString(serializedMessage, currentIndex, piecesize);
             currentIndex += piecesize;
         }
 

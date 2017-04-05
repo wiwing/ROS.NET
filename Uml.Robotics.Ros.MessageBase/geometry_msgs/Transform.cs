@@ -24,22 +24,22 @@ Quaternion rotation"; }
         {
         }
 
-        public Transform(byte[] SERIALIZEDSTUFF)
+        public Transform(byte[] serializedMessage)
         {
-            Deserialize(SERIALIZEDSTUFF);
+            Deserialize(serializedMessage);
         }
 
-        public Transform(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public Transform(byte[] serializedMessage, ref int currentIndex)
         {
-            Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+            Deserialize(serializedMessage, ref currentIndex);
         }
 
-        public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
             //translation
-            translation = new Messages.geometry_msgs.Vector3(SERIALIZEDSTUFF, ref currentIndex);
+            translation = new Messages.geometry_msgs.Vector3(serializedMessage, ref currentIndex);
             //rotation
-            rotation = new Messages.geometry_msgs.Quaternion(SERIALIZEDSTUFF, ref currentIndex);
+            rotation = new Messages.geometry_msgs.Quaternion(serializedMessage, ref currentIndex);
         }
 
         public override byte[] Serialize(bool partofsomethingelse)

@@ -23,14 +23,14 @@ namespace Messages.std_msgs
         {
         }
 
-        public String(byte[] SERIALIZEDSTUFF)
+        public String(byte[] serializedMessage)
         {
-            Deserialize(SERIALIZEDSTUFF);
+            Deserialize(serializedMessage);
         }
 
-        public String(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public String(byte[] serializedMessage, ref int currentIndex)
         {
-            Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+            Deserialize(serializedMessage, ref currentIndex);
         }
 
         public String(string d)
@@ -38,15 +38,15 @@ namespace Messages.std_msgs
             data = d;
         }
 
-        public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
             int piecesize = 0;
 
             //data
             data = "";
-            piecesize = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+            piecesize = BitConverter.ToInt32(serializedMessage, currentIndex);
             currentIndex += 4;
-            data = Encoding.ASCII.GetString(SERIALIZEDSTUFF, currentIndex, piecesize);
+            data = Encoding.ASCII.GetString(serializedMessage, currentIndex, piecesize);
             currentIndex += piecesize;
         }
 

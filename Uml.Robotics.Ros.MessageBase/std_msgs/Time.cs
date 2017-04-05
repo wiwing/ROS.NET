@@ -22,14 +22,14 @@ namespace Messages.std_msgs
         {
         }
 
-        public Time(byte[] SERIALIZEDSTUFF)
+        public Time(byte[] serializedMessage)
         {
-            Deserialize(SERIALIZEDSTUFF);
+            Deserialize(serializedMessage);
         }
 
-        public Time(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public Time(byte[] serializedMessage, ref int currentIndex)
         {
-            Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+            Deserialize(serializedMessage, ref currentIndex);
         }
 
         public Time(TimeData d)
@@ -37,12 +37,12 @@ namespace Messages.std_msgs
             data = d;
         }
 
-        public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
             //data
-            data.sec = BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex);
+            data.sec = BitConverter.ToUInt32(serializedMessage, currentIndex);
             currentIndex += Marshal.SizeOf(typeof(System.Int32));
-            data.nsec  = BitConverter.ToUInt32(SERIALIZEDSTUFF, currentIndex);
+            data.nsec  = BitConverter.ToUInt32(serializedMessage, currentIndex);
             currentIndex += Marshal.SizeOf(typeof(System.Int32));
         }
 

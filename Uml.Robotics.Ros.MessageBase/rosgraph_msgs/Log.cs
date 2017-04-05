@@ -49,17 +49,17 @@ string[] topics"; }
         {
         }
 
-        public Log(byte[] SERIALIZEDSTUFF)
+        public Log(byte[] serializedMessage)
         {
-            Deserialize(SERIALIZEDSTUFF);
+            Deserialize(serializedMessage);
         }
 
-        public Log(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public Log(byte[] serializedMessage, ref int currentIndex)
         {
-            Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+            Deserialize(serializedMessage, ref currentIndex);
         }
 
-        public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
             int arraylength = -1;
             bool hasmetacomponents = false;
@@ -67,40 +67,40 @@ string[] topics"; }
             IntPtr h;
 
             //header
-            header = new Header(SERIALIZEDSTUFF, ref currentIndex);
+            header = new Header(serializedMessage, ref currentIndex);
             //level
-            level=SERIALIZEDSTUFF[currentIndex++];
+            level=serializedMessage[currentIndex++];
             //name
             name = "";
-            piecesize = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+            piecesize = BitConverter.ToInt32(serializedMessage, currentIndex);
             currentIndex += 4;
-            name = Encoding.ASCII.GetString(SERIALIZEDSTUFF, currentIndex, piecesize);
+            name = Encoding.ASCII.GetString(serializedMessage, currentIndex, piecesize);
             currentIndex += piecesize;
             //msg
             msg = "";
-            piecesize = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+            piecesize = BitConverter.ToInt32(serializedMessage, currentIndex);
             currentIndex += 4;
-            msg = Encoding.ASCII.GetString(SERIALIZEDSTUFF, currentIndex, piecesize);
+            msg = Encoding.ASCII.GetString(serializedMessage, currentIndex, piecesize);
             currentIndex += piecesize;
             //file
             file = "";
-            piecesize = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+            piecesize = BitConverter.ToInt32(serializedMessage, currentIndex);
             currentIndex += 4;
-            file = Encoding.ASCII.GetString(SERIALIZEDSTUFF, currentIndex, piecesize);
+            file = Encoding.ASCII.GetString(serializedMessage, currentIndex, piecesize);
             currentIndex += piecesize;
             //function
             function = "";
-            piecesize = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+            piecesize = BitConverter.ToInt32(serializedMessage, currentIndex);
             currentIndex += 4;
-            function = Encoding.ASCII.GetString(SERIALIZEDSTUFF, currentIndex, piecesize);
+            function = Encoding.ASCII.GetString(serializedMessage, currentIndex, piecesize);
             currentIndex += piecesize;
             //line
             piecesize = Marshal.SizeOf(typeof(uint));
             h = IntPtr.Zero;
-            if (SERIALIZEDSTUFF.Length - currentIndex != 0)
+            if (serializedMessage.Length - currentIndex != 0)
             {
                 h = Marshal.AllocHGlobal(piecesize);
-                Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
+                Marshal.Copy(serializedMessage, currentIndex, h, piecesize);
             }
             if (h == IntPtr.Zero)
                 throw new Exception("Memory allocation failed");
@@ -109,7 +109,7 @@ string[] topics"; }
             currentIndex+= piecesize;
             //topics
             hasmetacomponents |= false;
-            arraylength = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+            arraylength = BitConverter.ToInt32(serializedMessage, currentIndex);
             currentIndex += Marshal.SizeOf(typeof(System.Int32));
             if (topics == null)
                 topics = new string[arraylength];
@@ -118,9 +118,9 @@ string[] topics"; }
             for (int i=0;i<topics.Length; i++) {
                 //topics[i]
                 topics[i] = "";
-                piecesize = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+                piecesize = BitConverter.ToInt32(serializedMessage, currentIndex);
                 currentIndex += 4;
-                topics[i] = Encoding.ASCII.GetString(SERIALIZEDSTUFF, currentIndex, piecesize);
+                topics[i] = Encoding.ASCII.GetString(serializedMessage, currentIndex, piecesize);
                 currentIndex += piecesize;
             }
         }

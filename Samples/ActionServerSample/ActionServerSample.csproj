@@ -6,9 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Messages\Messages.csproj" />
-    <ProjectReference Include="..\Uml.Robotics.Ros\Uml.Robotics.Ros.csproj" />
-    <ProjectReference Include="..\Uml.Robotics.XmlRpc\Uml.Robotics.XmlRpc.csproj" />
+    <ProjectReference Include="..\..\Messages\Messages.csproj" />
+    <ProjectReference Include="..\..\Uml.Robotics.Ros\Uml.Robotics.Ros.csproj" />
+    <ProjectReference Include="..\..\Uml.Robotics.XmlRpc\Uml.Robotics.XmlRpc.csproj" />
   </ItemGroup>
 
 </Project>

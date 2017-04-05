@@ -24,26 +24,26 @@ GoalStatus[] status_list"; }
         {
         }
 
-        public GoalStatusArray(byte[] SERIALIZEDSTUFF)
+        public GoalStatusArray(byte[] serializedMessage)
         {
-            Deserialize(SERIALIZEDSTUFF);
+            Deserialize(serializedMessage);
         }
 
-        public GoalStatusArray(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public GoalStatusArray(byte[] serializedMessage, ref int currentIndex)
         {
-            Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+            Deserialize(serializedMessage, ref currentIndex);
         }
 
-        public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
             int arraylength = -1;
             bool hasmetacomponents = false;
 
             //header
-            header = new Header(SERIALIZEDSTUFF, ref currentIndex);
+            header = new Header(serializedMessage, ref currentIndex);
             //status_list
             hasmetacomponents |= false;
-            arraylength = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+            arraylength = BitConverter.ToInt32(serializedMessage, currentIndex);
             currentIndex += Marshal.SizeOf(typeof(System.Int32));
             if (status_list == null)
                 status_list = new GoalStatus[arraylength];
@@ -51,7 +51,7 @@ GoalStatus[] status_list"; }
                 Array.Resize(ref status_list, arraylength);
             for (int i=0;i<status_list.Length; i++) {
                 //status_list[i]
-                status_list[i] = new GoalStatus(SERIALIZEDSTUFF, ref currentIndex);
+                status_list[i] = new GoalStatus(serializedMessage, ref currentIndex);
             }
         }
 

@@ -27,30 +27,30 @@ Transform transform"; }
         {
         }
 
-        public TransformStamped(byte[] SERIALIZEDSTUFF)
+        public TransformStamped(byte[] serializedMessage)
         {
-            Deserialize(SERIALIZEDSTUFF);
+            Deserialize(serializedMessage);
         }
 
-        public TransformStamped(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public TransformStamped(byte[] serializedMessage, ref int currentIndex)
         {
-            Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+            Deserialize(serializedMessage, ref currentIndex);
         }
 
-        public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
             int piecesize = 0;
 
             //header
-            header = new Header(SERIALIZEDSTUFF, ref currentIndex);
+            header = new Header(serializedMessage, ref currentIndex);
             //child_frame_id
             child_frame_id = "";
-            piecesize = BitConverter.ToInt32(SERIALIZEDSTUFF, currentIndex);
+            piecesize = BitConverter.ToInt32(serializedMessage, currentIndex);
             currentIndex += 4;
-            child_frame_id = Encoding.ASCII.GetString(SERIALIZEDSTUFF, currentIndex, piecesize);
+            child_frame_id = Encoding.ASCII.GetString(serializedMessage, currentIndex, piecesize);
             currentIndex += piecesize;
             //transform
-            transform = new Messages.geometry_msgs.Transform(SERIALIZEDSTUFF, ref currentIndex);
+            transform = new Messages.geometry_msgs.Transform(serializedMessage, ref currentIndex);
         }
 
         public override byte[] Serialize(bool partofsomethingelse)

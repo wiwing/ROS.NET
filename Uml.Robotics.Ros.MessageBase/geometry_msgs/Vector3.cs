@@ -26,17 +26,17 @@ float64 z"; }
         {
         }
 
-        public Vector3(byte[] SERIALIZEDSTUFF)
+        public Vector3(byte[] serializedMessage)
         {
-            Deserialize(SERIALIZEDSTUFF);
+            Deserialize(serializedMessage);
         }
 
-        public Vector3(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public Vector3(byte[] serializedMessage, ref int currentIndex)
         {
-            Deserialize(SERIALIZEDSTUFF, ref currentIndex);
+            Deserialize(serializedMessage, ref currentIndex);
         }
 
-        public override void Deserialize(byte[] SERIALIZEDSTUFF, ref int currentIndex)
+        public override void Deserialize(byte[] serializedMessage, ref int currentIndex)
         {
             int piecesize = 0;
             IntPtr h;
@@ -44,10 +44,10 @@ float64 z"; }
             //x
             piecesize = Marshal.SizeOf(typeof(double));
             h = IntPtr.Zero;
-            if (SERIALIZEDSTUFF.Length - currentIndex != 0)
+            if (serializedMessage.Length - currentIndex != 0)
             {
                 h = Marshal.AllocHGlobal(piecesize);
-                Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
+                Marshal.Copy(serializedMessage, currentIndex, h, piecesize);
             }
             if (h == IntPtr.Zero) throw new Exception("Memory allocation failed");
             x = (double)Marshal.PtrToStructure(h, typeof(double));
@@ -56,10 +56,10 @@ float64 z"; }
             //y
             piecesize = Marshal.SizeOf(typeof(double));
             h = IntPtr.Zero;
-            if (SERIALIZEDSTUFF.Length - currentIndex != 0)
+            if (serializedMessage.Length - currentIndex != 0)
             {
                 h = Marshal.AllocHGlobal(piecesize);
-                Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
+                Marshal.Copy(serializedMessage, currentIndex, h, piecesize);
             }
             if (h == IntPtr.Zero) throw new Exception("Memory allocation failed");
             y = (double)Marshal.PtrToStructure(h, typeof(double));
@@ -68,10 +68,10 @@ float64 z"; }
             //z
             piecesize = Marshal.SizeOf(typeof(double));
             h = IntPtr.Zero;
-            if (SERIALIZEDSTUFF.Length - currentIndex != 0)
+            if (serializedMessage.Length - currentIndex != 0)
             {
                 h = Marshal.AllocHGlobal(piecesize);
-                Marshal.Copy(SERIALIZEDSTUFF, currentIndex, h, piecesize);
+                Marshal.Copy(serializedMessage, currentIndex, h, piecesize);
             }
             if (h == IntPtr.Zero) throw new Exception("Memory allocation failed");
             z = (double)Marshal.PtrToStructure(h, typeof(double));

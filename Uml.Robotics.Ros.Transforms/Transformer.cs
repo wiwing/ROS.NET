@@ -161,7 +161,7 @@ namespace Uml.Robotics.Ros.Transforms
                 transform.basis = accum.result_quat;
                 transform.child_frame_id = mapped_src;
                 transform.frame_id = mapped_tgt;
-                transform.stamp = new Time(ROS.ticksToData((long)accum.time));
+                transform.stamp = new Time(TimeData.FromTicks((long)accum.time));
             }
             return retval == TF_STATUS.NO_ERROR;
         }
