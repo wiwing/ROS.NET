@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26228.9
+VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uml.Robotics.XmlRpc", "Uml.Robotics.XmlRpc\Uml.Robotics.XmlRpc.csproj", "{89241CC9-5E28-4B95-B682-37A0AC58D306}"
 EndProject
@@ -29,15 +29,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RosoutSample", "Samples\Ros
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTests", "Tests\IntegrationTests\IntegrationTests.csproj", "{8F229241-69FF-42A3-925C-49114DCB37EB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActionServerSample", "ActionServerSample\ActionServerSample.csproj", "{11AD9ED0-9284-4D40-8E7C-B907FFDC42C3}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActionClientSample", "ActionClientSample\ActionClientSample.csproj", "{35EA4BC9-811F-4367-B0DB-1675188A1C25}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActionClientTestbed", "Samples\ActionClientTestbed\ActionClientTestbed.csproj", "{353EDE41-B3E9-4CFE-BD24-EFA47018E0FD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uml.Robotics.Ros.MessageBase", "Uml.Robotics.Ros.MessageBase\Uml.Robotics.Ros.MessageBase.csproj", "{61409C4D-4855-4A73-8B37-8445E2638D5D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Messages", "Messages\Messages.csproj", "{0183095B-098C-4773-ACEA-272C45D587AA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ActionClientSample", "Samples\ActionClientSample\ActionClientSample.csproj", "{4F0E93D5-6CC7-4971-BB91-A5139CF4B05E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ActionServerSample", "Samples\ActionServerSample\ActionServerSample.csproj", "{3041CF5C-222C-412E-8EE6-289C1DE0E567}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -89,14 +89,6 @@ Global
 		{8F229241-69FF-42A3-925C-49114DCB37EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8F229241-69FF-42A3-925C-49114DCB37EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8F229241-69FF-42A3-925C-49114DCB37EB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{11AD9ED0-9284-4D40-8E7C-B907FFDC42C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{11AD9ED0-9284-4D40-8E7C-B907FFDC42C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{11AD9ED0-9284-4D40-8E7C-B907FFDC42C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{11AD9ED0-9284-4D40-8E7C-B907FFDC42C3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{35EA4BC9-811F-4367-B0DB-1675188A1C25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{35EA4BC9-811F-4367-B0DB-1675188A1C25}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{35EA4BC9-811F-4367-B0DB-1675188A1C25}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{35EA4BC9-811F-4367-B0DB-1675188A1C25}.Release|Any CPU.Build.0 = Release|Any CPU
 		{353EDE41-B3E9-4CFE-BD24-EFA47018E0FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{353EDE41-B3E9-4CFE-BD24-EFA47018E0FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{353EDE41-B3E9-4CFE-BD24-EFA47018E0FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -109,6 +101,14 @@ Global
 		{0183095B-098C-4773-ACEA-272C45D587AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0183095B-098C-4773-ACEA-272C45D587AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0183095B-098C-4773-ACEA-272C45D587AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F0E93D5-6CC7-4971-BB91-A5139CF4B05E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F0E93D5-6CC7-4971-BB91-A5139CF4B05E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F0E93D5-6CC7-4971-BB91-A5139CF4B05E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F0E93D5-6CC7-4971-BB91-A5139CF4B05E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3041CF5C-222C-412E-8EE6-289C1DE0E567}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3041CF5C-222C-412E-8EE6-289C1DE0E567}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3041CF5C-222C-412E-8EE6-289C1DE0E567}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3041CF5C-222C-412E-8EE6-289C1DE0E567}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -119,8 +119,8 @@ Global
 		{1845BA08-91C1-411D-B1F5-7DF2344498C3} = {EEE8759B-47AD-455B-8F32-0A36EAE2512B}
 		{F41BDC33-84FA-4E26-BC6C-187044E49BD6} = {9C75EAAD-EACA-4E4F-B9DA-D7BADB3B7577}
 		{8F229241-69FF-42A3-925C-49114DCB37EB} = {EEE8759B-47AD-455B-8F32-0A36EAE2512B}
-		{11AD9ED0-9284-4D40-8E7C-B907FFDC42C3} = {9C75EAAD-EACA-4E4F-B9DA-D7BADB3B7577}
-		{35EA4BC9-811F-4367-B0DB-1675188A1C25} = {9C75EAAD-EACA-4E4F-B9DA-D7BADB3B7577}
 		{353EDE41-B3E9-4CFE-BD24-EFA47018E0FD} = {9C75EAAD-EACA-4E4F-B9DA-D7BADB3B7577}
+		{4F0E93D5-6CC7-4971-BB91-A5139CF4B05E} = {9C75EAAD-EACA-4E4F-B9DA-D7BADB3B7577}
+		{3041CF5C-222C-412E-8EE6-289C1DE0E567} = {9C75EAAD-EACA-4E4F-B9DA-D7BADB3B7577}
 	EndGlobalSection
 EndGlobal
