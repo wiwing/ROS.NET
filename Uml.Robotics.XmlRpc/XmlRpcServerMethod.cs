@@ -4,8 +4,8 @@
 
     public class XmlRpcServerMethod
     {
-        public string name;
-        public XmlRpcServer server;
+        private string name;
+        private XmlRpcServer server;
         private XmlRpcFunc func;
 
         public XmlRpcServerMethod(string functionName, XmlRpcFunc func, XmlRpcServer server)
@@ -15,6 +15,16 @@
             this.func = func;
             if (server != null)
                 server.AddMethod(this);
+        }
+
+        public string Name
+        {
+            get { return name; }
+        }
+
+        public XmlRpcServer Server
+        {
+            get { return server; }
         }
 
         public XmlRpcFunc Func

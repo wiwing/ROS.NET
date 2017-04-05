@@ -47,13 +47,15 @@ namespace Uml.Robotics.Ros
         }
 
 
-        public void SetupTls()
+        private void SetupTls()
         {
             if (tls == null)
+            {
                 tls = new TLS
                 {
-                    calling_in_this_thread = ROS.getPID()
+                    calling_in_this_thread = Thread.CurrentThread.ManagedThreadId
                 };
+            }
         }
 
 
@@ -117,10 +119,11 @@ namespace Uml.Robotics.Ros
             IDInfo idinfo;
             lock (idInfoMutex)
             {
-                if (!idInfo.ContainsKey(owner_id)) return;
+                if (!idInfo.ContainsKey(owner_id))
+                    return;
                 idinfo = idInfo[owner_id];
             }
-            if (idinfo.id == tls.calling_in_this_thread)
+            if (idinfo.id == (ulong)tls.calling_in_this_thread)
                 RemoveAll(owner_id);
             else
             {

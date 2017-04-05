@@ -69,17 +69,17 @@ namespace Uml.Robotics.Ros
 
         public XmlRpcValue GetStats()
         {
-            XmlRpcValue stats = new XmlRpcValue();
+            var stats = new XmlRpcValue();
             stats.Set(0, Name);
-            XmlRpcValue conn_data = new XmlRpcValue();
+            var conn_data = new XmlRpcValue();
             conn_data.SetArray(0);
             lock (subscriber_links_mutex)
             {
                 int cidx = 0;
                 foreach (SubscriberLink sub_link in subscriber_links)
                 {
-                    SubscriberLink.Stats s = sub_link.stats;
-                    XmlRpcValue inside = new XmlRpcValue();
+                    var s = sub_link.stats;
+                    var inside = new XmlRpcValue();
                     inside.Set(0, sub_link.connection_id);
                     inside.Set(1, s.bytes_sent);
                     inside.Set(2, s.message_data_sent);
@@ -110,7 +110,9 @@ namespace Uml.Robotics.Ros
         {
             lock (subscriber_links_mutex)
             {
-                if (Dropped) return;
+                if (Dropped)
+                    return;
+
                 subscriber_links.Add(link);
                 PollManager.Instance.addPollThreadListener(processPublishQueue);
             }
@@ -192,7 +194,7 @@ namespace Uml.Robotics.Ros
             {
                 foreach (SubscriberLink c in subscriber_links)
                 {
-                    XmlRpcValue curr_info = new XmlRpcValue();
+                    var curr_info = new XmlRpcValue();
                     curr_info.Set(0, (int) c.connection_id);
                     curr_info.Set(1, c.destination_caller_id);
                     curr_info.Set(2, "o");
@@ -233,16 +235,12 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        public string dumphex(byte[] test)
-        {
-            return test.Aggregate("", (current, t) => current + ((t < 16 ? "0" : "") + t.ToString("x") + " "));
-        }
-
         internal bool EnqueueMessage(MessageAndSerializerFunc holder)
         {
             lock (subscriber_links_mutex)
             {
-                if (Dropped) return false;
+                if (Dropped)
+                    return false;
             }
 
             uint seq = incrementSequence();
@@ -269,10 +267,12 @@ namespace Uml.Robotics.Ros
             holder.msg.connection_header = connection_header.Values;
 
             lock (subscriber_links_mutex)
+            {
                 foreach (SubscriberLink sub_link in subscriber_links)
                 {
                     sub_link.enqueueMessage(holder);
                 }
+            }
 
             if (Latch)
             {
@@ -303,7 +303,7 @@ namespace Uml.Robotics.Ros
             {
                 if (cbs.connect != null && cbs.Callback != null)
                 {
-                    CallbackInterface cb = new PeerConnDisconnCallback(cbs.connect, sub_link);
+                    var cb = new PeerConnDisconnCallback(cbs.connect, sub_link);
                     cbs.Callback.AddCallback(cb, cbs.Get());
                 }
             }
@@ -316,7 +316,7 @@ namespace Uml.Robotics.Ros
             {
                 if (cbs.disconnect != null && cbs.Callback != null)
                 {
-                    CallbackInterface cb = new PeerConnDisconnCallback(cbs.disconnect, sub_link);
+                    var cb = new PeerConnDisconnCallback(cbs.disconnect, sub_link);
                     cbs.Callback.AddCallback(cb, cbs.Get());
                 }
             }
@@ -336,7 +336,9 @@ namespace Uml.Robotics.Ros
         {
             lock (publish_queue_mutex)
             {
-                if (Dropped) return;
+                if (Dropped)
+                    return;
+
                 while (publish_queue.Count > 0)
                 {
                     EnqueueMessage(publish_queue.Dequeue());

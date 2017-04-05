@@ -15,7 +15,7 @@ namespace Uml.Robotics.Ros
     public class TLS
     {
         private volatile List<CallbackInfo> _queue = new List<CallbackInfo>();
-        public UInt64 calling_in_this_thread = 0xffffffffffffffff;
+        public int calling_in_this_thread = -1;
 
         public int Count
         {
@@ -57,7 +57,8 @@ namespace Uml.Robotics.Ros
             CallbackInfo tmp;
             lock (_queue)
             {
-                if (_queue.Count == 0) return null;
+                if (_queue.Count == 0)
+                    return null;
                 tmp = _queue[0];
                 _queue.RemoveAt(0);
             }
@@ -88,7 +89,7 @@ namespace Uml.Robotics.Ros
     public class IDInfo
     {
         public object calling_rw_mutex;
-        public UInt64 id;
+        public ulong id;
     }
 
 

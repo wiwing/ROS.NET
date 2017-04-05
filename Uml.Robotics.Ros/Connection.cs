@@ -1,6 +1,4 @@
-﻿// #define BEGIN_INVOKE
-
-using System;
+﻿using System;
 using System.Threading;
 using System.Reflection;
 using System.Diagnostics;
@@ -60,7 +58,7 @@ namespace Uml.Robotics.Ros
 
         public void sendHeaderError(ref string error_message)
         {
-            IDictionary<string, string> m = new Dictionary<string, string>();
+            var m = new Dictionary<string, string>();
             m["error"] = error_message;
             writeHeader(m, onErrorHeaderWritten);
             sendingHeaderError = true;
@@ -123,7 +121,9 @@ namespace Uml.Robotics.Ros
 
         public void write(byte[] data, int size, WriteFinishedFunc finished_func, bool immediate)
         {
-            if (dropped || sendingHeaderError) return;
+            if (dropped || sendingHeaderError)
+                return;
+
             lock (write_callback_mutex)
             {
                 if (write_callback != null)
@@ -315,29 +315,31 @@ namespace Uml.Robotics.Ros
                             size = read_size;
                             read_size = 0;
                             read_filled = 0;
-#if BEGIN_INVOKE
-                            callback.BeginInvoke(this, buffer, size, false, readTransportComplete, callback);
-#else
-                        if (!callback(this, buffer, size, false))
-                        {
-                            Console.WriteLine("Callbacks invoked by connection errored");
-                        }
-                        callback = null;
-                        lock(read_callback_mutex)
-                            if (read_callback==null)
-                                transport.disableRead();
-#endif
-                            break;
+                            if (!callback(this, buffer, size, false))
+                            {
+                                Logger.LogError("Callbacks invoked by connection errored");
+                            }
+                            callback = null;
+                            lock (read_callback_mutex)
+                            {
+                                if (read_callback == null)
+                                    transport.disableRead();
+                                break;
+                            }
                         }
                         lock (read_callback_mutex)
+                        {
                             callback = read_callback;
+                        }
                         read_filled += bytes_read;
                     }
                     else
                     {
                         lock (read_callback_mutex)
+                        { 
                             if (read_callback == null)
                                 transport.disableRead();
+                        }
                         break;
                     }
                     if (read_filled == read_size && !dropped)
@@ -346,44 +348,33 @@ namespace Uml.Robotics.Ros
                         byte[] buffer = read_buffer;
                         read_buffer = null;
                         lock (read_callback_mutex)
+                        { 
                             read_callback = null;
+                        }
                         read_size = 0;
-#if BEGIN_INVOKE
-                        callback.BeginInvoke(this, buffer, size, true, readTransportComplete, callback);
-#else
-                    if (!callback(this, buffer, size, true))
-                    {
-                        Console.WriteLine("Callbacks invoked by connection errored");
-                    }
-                    lock (read_callback_mutex)
-                        if (read_callback == null)
-                            transport.disableRead();
-#endif
+                        if (!callback(this, buffer, size, true))
+                        {
+                            Logger.LogError("Callbacks invoked by connection errored");
+                        }
+                        lock (read_callback_mutex)
+                        {
+                            if (read_callback == null)
+                                transport.disableRead();
+                        }
                         callback = null;
                     }
                     else
                     {
                         lock (read_callback_mutex)
+                        {
                             if (read_callback == null)
                                 transport.disableRead();
+                        }
                         break;
                     }
                 }
             }
         }
-
-#if BEGIN_INVOKE
-        private void readTransportComplete(IAsyncResult iar)
-        {
-            lock (read_callback_mutex)
-            {
-                if (!((ReadFinishedFunc)iar.AsyncState).EndInvoke(iar))
-                    Console.WriteLine(((ReadFinishedFunc)iar.AsyncState).GetMethodInfo().Name + " FAILED");
-                if (read_callback == null)
-                    transport.disableRead();
-            }
-        }
-#endif
 
         private void writeTransport()
         {
@@ -391,6 +382,7 @@ namespace Uml.Robotics.Ros
             {
                 if (dropped)
                     return;
+
                 bool can_write_more = true;
                 while (write_callback != null && can_write_more && !dropped)
                 {
@@ -414,7 +406,7 @@ namespace Uml.Robotics.Ros
                             write_size = 0;
                             if (!callback(this))
                             {
-                                Console.WriteLine("Failed to invoke " + callback.GetMethodInfo().Name);
+                                Logger.LogError("Failed to invoke " + callback.GetMethodInfo().Name);
                             }
                         }
                     }

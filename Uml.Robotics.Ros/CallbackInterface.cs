@@ -10,9 +10,9 @@ namespace Uml.Robotics.Ros
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Callback<T>>();
         private volatile bool callback_state;
 
-        public readonly bool allow_concurrent_callbacks;
-        public volatile Queue<Item> queue = new Queue<Item>();
-        public uint size;
+        private readonly bool allow_concurrent_callbacks;
+        private readonly Queue<Item> queue = new Queue<Item>();
+        private uint size;
 
         public Callback(CallbackDelegate<T> f, string topic, uint queue_size, bool allow_concurrent_callbacks)
             : this(f)
@@ -35,13 +35,15 @@ namespace Uml.Robotics.Ros
         {
             if (was_full)
                 was_full = false;
-            Item i = new Item
+
+            var i = new Item
             {
                 helper = helper,
                 message = message,
                 nonconst_need_copy = nonconst_need_copy,
                 receipt_time = receipt_time
             };
+
             lock (queue)
             {
                 if (fullNoLock())
@@ -58,7 +60,7 @@ namespace Uml.Robotics.Ros
             queue.Clear();
         }
 
-        public new virtual bool ready()
+        public virtual bool ready()
         {
             return true;
         }
@@ -71,7 +73,9 @@ namespace Uml.Robotics.Ros
         public bool full()
         {
             lock (queue)
+            {
                 return fullNoLock();
+            }
         }
 
         public class Item
@@ -114,7 +118,6 @@ namespace Uml.Robotics.Ros
         private static object uidlock = new object();
         private static UInt64 nextuid;
 
-
         public CallbackInterface()
         {
             lock (uidlock)
@@ -124,12 +127,11 @@ namespace Uml.Robotics.Ros
             }
         }
 
-
-        public CallbackInterface(CallbackDelegate f) : this()
+        public CallbackInterface(CallbackDelegate f) 
+            : this()
         {
             Event += f;
         }
-
 
         public enum CallResult
         {
@@ -137,7 +139,6 @@ namespace Uml.Robotics.Ros
             TryAgain,
             Invalid
         }
-
 
         public void SendEvent<T>(T msg) where T : RosMessage, new()
         {
@@ -150,7 +151,6 @@ namespace Uml.Robotics.Ros
                 Logger.LogError($"{nameof(Event)} is null");
             }
         }
-
 
         public abstract void AddToCallbackQueue(ISubscriptionCallbackHelper helper, RosMessage msg, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time);
         public abstract void Clear();
