@@ -252,32 +252,32 @@ namespace Uml.Robotics.Ros
 
             IPEndPoint ipep = new IPEndPoint(IPA, port);
             LocalEndPoint = ipep;
-            DateTime connectionAttempted = DateTime.Now;
+            DateTime connectionAttempted = DateTime.UtcNow;
             IAsyncResult asyncres;
-            lock (this)
-                asyncres = sock.BeginConnect(ipep, iar =>
-                {
-                    lock(this)
-                        if (sock != null)
-                            try
-                            {
-                                sock.EndConnect(iar);
-                            }
-                            catch (Exception e)
-                            {
-                                Logger.LogError(e.ToString());
-                            }
-                }, null);
+
+            asyncres = sock.BeginConnect(ipep, iar =>
+            {
+                lock(this)
+                    if (sock != null)
+                        try
+                        {
+                            sock.EndConnect(iar);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.LogError(e.ToString());
+                        }
+            }, null);
+
             bool completed = false;
             while (ROS.ok && !ROS.shutting_down)
             {
-#pragma warning disable 665
-                if ((completed = asyncres.AsyncWaitHandle.WaitOne(10)))
-#pragma warning restore 665
+                completed = asyncres.AsyncWaitHandle.WaitOne(10);
+                if (completed)
                     break;
-                if (DateTime.Now.Subtract(connectionAttempted).TotalSeconds >= 3)
+                if (DateTime.UtcNow.Subtract(connectionAttempted).TotalSeconds >= 3)
                 {
-                    Logger.LogInformation("Trying to connect for " + DateTime.Now.Subtract(connectionAttempted).TotalSeconds + "s\t: " + this);
+                    Logger.LogInformation("Trying to connect for " + DateTime.UtcNow.Subtract(connectionAttempted).TotalSeconds + "s\t: " + this);
                     if (!asyncres.AsyncWaitHandle.WaitOne(100))
                     {
                         sock.Close();
@@ -285,8 +285,14 @@ namespace Uml.Robotics.Ros
                     }
                 }
             }
+
             if (!completed || sock == null || !sock.Connected)
+            {
                 return false;
+            } else
+            {
+                Logger.LogDebug("TcpTransport connection established.");
+            }
             return ROS.ok && initializeSocket();
         }
 
