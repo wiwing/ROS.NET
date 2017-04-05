@@ -57,10 +57,10 @@ namespace Uml.Robotics.XmlRpc
             {
                 // serialize request into memory stream
                 var buffer = new MemoryStream();
-                using (var sw = new StreamWriter(buffer))       // by default uses UTF-8 encoding
-                {
-                    WriteRequest(sw, methodName, parameters);
-                }
+                var sw = new StreamWriter(buffer);       // by default uses UTF-8 encoding
+                WriteRequest(sw, methodName, parameters);
+                sw.Flush();
+                buffer.Position = 0;
 
                 await buffer.CopyToAsync(stream);
             }
