@@ -181,7 +181,7 @@ namespace Uml.Robotics.Ros
             publisher_links.Add(pub);
         }
 
-        public bool pubUpdate(IEnumerable<string> pubs)
+        public bool pubUpdate(IEnumerable<string> publisherUris)
         {
             using (Logger.BeginScope ($"{ nameof(pubUpdate) }"))
             {
@@ -196,26 +196,25 @@ namespace Uml.Robotics.Ros
                 Logger.LogDebug("Publisher update for [" + name + "]");
 
                 var additions = new List<string>();
-                var subtractions = new List<PublisherLink>();
+                List<PublisherLink> subtractions;
                 lock (publisher_links_mutex)
                 {
-
-                    subtractions.AddRange(from spc in publisher_links let found = pubs.Any(up_i => urisEqual(spc.XmlRpc_Uri, up_i)) where !found select spc);
-                    foreach (string up_i in pubs)
+                    subtractions = publisher_links.Where(x => !publisherUris.Any(u => urisEqual(x.XmlRpc_Uri, u))).ToList();
+                    foreach (string uri in publisherUris)
                     {
-                        bool found = publisher_links.Any(spc => urisEqual(up_i, spc.XmlRpc_Uri));
+                        bool found = publisher_links.Any(spc => urisEqual(uri, spc.XmlRpc_Uri));
                         if (found)
                             continue;
 
                         lock (pendingConnections)
                         {
-                            if (pendingConnections.Any(pc => urisEqual(up_i, pc.RemoteUri)))
+                            if (pendingConnections.Any(pc => urisEqual(uri, pc.RemoteUri)))
                             {
                                 found = true;
                             }
 
                             if (!found)
-                                additions.Add(up_i);
+                                additions.Add(uri);
                         }
                     }
                 }
