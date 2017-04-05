@@ -36,14 +36,6 @@ namespace Uml.Robotics.Ros
             return res;
         }
 
-        private static byte[] concat(byte[] a, byte[] b)
-        {
-            byte[] result = new byte[a.Length + b.Length];
-            Array.Copy(a, result, a.Length);
-            Array.Copy(b, 0, result, a.Length, b.Length);
-            return result;
-        }
-
         public void Write(IDictionary<string, string> dict, out byte[] buffer, out int totallength)
         {
             var ms = new MemoryStream();

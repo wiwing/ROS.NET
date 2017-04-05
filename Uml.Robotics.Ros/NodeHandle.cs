@@ -222,10 +222,10 @@ namespace Uml.Robotics.Ros
             {
                 ops.callback_queue = Callback;
             }
-            SubscriberCallbacks callbacks = new SubscriberCallbacks(ops.connectCB, ops.disconnectCB, ops.callback_queue);
+            var callbacks = new SubscriberCallbacks(ops.connectCB, ops.disconnectCB, ops.callback_queue);
             if (TopicManager.Instance.advertise(ops, callbacks))
             {
-                Publisher<M> pub = new Publisher<M>(ops.topic, ops.md5sum, ops.datatype, this, callbacks);
+                var pub = new Publisher<M>(ops.topic, ops.md5sum, ops.datatype, this, callbacks);
                 lock (collection.mutex)
                 {
                     collection.publishers.Add(pub);
@@ -279,8 +279,11 @@ namespace Uml.Robotics.Ros
             {
                 _callback = ROS.GlobalCallbackQueue;
             }
-            SubscribeOptions<M> ops = new SubscribeOptions<M>(topic, queue_size, cb.SendEvent)
-            {callback_queue = _callback, allow_concurrent_callbacks=allow_concurrent_callbacks};
+            var ops = new SubscribeOptions<M>(topic, queue_size, cb.SendEvent)
+            {
+                callback_queue = _callback,
+                allow_concurrent_callbacks = allow_concurrent_callbacks
+            };
             ops.callback_queue.AddCallback(cb);
             return subscribe(ops);
         }
@@ -300,7 +303,7 @@ namespace Uml.Robotics.Ros
             }
             if (TopicManager.Instance.subscribe(ops))
             {
-                Subscriber<M> sub = new Subscriber<M>(ops.topic, this, ops.helper);
+                var sub = new Subscriber<M>(ops.topic, this, ops.helper);
                 lock (collection.mutex)
                 {
                     collection.subscribers.Add(sub);
@@ -386,14 +389,12 @@ namespace Uml.Robotics.Ros
 
         public ServiceClient<MSrv> serviceClient<MSrv>(string service_name)
             where MSrv : RosService, new()
-
         {
             return serviceClient<MSrv>(new ServiceClientOptions(service_name, false, null));
         }
 
         public ServiceClient<MSrv> serviceClient<MSrv>(string service_name, bool persistent)
             where MSrv : RosService, new()
-
         {
             return serviceClient<MSrv>(new ServiceClientOptions(service_name, persistent, null));
         }
@@ -401,14 +402,12 @@ namespace Uml.Robotics.Ros
         public ServiceClient<MSrv> serviceClient<MSrv>(string service_name, bool persistent,
             IDictionary<string, string> header_values)
             where MSrv : RosService, new()
-
         {
             return serviceClient<MSrv>(new ServiceClientOptions(service_name, persistent, header_values));
         }
 
         public ServiceClient<MSrv> serviceClient<MSrv>(ServiceClientOptions ops)
             where MSrv : RosService, new()
-
         {
             ops.service = resolveName(ops.service);
             ops.md5sum = new MSrv().RequestMessage.MD5Sum();
@@ -450,7 +449,9 @@ namespace Uml.Robotics.Ros
 
         private void initRemappings(IDictionary<string, string> rms)
         {
-            if (rms == null) return;
+            if (rms == null)
+                return;
+
             foreach (string k in rms.Keys)
             {
                 string left = k;
@@ -482,19 +483,20 @@ namespace Uml.Robotics.Ros
 
         private string resolveName(string name, bool remap)
         {
-            string error = "";
-            if (!names.validate(name, ref error))
-                names.InvalidName(error);
+            if (!names.validate(name, out string error))
+                throw new InvalidNameException(error);
             return resolveName(name, remap, no_validate);
         }
 
         private string resolveName(string name, bool remap, bool novalidate)
         {
             //Logger.LogDebug("resolveName(" + name + ")");
-            if (name == "") return Namespace;
+            if (name == "")
+                return Namespace;
+
             string final = name;
             if (final[0] == '~')
-                names.InvalidName("THERE'S A ~ IN THAT!");
+                throw new InvalidNameException("Node name must not start with a '~' (tilde) character.");
             else if (final[0] != '/' && Namespace != "")
             {
                 final = names.append(Namespace, final);
@@ -509,7 +511,7 @@ namespace Uml.Robotics.Ros
 
         #region Nested type: NodeHandleBackingCollection
 
-        public class NodeHandleBackingCollection : IDisposable
+        private class NodeHandleBackingCollection : IDisposable
         {
             public readonly object mutex = new object();
             public List<IPublisher> publishers = new List<IPublisher>();
@@ -517,8 +519,6 @@ namespace Uml.Robotics.Ros
             public List<IServiceClient> serviceclients = new List<IServiceClient>();
             public List<ServiceServer> serviceservers = new List<ServiceServer>();
             public List<ISubscriber> subscribers = new List<ISubscriber>();
-
-            #region IDisposable Members
 
             public void Dispose()
             {
@@ -528,8 +528,6 @@ namespace Uml.Robotics.Ros
                 serviceservers.Clear();
                 serviceclients.Clear();
             }
-
-            #endregion
         }
 
         #endregion

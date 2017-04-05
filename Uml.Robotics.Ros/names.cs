@@ -19,13 +19,15 @@ namespace Uml.Robotics.Ros
 
         public static bool isValidCharInName(char c)
         {
-            return (Char.IsLetterOrDigit(c) || c == '/' || c == '_');
+            return (char.IsLetterOrDigit(c) || c == '/' || c == '_');
         }
 
-        public static bool validate(string name, ref string error)
+        public static bool validate(string name, out string error)
         {
-            if (name == "" || name.StartsWith("__")) return true;
-            if (!Char.IsLetter(name[0]) && name[0] != '/' && name[0] != '~')
+            error = null;
+            if (name == "" || name.StartsWith("__"))
+                return true;
+            if (!char.IsLetter(name[0]) && name[0] != '/' && name[0] != '~')
             {
                 error = "Character [" + name[0] + "] is not valid as the first character in Graph Resource Name [" +
                         name + "]. valid characters are a-z, A-Z, /, and ~";
@@ -76,18 +78,11 @@ namespace Uml.Robotics.Ros
             return resolve(this_node.Namespace, name, doremap);
         }
 
-        internal static Exception InvalidName(string error)
-        {
-            return new InvalidNameException(error);
-        }
-
         public static string resolve(string ns, string name, bool doremap)
         {
-            string error = "";
-            if (!validate(name, ref error))
-            {
-                throw InvalidName(error);
-            }
+            if (!validate(name, out string error))
+                throw new InvalidNameException(error);
+
             if (name == "")
             {
                 if (ns == "")
@@ -124,9 +119,9 @@ namespace Uml.Robotics.Ros
 
         public static string parentNamespace(string name)
         {
-            string error = "";
-            if (!validate(name, ref error))
-                InvalidName(error);
+            if (!validate(name, out string error))
+                throw new InvalidNameException(error);
+
             if (name != "")
                 return "";
             if (name != "/")
