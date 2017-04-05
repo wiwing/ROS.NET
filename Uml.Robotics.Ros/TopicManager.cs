@@ -40,9 +40,9 @@ namespace Uml.Robotics.Ros
             {
                 shutting_down = false;
 
-                XmlRpcManager.Instance.bind("publisherUpdate", pubUpdateCallback);
+                XmlRpcManager.Instance.bind("publisherUpdate", publisherUpdateCallback);
                 XmlRpcManager.Instance.bind("requestTopic", requestTopicCallback);
-                XmlRpcManager.Instance.bind("getBusStats", getBusStatusCallback);
+                XmlRpcManager.Instance.bind("getBusStats", getBusStatsCallback);
                 XmlRpcManager.Instance.bind("getBusInfo", getBusInfoCallback);
                 XmlRpcManager.Instance.bind("getSubscriptions", getSubscriptionsCallback);
                 XmlRpcManager.Instance.bind("getPublications", getPublicationsCallback);
@@ -531,7 +531,7 @@ namespace Uml.Robotics.Ros
             bool unregisterSuccess = false;
             try
             {
-                unregisterSuccess = master.execute("unregisterSubscriber", args, result, payload, false) && result.IsValid;
+                unregisterSuccess = master.execute("unregisterSubscriber", args, result, payload, false) && result.IsEmpty;
             }
             // Ignore exception during unregister
             catch (Exception e)
@@ -550,7 +550,7 @@ namespace Uml.Robotics.Ros
             bool unregisterSuccess = false;
             try
             {
-                unregisterSuccess = master.execute("unregisterPublisher", args, result, payload, false) && result.IsValid;
+                unregisterSuccess = master.execute("unregisterPublisher", args, result, payload, false) && result.IsEmpty;
             }
             // Ignore exception during unregister
             catch (Exception e)
@@ -565,41 +565,45 @@ namespace Uml.Robotics.Ros
             return advertised_topics.FirstOrDefault(p => p.Name == topic && !p.Dropped);
         }
 
-        public void getBusStats(XmlRpcValue stats)
+        public XmlRpcValue getBusStats()
         {
             var publish_stats = new XmlRpcValue();
             var subscribe_stats = new XmlRpcValue();
             var service_stats = new XmlRpcValue();
 
-            publish_stats.SetArray(0); //.Size = 0;
-            subscribe_stats.SetArray(0); //subscribe_stats.Size = 0;
-            service_stats.SetArray(0); //service_stats.Size = 0;
             int pidx = 0;
             lock (advertised_topics_mutex)
             {
+                publish_stats.SetArray(advertised_topics.Count);
                 foreach (Publication t in advertised_topics)
                 {
                     publish_stats.Set(pidx++, t.GetStats());
                 }
             }
+
             int sidx = 0;
             lock (subs_mutex)
             {
+                subscribe_stats.SetArray(subscriptions.Count);
                 foreach (Subscription t in subscriptions)
                 {
                     subscribe_stats.Set(sidx++, t.getStats());
                 }
             }
 
-            //TODO: fix for services
+            // TODO: fix for services
+            service_stats.SetArray(0); //service_stats.Size = 0;
 
+            var stats = new XmlRpcValue();
             stats.Set(0, publish_stats);
             stats.Set(1, subscribe_stats);
             stats.Set(2, service_stats);
+            return stats;
         }
 
-        public void getBusInfo(XmlRpcValue info)
+        public XmlRpcValue getBusInfo()
         {
+            var info = new XmlRpcValue();
             info.SetArray(0);
             lock (advertised_topics_mutex)
             {
@@ -615,6 +619,7 @@ namespace Uml.Robotics.Ros
                     t.getInfo(info);
                 }
             }
+            return info;
         }
 
         public void getSubscriptions(ref XmlRpcValue subs)
@@ -675,25 +680,22 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        //public void pubUpdateCallback([In] [Out] IntPtr parms, [In] [Out] IntPtr result)
-        public void pubUpdateCallback(XmlRpcValue parm, XmlRpcValue result)
+        private void publisherUpdateCallback(XmlRpcValue parm, XmlRpcValue result)
         {
-            //XmlRpcValue parm = XmlRpcValue.Create(ref parms);
-            List<string> pubs = new List<string>();
+            var pubs = new List<string>();
             for (int idx = 0; idx < parm[2].Count; idx++)
                 pubs.Add(parm[2][idx].GetString());
             if (pubUpdate(parm[1].GetString(), pubs))
-                XmlRpcManager.Instance.responseInt(1, "", 0)(result);
+                XmlRpcManager.responseInt(1, "", 0)(result);
             else
             {
                 const string error = "Unknown error while handling XmlRpc call to pubUpdate";
                 this.Logger.LogError(error);
-                XmlRpcManager.Instance.responseInt(0, error, 0)(result);
+                XmlRpcManager.responseInt(0, error, 0)(result);
             }
         }
 
-        //public void requestTopicCallback([In] [Out] IntPtr parms, [In] [Out] IntPtr result)
-        public void requestTopicCallback(XmlRpcValue parm, XmlRpcValue res)
+        private void requestTopicCallback(XmlRpcValue parm, XmlRpcValue res)
         {
             //XmlRpcValue res = XmlRpcValue.Create(ref result)
             //	, parm = XmlRpcValue.Create(ref parms);
@@ -702,37 +704,28 @@ namespace Uml.Robotics.Ros
             {
                 const string error = "Unknown error while handling XmlRpc call to requestTopic";
                 this.Logger.LogError(error);
-                XmlRpcManager.Instance.responseInt(0, error, 0)(res);
+                XmlRpcManager.responseInt(0, error, 0)(res);
             }
         }
 
-        //public void getBusStatusCallback([In] [Out] IntPtr parms, [In] [Out] IntPtr result)
-        public void getBusStatusCallback(XmlRpcValue parm, XmlRpcValue res)
+        private void getBusStatsCallback(XmlRpcValue parm, XmlRpcValue res)
         {
-            //XmlRpcValue res = XmlRpcValue.Create(ref result);
             res.Set(0, 1);
             res.Set(1, "");
-            var response = new XmlRpcValue();
-            getBusStats(response);
+            var response = getBusStats();
             res.Set(2, response);
         }
 
-        //public void getBusInfoCallback([In] [Out] IntPtr parms, [In] [Out] IntPtr result)
-        public void getBusInfoCallback(XmlRpcValue parm, XmlRpcValue res)
+        private void getBusInfoCallback(XmlRpcValue parm, XmlRpcValue res)
         {
-            //XmlRpcValue res = XmlRpcValue.Create(ref result);
             res.Set(0, 1);
             res.Set(1, "");
-            var response = new XmlRpcValue();
-            //IntPtr resp = response.instance;
-            getBusInfo(response);
+            var response = getBusInfo();
             res.Set(2, response);
         }
 
-        //public void getSubscriptionsCallback([In] [Out] IntPtr parms, [In] [Out] IntPtr result)
-        public void getSubscriptionsCallback(XmlRpcValue parm, XmlRpcValue res)
+        private void getSubscriptionsCallback(XmlRpcValue parm, XmlRpcValue res)
         {
-            //XmlRpcValue res = XmlRpcValue.Create(ref result);
             res.Set(0, 1);
             res.Set(1, "subscriptions");
             var response = new XmlRpcValue();
@@ -740,10 +733,8 @@ namespace Uml.Robotics.Ros
             res.Set(2, response);
         }
 
-        //public void getPublicationsCallback([In] [Out] IntPtr parms, [In] [Out] IntPtr result)
-        public void getPublicationsCallback(XmlRpcValue parm, XmlRpcValue res)
+        private void getPublicationsCallback(XmlRpcValue parm, XmlRpcValue res)
         {
-            //XmlRpcValue res = XmlRpcValue.Create(ref result);
             res.Set(0, 1);
             res.Set(1, "publications");
             var response = new XmlRpcValue();

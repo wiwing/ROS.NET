@@ -7,41 +7,37 @@ namespace Uml.Robotics.Ros
 {
     public class TransportSubscriberLink : SubscriberLink, IDisposable
     {
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<TransportSubscriberLink>();
-        public Connection connection;
-        private bool header_written;
-        private int max_queue;
-        private Queue<MessageAndSerializerFunc> outbox = new Queue<MessageAndSerializerFunc>();
-        private new Publication parent;
-        private bool queue_full;
-        private bool writing_message;
+        ILogger Logger { get; } = ApplicationLogging.CreateLogger<TransportSubscriberLink>();
+        Connection connection;
+        bool headerWritten;
+        int maxQueue;
+        Queue<MessageAndSerializerFunc> outbox = new Queue<MessageAndSerializerFunc>();
+        new Publication parent;
+        bool queueFull;
+        bool writingMessage;
 
         public TransportSubscriberLink()
         {
-            writing_message = false;
-            header_written = false;
-            queue_full = false;
+            writingMessage = false;
+            headerWritten = false;
+            queueFull = false;
         }
-
-        #region IDisposable Members
 
         public void Dispose()
         {
             drop();
         }
 
-        #endregion
-
-        public bool initialize(Connection connection)
+        public bool Initialize(Connection connection)
         {
             if (parent != null)
                 Logger.LogDebug("Init transport subscriber link: " + parent.Name);
             this.connection = connection;
-            connection.DroppedEvent += onConnectionDropped;
+            connection.DroppedEvent += OnConnectionDropped;
             return true;
         }
 
-        public bool handleHeader(Header header)
+        public bool HandleHeader(Header header)
         {
             if (!header.Values.ContainsKey("topic"))
             {
@@ -74,15 +70,16 @@ namespace Uml.Robotics.Ros
             parent = pt;
             lock (parent)
             {
-                max_queue = parent.MaxQueue;
+                maxQueue = parent.MaxQueue;
             }
-            IDictionary<string, string> m = new Dictionary<string, string>();
+
+            var m = new Dictionary<string, string>();
             m["type"] = pt.DataType;
             m["md5sum"] = pt.Md5sum;
             m["message_definition"] = pt.MessageDefinition;
             m["callerid"] = this_node.Name;
             m["latching"] = Convert.ToString(pt.Latch);
-            connection.writeHeader(m, onHeaderWritten);
+            connection.writeHeader(m, OnHeaderWritten);
             pt.addSubscriberLink(this);
             Logger.LogDebug("Finalize transport subscriber link for " + name);
             return true;
@@ -92,64 +89,70 @@ namespace Uml.Robotics.Ros
         {
             lock (outbox)
             {
-                if (max_queue > 0 && outbox.Count >= max_queue)
+                if (maxQueue > 0 && outbox.Count >= maxQueue)
                 {
                     outbox.Dequeue();
-                    queue_full = true;
+                    queueFull = true;
                 }
                 else
-                    queue_full = false;
+                {
+                    queueFull = false;
+                }
                 outbox.Enqueue(holder);
             }
-            startMessageWrite(false);
+            StartMessageWrite(false);
         }
 
         public override void drop()
         {
             if (connection.sendingHeaderError)
-                connection.DroppedEvent -= onConnectionDropped;
+                connection.DroppedEvent -= OnConnectionDropped;
             else
                 connection.drop(Connection.DropReason.Destructing);
         }
 
-        private void onConnectionDropped(Connection conn, Connection.DropReason reason)
+        private void OnConnectionDropped(Connection conn, Connection.DropReason reason)
         {
-            if (conn != connection || parent == null) return;
+            if (conn != connection || parent == null)
+                return;
+
             lock (parent)
             {
                 parent.removeSubscriberLink(this);
             }
         }
 
-        private bool onHeaderWritten(Connection conn)
+        private bool OnHeaderWritten(Connection conn)
         {
-            header_written = true;
-            startMessageWrite(true);
+            headerWritten = true;
+            StartMessageWrite(true);
             return true;
         }
 
-        private bool onMessageWritten(Connection conn)
+        private bool OnMessageWritten(Connection conn)
         {
-            writing_message = false;
-            startMessageWrite(true);
+            writingMessage = false;
+            StartMessageWrite(true);
             return true;
         }
 
-        private void startMessageWrite(bool immediate_write)
+        private void StartMessageWrite(bool immediateWrite)
         {
             MessageAndSerializerFunc holder = null;
-            if (writing_message || !header_written)
+            if (writingMessage || !headerWritten)
                 return;
+
             lock (outbox)
             {
                 if (outbox.Count > 0)
                 {
-                    writing_message = true;
+                    writingMessage = true;
                     holder = outbox.Dequeue();
                 }
-                if (outbox.Count < max_queue)
-                    queue_full = false;
+                if (outbox.Count < maxQueue)
+                    queueFull = false;
             }
+
             if (holder != null)
             {
                 if (holder.msg.Serialized == null)
@@ -161,13 +164,8 @@ namespace Uml.Robotics.Ros
                 //Logger.LogDebug("Message backlog = " + (triedtosend - stats.messages_sent));
                 stats.bytes_sent += outbuf.Length;
                 stats.message_data_sent += outbuf.Length;
-                connection.write(outbuf, outbuf.Length, onMessageWritten, immediate_write);
+                connection.write(outbuf, outbuf.Length, OnMessageWritten, immediateWrite);
             }
-        }
-
-        public string dumphex(byte[] test)
-        {
-            return test.Aggregate("", (current, t) => current + ((t < 16 ? "0" : "") + t.ToString("x") + " "));
         }
     }
 }

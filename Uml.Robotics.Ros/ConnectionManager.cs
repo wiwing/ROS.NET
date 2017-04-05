@@ -140,8 +140,8 @@ namespace Uml.Robotics.Ros
             if (header.Values.ContainsKey("topic"))
             {
                 TransportSubscriberLink sub_link = new TransportSubscriberLink();
-                ret = sub_link.initialize(conn);
-                ret &= sub_link.handleHeader(header);
+                ret = sub_link.Initialize(conn);
+                ret &= sub_link.HandleHeader(header);
             }
             else if (header.Values.ContainsKey("service"))
             {

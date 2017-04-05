@@ -1,6 +1,6 @@
 ﻿namespace Uml.Robotics.XmlRpc
 {
-    public delegate void XmlRpcFunc(XmlRpcValue parms, XmlRpcValue reseseses);
+    public delegate void XmlRpcFunc(XmlRpcValue parms, XmlRpcValue result);
 
     public class XmlRpcServerMethod
     {
@@ -23,9 +23,9 @@
             set { func = value; }
         }
 
-        public void Execute(XmlRpcValue parms, XmlRpcValue reseseses)
+        public void Execute(XmlRpcValue parms, XmlRpcValue result)
         {
-            func(parms, reseseses);
+            func(parms, result);
         }
 
         public virtual string Help()

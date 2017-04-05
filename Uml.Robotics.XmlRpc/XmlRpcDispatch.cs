@@ -172,20 +172,6 @@ namespace Uml.Robotics.XmlRpc
             //work(instance, msTime);
         }
 
-        public void Exit()
-        {
-            /// TODO: Do something reasonable here?
-            /*
-            try
-            {
-                exit(instance);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }*/
-        }
-
         public void Clear()
         {
             try

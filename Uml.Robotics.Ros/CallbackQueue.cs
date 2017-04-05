@@ -8,17 +8,6 @@ namespace Uml.Robotics.Ros
 {
     public class CallbackQueue : ICallbackQueue
     {
-        public bool IsEmpty
-        {
-            get { return count == 0; }
-        }
-
-
-        public bool IsEnabled
-        {
-            get { return enabled; }
-        }
-
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<CallbackQueue>();
         private int count;
         private int calling;
@@ -36,12 +25,21 @@ namespace Uml.Robotics.Ros
             enabled = true;
         }
 
+        public bool IsEmpty
+        {
+            get { return count == 0; }
+        }
+
+
+        public bool IsEnabled
+        {
+            get { return enabled; }
+        }
 
         public void AddCallback(CallbackInterface callback)
         {
             AddCallback(callback, callback.Uid);
         }
-
 
         public void AddCallback(CallbackInterface cb, UInt64 owner_id)
         {
@@ -66,12 +64,10 @@ namespace Uml.Robotics.Ros
             NotifyOne();
         }
 
-
         public bool CallAvailable()
         {
             return CallAvailable(ROS.WallDuration);
         }
-
 
         public bool CallAvailable(int timeout)
         {
@@ -113,7 +109,6 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-
         public void Clear()
         {
             lock (mutex)
@@ -122,7 +117,6 @@ namespace Uml.Robotics.Ros
                 count = 0;
             }
         }
-
 
         public void Disable()
         {
@@ -133,7 +127,6 @@ namespace Uml.Robotics.Ros
             NotifyAll();
         }
 
-
         public void Dispose()
         {
             lock (mutex)
@@ -141,7 +134,6 @@ namespace Uml.Robotics.Ros
                 Disable();
             }
         }
-
 
         public void Enable()
         {
@@ -151,7 +143,6 @@ namespace Uml.Robotics.Ros
             }
             NotifyAll();
         }
-
 
         public void RemoveById(UInt64 owner_id)
         {
@@ -170,7 +161,6 @@ namespace Uml.Robotics.Ros
                 RemoveAll(owner_id);
             }
         }
-
 
         private CallOneResult CallOne(TLS tls)
         {
@@ -208,7 +198,6 @@ namespace Uml.Robotics.Ros
             return CallOneResult.Called;
         }
 
-
         private void RemoveAll(ulong owner_id)
         {
             lock (mutex)
@@ -218,35 +207,32 @@ namespace Uml.Robotics.Ros
             }
         }
 
-
         private void SetupTls()
         {
             if (tls == null)
+            {
                 tls = new TLS
                 {
                     calling_in_this_thread = ROS.getPID()
                 };
+            }
         }
-
 
         private void NotifyAll()
         {
             sem.Set();
         }
 
-
         private void NotifyOne()
         {
             sem.Set();
         }
 
-
         private IDInfo GetIdInfo(UInt64 id)
         {
             lock (idInfoMutex)
             {
-                IDInfo value;
-                if (idInfo.TryGetValue(id, out value))
+                if (idInfo.TryGetValue(id, out IDInfo value))
                     return value;
             }
             return null;

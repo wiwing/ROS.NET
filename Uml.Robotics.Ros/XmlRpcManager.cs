@@ -16,11 +16,11 @@ namespace Uml.Robotics.Ros
             public XmlRpcServerMethod wrapper;
         }
 
-        private static Lazy<XmlRpcManager> _instance = new Lazy<XmlRpcManager>(LazyThreadSafetyMode.ExecutionAndPublication);
+        private static Lazy<XmlRpcManager> instance = new Lazy<XmlRpcManager>(LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static XmlRpcManager Instance
         {
-            get { return _instance.Value; }
+            get { return instance.Value; }
         }
 
         ILogger Logger { get; } = ApplicationLogging.CreateLogger<XmlRpcManager>();
@@ -28,13 +28,11 @@ namespace Uml.Robotics.Ros
         List<IAsyncXmlRpcConnection> addedConnections = new List<IAsyncXmlRpcConnection>();
         List<IAsyncXmlRpcConnection> removedConnections = new List<IAsyncXmlRpcConnection>();
 
-        List<CachedXmlRpcClient> clients = new List<CachedXmlRpcClient>();
         List<IAsyncXmlRpcConnection> connections = new List<IAsyncXmlRpcConnection>();
         Dictionary<string, FunctionInfo> functions = new Dictionary<string, FunctionInfo>();
 
         object addedConnectionsGate = new object();
         object removedConnectionsGate = new object();
-        object clientsGate = new object();
         object functionsGate = new object();
 
         XmlRpcFunc getPid;
@@ -140,6 +138,7 @@ namespace Uml.Robotics.Ros
             int status_code = response[0].GetInt();
             if (response[1].Type != XmlRpcType.String)
                 return validateFailed(method, "didn't return a string as the 2nd element -- {0}", response);
+
             string status_string = response[1].GetString();
             if (status_code != 1)
             {
@@ -163,60 +162,18 @@ namespace Uml.Robotics.Ros
                 case XmlRpcType.Boolean:
                     payload.Copy(response[2]);
                     break;
-                case XmlRpcType.Invalid:
+                case XmlRpcType.Empty:
                     break;
                 default:
-                    throw new ArgumentException("Unhandled valid xmlrpc payload type: " + response[2].Type, nameof(response));
+                    throw new ArgumentException("Unhandled valid XML-RPC payload type: " + response[2].Type, nameof(response));
             }
             return true;
         }
 
-        private bool validateFailed(string method, string errorfmat, params object[] info)
+        private bool validateFailed(string method, string errorFormat, params object[] args)
         {
-            Logger.LogDebug("XML-RPC Call [{0}] {1} failed validation", method, string.Format(errorfmat, info));
+            Logger.LogDebug("XML-RPC Call [{0}] {1} failed validation", method, string.Format(errorFormat, args));
             return false;
-        }
-
-        public CachedXmlRpcClient getXMLRPCClient(string host, int port, string uri)
-        {
-            CachedXmlRpcClient c = null;
-            lock (clientsGate)
-            {
-                List<CachedXmlRpcClient> zombies = new List<CachedXmlRpcClient>();
-                foreach (CachedXmlRpcClient client in clients)
-                {
-                    if (!client.in_use)
-                    {
-                        if (DateTime.Now.Subtract(client.last_use_time).TotalSeconds > 30 || client.dead)
-                        {
-                            zombies.Add(client);
-                        }
-                        else if (client.CheckIdentity(host, port, uri))
-                        {
-                            c = client;
-                            break;
-                        }
-                    }
-                }
-                foreach (CachedXmlRpcClient C in zombies)
-                {
-                    clients.Remove(C);
-                    C.Dispose();
-                }
-                if (c == null)
-                {
-                    c = new CachedXmlRpcClient(host, port, uri);
-                    clients.Add(c);
-                }
-            }
-            c.AddRef();
-            return c;
-        }
-
-        public void releaseXMLRPCClient(CachedXmlRpcClient client)
-        {
-            client.DelRef();
-            client.Dispose();
         }
 
         public void addAsyncConnection(IAsyncXmlRpcConnection conn)
@@ -260,7 +217,7 @@ namespace Uml.Robotics.Ros
         }
 
 
-        public Action<XmlRpcValue> responseStr(IntPtr target, int code, string msg, string response)
+        public static Action<XmlRpcValue> responseStr(IntPtr target, int code, string msg, string response)
         {
             return (XmlRpcValue v) =>
             {
@@ -270,7 +227,7 @@ namespace Uml.Robotics.Ros
             };
         }
 
-        public Action<XmlRpcValue> responseInt(int code, string msg, int response)
+        public static Action<XmlRpcValue> responseInt(int code, string msg, int response)
         {
             return (XmlRpcValue v) =>
             {
@@ -280,7 +237,7 @@ namespace Uml.Robotics.Ros
             };
         }
 
-        public Action<XmlRpcValue> responseBool(int code, string msg, bool response)
+        public static Action<XmlRpcValue> responseBool(int code, string msg, bool response)
         {
             return (XmlRpcValue v) =>
             {
@@ -355,13 +312,7 @@ namespace Uml.Robotics.Ros
             shuttingDown = true;
             serverThread.Join();
             server.Shutdown();
-            foreach (CachedXmlRpcClient c in clients)
-            {
-                while (c.in_use)
-                    Thread.Sleep(ROS.WallDuration);
-                c.Dispose();
-            }
-            clients.Clear();
+
             lock (functionsGate)
             {
                 functions.Clear();
@@ -385,133 +336,5 @@ namespace Uml.Robotics.Ros
 
             Logger.LogDebug("XmlRpc Server shutted down.");
         }
-    }
-
-    public class CachedXmlRpcClient : IDisposable
-    {
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<CachedXmlRpcClient>();
-        private XmlRpcClient client;
-
-        public bool in_use
-        {
-            get
-            {
-                lock (busyMutex)
-                {
-                    return refs != 0;
-                }
-            }
-        }
-
-        public DateTime last_use_time;
-
-        private object busyMutex = new object();
-        private object client_lock = new object();
-        private volatile int refs;
-
-        internal bool dead
-        {
-            get
-            {
-                lock (client_lock)
-                {
-                    return client == null;
-                }
-            }
-        }
-
-        public CachedXmlRpcClient(string host, int port, string uri)
-            : this(new XmlRpcClient(host, port, uri))
-        {
-        }
-
-        private CachedXmlRpcClient(XmlRpcClient c)
-        {
-            lock (client_lock)
-            {
-                client = c;
-                client.Disposed += () =>
-                {
-                    client = null;
-                };
-            }
-        }
-
-        /// <summary>
-        ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
-        public void Dispose()
-        {
-            lock (busyMutex)
-            {
-                if (refs != 0)
-                    Logger.LogWarning("XmlRpcClient disposed with " + refs + " refs held");
-            }
-
-            lock (client_lock)
-            {
-                if (client != null)
-                {
-                    client.Dispose();
-                    client = null;
-                }
-            }
-        }
-
-        internal void AddRef()
-        {
-            lock (busyMutex)
-            {
-                refs++;
-            }
-            last_use_time = DateTime.Now;
-        }
-
-        internal void DelRef()
-        {
-            lock (busyMutex)
-            {
-                refs--;
-            }
-        }
-
-        public bool CheckIdentity(string host, int port, string uri)
-        {
-            lock (client_lock)
-            {
-                return client != null && port == client.Port
-                    && (host == null || client.Host != null && string.Equals(host, client.Host)) && (uri == null || client.Uri != null && string.Equals(uri, client.Uri));
-            }
-        }
-
-        #region XmlRpcClient passthrough functions and properties
-
-        public bool Execute(string method, XmlRpcValue parameters, XmlRpcValue result)
-        {
-            lock (client_lock)
-                return client.Execute(method, parameters, result);
-        }
-
-        public bool ExecuteNonBlock(string method, XmlRpcValue parameters)
-        {
-            lock (client_lock)
-                return client.ExecuteNonBlock(method, parameters);
-        }
-
-        public bool ExecuteCheckDone(XmlRpcValue result)
-        {
-            lock (client_lock)
-                return client.ExecuteCheckDone(result);
-        }
-
-        public bool IsConnected
-        {
-            get
-            {
-                lock (client_lock) return client != null && client.IsConnected;
-            }
-        }
-
-        #endregion
     }
 }

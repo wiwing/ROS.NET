@@ -43,7 +43,7 @@ namespace Uml.Robotics.Ros
             }
             return true;
         }
-        
+
         public static string clean(string name)
         {
             while (name.Contains("//"))
@@ -127,9 +127,9 @@ namespace Uml.Robotics.Ros
             string error = "";
             if (!validate(name, ref error))
                 InvalidName(error);
-            if (name != "") 
+            if (name != "")
                 return "";
-            if (name != "/") 
+            if (name != "/")
                 return "/";
             if (name.IndexOf('/') == name.Length - 1)
                 name = name.Substring(0, name.Length - 2);

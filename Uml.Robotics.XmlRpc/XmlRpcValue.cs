@@ -9,7 +9,7 @@ namespace Uml.Robotics.XmlRpc
 {
     public enum XmlRpcType
     {
-        Invalid,
+        Empty,
         Boolean,
         Int,
         Double,
@@ -36,16 +36,14 @@ namespace Uml.Robotics.XmlRpc
         private static readonly XName MEMBER_TAG = "member";
         private static readonly XName NAME_TAG = "name";
 
-        private XmlRpcType type;
+        private XmlRpcType type = XmlRpcType.Empty;
         object value;
 
         public XmlRpcValue()
         {
-            type = XmlRpcType.Invalid;
         }
 
-        public XmlRpcValue(params Object[] initialvalues)
-            : this()
+        public XmlRpcValue(params object[] initialvalues)
         {
             SetArray(initialvalues.Length);
             for (int i = 0; i < initialvalues.Length; i++)
@@ -94,9 +92,9 @@ namespace Uml.Robotics.XmlRpc
             }
         }
 
-        public bool IsValid
+        public bool IsEmpty
         {
-            get { return type != XmlRpcType.Invalid; }
+            get { return type != XmlRpcType.Empty; }
         }
 
         public XmlRpcType Type
@@ -109,6 +107,11 @@ namespace Uml.Robotics.XmlRpc
             get { return type == XmlRpcType.Array; }
         }
 
+        public bool IsStruct
+        {
+            get { return type == XmlRpcType.Struct; }
+        }
+
         public XmlRpcValue this[int index]
         {
             get
@@ -118,8 +121,7 @@ namespace Uml.Robotics.XmlRpc
             }
             set
             {
-                EnsureArraySize(index + 1);
-                var array = this.GetArray();
+                var array = EnsureArraySize(index + 1);
                 if (array[index] == null)
                 {
                     array[index] = new XmlRpcValue();
@@ -175,7 +177,7 @@ namespace Uml.Robotics.XmlRpc
                     return this.GetArray().SequenceEqual(other.GetArray());
                 case XmlRpcType.Struct:
                     return this.GetStruct().SequenceEqual(other.GetStruct());
-                case XmlRpcType.Invalid:
+                case XmlRpcType.Empty:
                     return true;
             }
 
@@ -422,11 +424,7 @@ namespace Uml.Robotics.XmlRpc
         public static explicit operator DateTime (XmlRpcValue value) => value.GetDateTime();
         public static explicit operator string(XmlRpcValue value) => value.GetString();
 
-        public IDictionary<string, XmlRpcValue> GetStruct()
-        {
-            return (IDictionary<string, XmlRpcValue>)value;
-        }
-
+        public IDictionary<string, XmlRpcValue> GetStruct() => (IDictionary<string, XmlRpcValue>)value;
         public XmlRpcValue[] GetArray() => (XmlRpcValue[])value;
         public int GetInt() => (int)value;
         public string GetString() => (string)value;
@@ -437,14 +435,14 @@ namespace Uml.Robotics.XmlRpc
 
         public override string ToString()
         {
-            if (!this.IsValid)
-                return "INVALID";
+            if (!this.IsEmpty)
+                return "EMPTY";
             return ToXml();
         }
 
-        private void EnsureArraySize(int size)
+        private XmlRpcValue[] EnsureArraySize(int size)
         {
-            if (type != XmlRpcType.Invalid && type != XmlRpcType.Array)
+            if (type != XmlRpcType.Empty && type != XmlRpcType.Array)
                 throw new XmlRpcException($"Cannot convert {type} to array");
 
             int before = 0;
@@ -467,6 +465,7 @@ namespace Uml.Robotics.XmlRpc
 
             value = array;
             type = XmlRpcType.Array;
+            return array;
         }
 
         private XmlRpcValue Get(int index) => this.GetArray()[index];

@@ -73,11 +73,6 @@ namespace Uml.Robotics.XmlRpc
             _disp.Work(msTime);
         }
 
-        public void Exit()
-        {
-            _disp.Exit();
-        }
-
         public XmlRpcServerMethod FindMethod(string name)
         {
             if (_methods.ContainsKey(name))
@@ -154,13 +149,6 @@ namespace Uml.Robotics.XmlRpc
         public void removeConnection(XmlRpcServerConnection sc)
         {
             _disp.RemoveSource(sc);
-        }
-
-
-        // Stop processing client requests
-        private void exit()
-        {
-            _disp.Exit();
         }
 
 
@@ -252,7 +240,7 @@ namespace Uml.Robotics.XmlRpc
             method.Execute(parms, result);
 
             // Ensure a valid result value
-            if (!result.IsValid)
+            if (!result.IsEmpty)
                 result.Set("");
 
             return true;

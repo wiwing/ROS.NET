@@ -16,30 +16,31 @@ namespace Uml.Robotics.Ros
             Init(n, remappings, 0);
         }
 
-        public static void Init(string n, IDictionary<string, string> remappings, int options)
+        public static void Init(string name, IDictionary<string, string> remappings, int options)
         {
-            Name = n;
-            bool disable_anon = false;
+            Name = name;
+
+            bool disableAnonymous = false;
             if (remappings.ContainsKey("__name"))
             {
                 Name = remappings["__name"];
-                disable_anon = true;
+                disableAnonymous = true;
             }
             if (remappings.ContainsKey("__ns"))
             {
                 Namespace = remappings["__ns"];
             }
-            if (Namespace == "")
+            if (string.IsNullOrEmpty(Namespace))
             {
                 Namespace = "/";
-            } 
+            }
 
             long walltime = DateTime.Now.Subtract(Process.GetCurrentProcess().StartTime).Ticks;
             names.Init(remappings);
             if (Name.Contains("/"))
-                throw new ArgumentException("Slashes '/' are not allowed in names", nameof(n));
+                throw new ArgumentException("Slashes '/' are not allowed in names", nameof(name));
             if (Name.Contains("~"))
-                throw new ArgumentException("Tildes '~' are not allowed in names", nameof(n));
+                throw new ArgumentException("Tildes '~' are not allowed in names", nameof(name));
             try
             {
                 Name = names.resolve(Namespace, Name);
@@ -48,7 +49,7 @@ namespace Uml.Robotics.Ros
             {
                 Logger.LogError(e.ToString());
             }
-            if ((options & (int) InitOption.AnonymousName) == (int) InitOption.AnonymousName && !disable_anon)
+            if ((options & (int) InitOption.AnonymousName) == (int) InitOption.AnonymousName && !disableAnonymous)
             {
                 int lbefore = Name.Length;
                 Name += "_" + walltime;

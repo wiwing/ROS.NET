@@ -180,7 +180,7 @@ namespace Uml.Robotics.Ros
             if (needs_retry && DateTime.Now.Subtract(next_retry).TotalMilliseconds < 0)
             {
                 retry_period =
-                    TimeSpan.FromSeconds((retry_period.TotalSeconds > 20) ? 20 : (2*retry_period.TotalSeconds));
+                    TimeSpan.FromSeconds((retry_period.TotalSeconds > 20) ? 20 : (2 * retry_period.TotalSeconds));
                 needs_retry = false;
                 TcpTransport old_transport = connection.transport;
                 string host = old_transport.connected_host;

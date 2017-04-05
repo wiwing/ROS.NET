@@ -91,9 +91,6 @@ namespace Uml.Robotics.Ros
             get { return _ok; }
         }
 
-        private static string _processname = null;
-        public static string ProcessName { get { if (_processname == null) _processname = Process.GetCurrentProcess().ProcessName; return _processname; } }
-
         /// <summary>
         ///     Gets the current thread's TID, emulating the behavior ROS has in a more interprocess situation on xnix
         /// </summary>
@@ -114,28 +111,6 @@ namespace Uml.Robotics.Ros
             return GetTime<std_msgs.Time>(time.Subtract(new DateTime(1970, 1, 1, 0, 0, 0)));
         }
 
-        #region time helpers
-
-        public static long ticksFromData(TimeData data)
-        {
-            return data.sec * TimeSpan.TicksPerSecond + (uint)Math.Floor(data.nsec / 100.0);
-
-        }
-
-        public static TimeData ticksToData(long ticks)
-        {
-            return ticksToData((ulong)ticks);
-        }
-
-        public static TimeData ticksToData(ulong ticks)
-        {
-            ulong seconds = (((ulong)Math.Floor(1.0 * ticks / TimeSpan.TicksPerSecond)));
-            ulong nanoseconds = 100 * (ticks % TimeSpan.TicksPerSecond);
-            return new TimeData((uint)seconds, (uint)nanoseconds);
-        }
-
-        #endregion
-
         /// <summary>
         ///     Turns a std_msgs.Time into a DateTime
         /// </summary>
@@ -143,7 +118,7 @@ namespace Uml.Robotics.Ros
         /// <returns> a DateTime </returns>
         public static DateTime GetTime(std_msgs.Time time)
         {
-            return new DateTime(1970, 1, 1, 0, 0, 0).Add(new TimeSpan(ticksFromData(time.data)));
+            return new DateTime(1970, 1, 1, 0, 0, 0).Add(new TimeSpan(time.data.Ticks));
         }
 
         /// <summary>
@@ -153,7 +128,7 @@ namespace Uml.Robotics.Ros
         /// <returns> a TimeSpan </returns>
         public static TimeSpan GetTime(std_msgs.Duration duration)
         {
-            return new TimeSpan(ticksFromData(duration.data));
+            return new TimeSpan(duration.data.Ticks);
         }
 
         public static T GetTime<T>(TimeSpan ts) where T : RosMessage, new()
@@ -173,7 +148,7 @@ namespace Uml.Robotics.Ros
             {
                 timestamp = timestamp.Subtract(lastSimTimeReceived).Add(lastSimTime);
             }
-            return ticksToData(timestamp.Ticks);
+            return TimeData.FromTicks(timestamp.Ticks);
         }
 
         /// <summary>
@@ -201,6 +176,10 @@ namespace Uml.Robotics.Ros
             return RosMessage.Generate(type);
         }
 
+
+        /// <summary>
+        /// Non-creatable marker class
+        /// </summary>
         public class ONLY_AUTO_PARAMS
         {
             private ONLY_AUTO_PARAMS() {}
@@ -369,7 +348,7 @@ namespace Uml.Robotics.Ros
 
                     // Load RosMessages from MessageBase assembly
                     msgRegistry.ParseAssemblyAndRegisterRosMessages(typeof(RosMessage).GetTypeInfo().Assembly);
-                    
+
                     // Load RosMessages from all assemblies that depend on MessageBase
                     var candidates = MessageTypeRegistry.GetCandidateAssemblies("Uml.Robotics.Ros.MessageBase");
                     foreach (var assembly in candidates)
@@ -424,7 +403,7 @@ namespace Uml.Robotics.Ros
                 Logger.LogInformation("Reason given for shutdown: [" + reason + "]");
                 shutdown();
             }
-            XmlRpcManager.Instance.responseInt(1, "", 0)(r);
+            XmlRpcManager.responseInt(1, "", 0)(r);
         }
 
         /// <summary>
@@ -446,7 +425,8 @@ namespace Uml.Robotics.Ros
         {
             lock (start_mutex)
             {
-                if (started) return;
+                if (started)
+                    return;
 
                 PollManager.Instance.addPollThreadListener(checkForShutdown);
                 XmlRpcManager.Instance.bind("shutdown", shutdownCallback);

@@ -213,7 +213,7 @@ namespace Uml.Robotics.Ros
             try
             {
                 XmlRpcValue v = getParam(key);
-                if (v == null || !v.IsValid)
+                if (v == null || !v.IsEmpty)
                 {
                     if (def == null)
                         return false;
@@ -460,7 +460,7 @@ namespace Uml.Robotics.Ros
                     {
                         if (parms.ContainsKey(mapped_key))
                         {
-                            if (parms[mapped_key].IsValid)
+                            if (parms[mapped_key].IsEmpty)
                             {
                                 v = parms[mapped_key];
                                 return true;
