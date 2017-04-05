@@ -15,19 +15,25 @@ using System.IO;
 namespace Uml.Robotics.Ros
 {
     /// <summary>
-    ///     Everything happens here.
+    /// A static class for global variables, initializations and shutdowns.
     /// </summary>
     public static class ROS
     {
         private static ILogger Logger { get; set;} = ApplicationLogging.CreateLogger(nameof(ROS));
 
+        private static ICallbackQueue globalCallbackQueue;
+        private static object start_mutex = new object();
+
         public static TimerManager timer_manager = new TimerManager();
 
-        public static ICallbackQueue GlobalCallbackQueue;
-        internal static bool initialized, started, atexit_registered, _ok;
-
+        internal static bool initialized, started, atExitRegistered, _ok;
         internal static bool _shutting_down, shutdown_requested;
         internal static int init_options;
+
+        public static ICallbackQueue GlobalCallbackQueue
+        {
+            get => globalCallbackQueue;
+        }
 
         /// <summary>
         ///     Means of setting ROS_MASTER_URI programatically before Init is called
@@ -47,20 +53,17 @@ namespace Uml.Robotics.Ros
         /// </summary>
         public static string ROS_IP;
 
-        private static object start_mutex = new object();
 
         /// <summary>
-        ///     general global sleep time in miliseconds
+        /// General global sleep time in miliseconds for spin operations.
         /// </summary>
-        public static int WallDuration = 10;
+        public const int WallDuration = 10;
 
         public static NodeHandle GlobalNodeHandle;
         private static object shutting_down_mutex = new object();
 
-        //last sim time time
-        private static TimeSpan lastSimTime;
-        //last sim time received time (wall)
-        private static TimeSpan lastSimTimeReceived;
+        private static TimeSpan lastSimTime;                // last sim time time
+        private static TimeSpan lastSimTimeReceived;        // last sim time received time (wall)
 
         private static readonly string ROSOUT_FMAT = "{0} {1}";
         private static readonly string ROSOUT_DEBUG_PREFIX = "[Debug]";
@@ -308,24 +311,23 @@ namespace Uml.Robotics.Ros
         /// <summary>
         ///     Initializes ROS so nodehandles and nodes can exist
         /// </summary>
-        /// <param name="remapping_args"> dictionary of remapping args </param>
+        /// <param name="remappingArgs"> dictionary of remapping args </param>
         /// <param name="name"> node name </param>
         /// <param name="options"> options? </param>
-        internal static void Init(IDictionary<string, string> remapping_args, string name, int options)
+        internal static void Init(IDictionary<string, string> remappingArgs, string name, int options)
         {
             lock (typeof(ROS))
             {
-                // if we haven't sunk our fangs into the processes jugular so we can tell
-                //    when it has stopped kicking, do so now
-                if (!atexit_registered)
+                // register process unload and cancel (CTRL+C) event handlers
+                if (!atExitRegistered)
                 {
-                    atexit_registered = true;
-                    Process.GetCurrentProcess().EnableRaisingEvents = true;
-                    Process.GetCurrentProcess().Exited += (o, args) =>
+                    AssemblyLoadContext.Default.Unloading += (AssemblyLoadContext obj) =>
                     {
                         _shutdown();
                         waitForShutdown();
                     };
+                    atExitRegistered = true;
+
                     Console.CancelKeyPress += (o, args) =>
                     {
                         _shutdown();
@@ -334,13 +336,13 @@ namespace Uml.Robotics.Ros
                     };
                 }
 
-                // this needs to exist for connections and stuff to happen
-                if (GlobalCallbackQueue == null)
+                // crate global callback queue
+                if (globalCallbackQueue == null)
                 {
-                    GlobalCallbackQueue = new CallbackQueue();
+                    globalCallbackQueue = new CallbackQueue();
                 }
 
-                // kick the tires and light the fires
+                // run the actual ROS initialization
                 if (!initialized)
                 {
                     var msgRegistry = MessageTypeRegistry.Default;
@@ -360,13 +362,13 @@ namespace Uml.Robotics.Ros
 
                     init_options = options;
                     _ok = true;
-                    network.init(remapping_args);
-                    master.init(remapping_args);
-                    this_node.Init(name, remapping_args, options);
-                    Param.init(remapping_args);
+                    network.init(remappingArgs);
+                    master.init(remappingArgs);
+                    this_node.Init(name, remappingArgs, options);
+                    Param.init(remappingArgs);
                     SimTime.instance.SimTimeEvent += SimTimeCallback;
                     initialized = true;
-                    GlobalNodeHandle = new NodeHandle(this_node.Namespace, remapping_args);
+                    GlobalNodeHandle = new NodeHandle(this_node.Namespace, remappingArgs);
                     RosOutAppender.Instance.start();
                 }
             }
@@ -501,8 +503,9 @@ namespace Uml.Robotics.Ros
     }
 
     /// <summary>
-    ///     This is probably useless
+    /// Options that can be passed to the ROS.init() function.
     /// </summary>
+    [Flags]
     public enum InitOption
     {
         NosigintHandler = 1 << 0,

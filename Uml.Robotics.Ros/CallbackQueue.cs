@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 
 namespace Uml.Robotics.Ros
@@ -29,7 +28,6 @@ namespace Uml.Robotics.Ros
         {
             get { return count == 0; }
         }
-
 
         public bool IsEnabled
         {

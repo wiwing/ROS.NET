@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Uml.Robotics.Ros
 {
@@ -12,7 +10,6 @@ namespace Uml.Robotics.Ros
         bool CallAvailable(int timeOut);
 
         void RemoveById(UInt64 owner_id);
-
 
         void Enable();
         void Disable();

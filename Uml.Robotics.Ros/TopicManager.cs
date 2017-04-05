@@ -241,15 +241,16 @@ namespace Uml.Robotics.Ros
                 if (shutting_down)
                     return false;
             }
-            if (ops.md5sum == "")
+            if (string.IsNullOrEmpty(ops.md5sum))
                 throw subscribeFail(ops, "with an empty md5sum");
-            if (ops.datatype == "")
+            if (string.IsNullOrEmpty(ops.datatype))
                 throw subscribeFail(ops, "with an empty datatype");
             if (ops.helper == null)
                 throw subscribeFail(ops, "without a callback");
+
             string md5sum = ops.md5sum;
             string datatype = ops.datatype;
-            Subscription s = new Subscription(ops.topic, md5sum, datatype);
+            var s = new Subscription(ops.topic, md5sum, datatype);
             s.addCallback(ops.helper, ops.md5sum, ops.callback_queue, ops.queue_size, ops.allow_concurrent_callbacks, ops.topic);
             if (!registerSubscriber(s, ops.datatype))
             {

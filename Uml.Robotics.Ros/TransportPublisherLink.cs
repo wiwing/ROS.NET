@@ -102,7 +102,6 @@ namespace Uml.Robotics.Ros
 
         private bool onHeaderReceived(Connection conn, Header header)
         {
-            ScopedTimer.Ping();
             if (conn != connection)
                 return false;
             if (!setHeader(header))
@@ -134,7 +133,6 @@ namespace Uml.Robotics.Ros
 
         private bool onMessageLength(Connection conn, byte[] buffer, int size, bool success)
         {
-            ScopedTimer.Ping();
             if (retry_timer != null)
                 ROS.timer_manager.RemoveTimer(ref retry_timer);
             if (!success)
@@ -159,8 +157,9 @@ namespace Uml.Robotics.Ros
 
         private bool onMessage(Connection conn, byte[] buffer, int size, bool success)
         {
-            ScopedTimer.Ping();
-            if (!success || conn == null || conn != connection) return false;
+            if (!success || conn == null || conn != connection)
+                return false;
+
             if (success)
             {
                 RosMessage msg = RosMessage.Generate(parent.msgtype);
@@ -176,7 +175,9 @@ namespace Uml.Robotics.Ros
         private void onRetryTimer(object o)
         {
             Logger.LogDebug("TransportPublisherLink: onRetryTimer");
-            if (dropping) return;
+            if (dropping)
+                return;
+
             if (needs_retry && DateTime.Now.Subtract(next_retry).TotalMilliseconds < 0)
             {
                 retry_period =

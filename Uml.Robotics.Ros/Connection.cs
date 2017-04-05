@@ -281,15 +281,15 @@ namespace Uml.Robotics.Ros
             lock (reading)
             {
                 //Logger.LogDebug("READ - "+transport.poll_set);
-                if (dropped) return;
-                ScopedTimer.Ping();
+                if (dropped)
+                    return;
+
                 ReadFinishedFunc callback;
                 lock (read_callback_mutex)
                     callback = read_callback;
                 int size;
                 while (!dropped && callback != null)
                 {
-                    ScopedTimer.Ping();
                     int to_read = read_size - read_filled;
                     if (to_read > 0 && read_buffer == null)
                         throw new Exception($"Trying to read {to_read} bytes with a null read_buffer.");
@@ -300,7 +300,6 @@ namespace Uml.Robotics.Ros
                         throw new Exception("Cannot determine which read_callback to invoke.");
                     if (to_read > 0)
                     {
-                        ScopedTimer.Ping();
                         int bytes_read = transport.read(read_buffer, read_filled, to_read);
                         if (dropped)
                         {
@@ -310,7 +309,6 @@ namespace Uml.Robotics.Ros
                         }
                         if (bytes_read < 0)
                         {
-                            ScopedTimer.Ping();
                             read_callback = null;
                             byte[] buffer = read_buffer;
                             read_buffer = null;
@@ -391,8 +389,8 @@ namespace Uml.Robotics.Ros
         {
             lock (writing)
             {
-                if (dropped) return;
-                ScopedTimer.Ping();
+                if (dropped)
+                    return;
                 bool can_write_more = true;
                 while (write_callback != null && can_write_more && !dropped)
                 {

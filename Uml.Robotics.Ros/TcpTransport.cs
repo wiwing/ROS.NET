@@ -461,7 +461,6 @@ namespace Uml.Robotics.Ros
 
         public int read(byte[] buffer, int pos, int length)
         {
-            ScopedTimer.Ping();
             lock (close_mutex)
             {
                 if (closed)
@@ -485,7 +484,6 @@ namespace Uml.Robotics.Ros
 
         public int write(byte[] buffer, int pos, int size)
         {
-            ScopedTimer.Ping();
             lock (close_mutex)
             {
                 if (closed)
@@ -569,7 +567,6 @@ namespace Uml.Robotics.Ros
 
         private void socketUpdate(int events)
         {
-            ScopedTimer.Ping();
             lock (close_mutex)
             {
                 if (closed) return;

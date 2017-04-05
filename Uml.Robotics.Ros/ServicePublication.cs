@@ -15,15 +15,14 @@ namespace Uml.Robotics.Ros
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentNullException(nameof(name));
 
-            // TODO: Complete member initialization
             this.name = name;
-            md5sum = md5Sum;
+            this.md5sum = md5Sum;
             this.datatype = datatype;
-            req_datatype = reqDatatype;
-            res_datatype = resDatatype;
+            this.req_datatype = reqDatatype;
+            this.res_datatype = resDatatype;
             this.helper = helper;
             this.callback = callback;
-            tracked_object = trackedObject;
+            this.tracked_object = trackedObject;
 
             if (trackedObject != null)
                 has_tracked_object = true;
@@ -64,14 +63,14 @@ namespace Uml.Robotics.Ros
 
             public ServiceCallback(ServicePublication<MReq, MRes> sp, ServiceCallbackHelper<MReq, MRes> _helper, byte[] buf, int num_bytes, IServiceClientLink link, bool has_tracked_object, object tracked_object)
             {
-                isp = sp;
-                if (isp != null && _helper != null)
-                    isp.helper = _helper;
-                buffer = buf;
-                _numBytes = num_bytes;
+                this.isp = sp;
+                if (this.isp != null && _helper != null)
+                    this.isp.helper = _helper;
+                this.buffer = buf;
+                this._numBytes = num_bytes;
                 this.link = link;
-                _hasTrackedObject = has_tracked_object;
-                _trackedObject = tracked_object;
+                this._hasTrackedObject = has_tracked_object;
+                this._trackedObject = tracked_object;
             }
 
             internal override CallResult Call()
@@ -117,7 +116,7 @@ namespace Uml.Robotics.Ros
         }
     }
 
-    public class IServicePublication
+    public abstract class IServicePublication
     {
         internal ICallbackQueue callback;
         internal List<IServiceClientLink> client_links = new List<IServiceClientLink>();
@@ -156,19 +155,8 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        internal virtual void addServiceClientLink(IServiceClientLink iServiceClientLink)
-        {
-            throw new NotImplementedException();
-        }
-
-        internal virtual void removeServiceClientLink(IServiceClientLink iServiceClientLink)
-        {
-            throw new NotImplementedException();
-        }
-
-        public virtual void processRequest(ref byte[] buffer, int size, IServiceClientLink iServiceClientLink)
-        {
-            throw new NotImplementedException();
-        }
+        internal abstract void addServiceClientLink(IServiceClientLink iServiceClientLink);
+        internal abstract void removeServiceClientLink(IServiceClientLink iServiceClientLink);
+        public abstract void processRequest(ref byte[] buffer, int size, IServiceClientLink iServiceClientLink);
     }
 }
