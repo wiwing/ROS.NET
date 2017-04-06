@@ -34,7 +34,6 @@ namespace Uml.Robotics.Ros
         public TcpTransport transport;
         public byte[] write_buffer;
         public WriteFinishedFunc write_callback;
-        public object write_callback_mutex = new object();
         public int write_sent, write_size;
         private object reading = new object();
         private object writing = new object();
@@ -124,7 +123,7 @@ namespace Uml.Robotics.Ros
             if (dropped || sendingHeaderError)
                 return;
 
-            lock (write_callback_mutex)
+            lock (writing)
             {
                 if (write_callback != null)
                     writeTransport();
@@ -336,7 +335,7 @@ namespace Uml.Robotics.Ros
                     else
                     {
                         lock (read_callback_mutex)
-                        { 
+                        {
                             if (read_callback == null)
                                 transport.disableRead();
                         }
@@ -348,7 +347,7 @@ namespace Uml.Robotics.Ros
                         byte[] buffer = read_buffer;
                         read_buffer = null;
                         lock (read_callback_mutex)
-                        { 
+                        {
                             read_callback = null;
                         }
                         read_size = 0;
@@ -397,17 +396,14 @@ namespace Uml.Robotics.Ros
                         can_write_more = false;
                     if (write_sent == write_size && !dropped)
                     {
-                        lock (write_callback_mutex)
+                        WriteFinishedFunc callback = write_callback;
+                        write_callback = null;
+                        write_buffer = null;
+                        write_sent = 0;
+                        write_size = 0;
+                        if (!callback(this))
                         {
-                            WriteFinishedFunc callback = write_callback;
-                            write_callback = null;
-                            write_buffer = null;
-                            write_sent = 0;
-                            write_size = 0;
-                            if (!callback(this))
-                            {
-                                Logger.LogError("Failed to invoke " + callback.GetMethodInfo().Name);
-                            }
+                            Logger.LogError("Failed to invoke " + callback.GetMethodInfo().Name);
                         }
                     }
                 }
