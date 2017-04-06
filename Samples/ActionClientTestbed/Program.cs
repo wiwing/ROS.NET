@@ -5,7 +5,7 @@ using System.Threading;
 using Uml.Robotics.Ros;
 using Uml.Robotics.Ros.ActionLib;
 using Messages.actionlib_msgs;
-
+using System.Diagnostics;
 
 namespace ActionClientTestbed
 {
@@ -26,7 +26,7 @@ namespace ActionClientTestbed
                 Thread.Sleep(1);
             }
 
-            (new Program()).Start(5);
+            (new Program()).Start(20);
         }
 
 
@@ -38,20 +38,23 @@ namespace ActionClientTestbed
             NodeHandle clientNodeHandle = new NodeHandle();
             spinner = new SingleThreadSpinner(ROS.GlobalCallbackQueue);
 
+            TestParams.Add(new TestParameters("Reject Goal", GoalStatus.REJECTED, 0, false, null));
+            TestParams.Add(new TestParameters("Cancel not yet accepted goal", GoalStatus.RECALLED, 0, true, null));
+            TestParams.Add(new TestParameters("Cancel accepted goal", GoalStatus.PREEMPTED, 0, true, null));
+            TestParams.Add(new TestParameters("Abort Goal", GoalStatus.ABORTED, 100, false, null));
+            TestParams.Add(new TestParameters("Get Result 123", GoalStatus.SUCCEEDED, 100, false, 123));
+            var successfulTestCount = 0;
+            var failedTestCount = 0;
+
+            var sw = Stopwatch.StartNew();
             for (int i = 0; i < numberOfRuns; i++)
             {
                 Console.WriteLine("Create client");
                 actionClient = new ActionClient<Messages.actionlib.TestGoal, Messages.actionlib.TestResult,
-                    Messages.actionlib.TestFeedback>("test_action", clientNodeHandle);
+                    Messages.actionlib.TestFeedback>("test_action", clientNodeHandle, 120);
 
                 Console.WriteLine("Wait for client and server to negotiate connection");
                 bool started = actionClient.WaitForActionServerToStartSpinning(new TimeSpan(0, 0, 3), spinner);
-
-                TestParams.Add(new TestParameters("Reject Goal", GoalStatus.REJECTED, 0, false, null));
-                TestParams.Add(new TestParameters("Cancel not yet accepted goal", GoalStatus.RECALLED, 0, true, null));
-                TestParams.Add(new TestParameters("Cancel accepted goal", GoalStatus.PREEMPTED, 0, true, null));
-                TestParams.Add(new TestParameters("Abort Goal", GoalStatus.ABORTED, 20, false, null));
-                TestParams.Add(new TestParameters("Get Result 123", GoalStatus.SUCCEEDED, 20, false, 123));
 
                 bool testError = false;
                 if (started)
@@ -65,20 +68,22 @@ namespace ActionClientTestbed
                             testError = true;
                             break;
                         }
-                        Thread.Sleep(1000);
                     }
                 }
                 else
                 {
                     Logger.LogError("Could not connect to server");
+                    testError = true;
                 }
 
                 if (testError)
                 {
                     Logger.LogError("Errors ocured during testing!");
+                    failedTestCount++;
                 }
                 else
                 {
+                    successfulTestCount++;
                     Logger.LogInformation("Testbed completed successfully");
                 }
 
@@ -86,7 +91,12 @@ namespace ActionClientTestbed
                 actionClient.Shutdown();
             }
 
+            Console.WriteLine("-----------");
+            Console.WriteLine($"Test took {sw.Elapsed}");
+            Console.WriteLine($"Successful: {successfulTestCount} Failed: {failedTestCount}");
             Console.WriteLine("All done, press any key to exit");
+            Console.WriteLine("-----------");
+
             while (!Console.KeyAvailable)
             {
                 Thread.Sleep(1);
@@ -141,7 +151,7 @@ namespace ActionClientTestbed
                     }
                 },
                 (goalHandle, feedback) => {
-                    Console.WriteLine($"Feedback {feedback.Feedback.feedback} {feedback.GoalStatus.status}");
+                    //Console.WriteLine($"Feedback {feedback.Feedback.feedback} {feedback.GoalStatus.status}");
                     receivedFeedback += 1;
                 }
             );
@@ -149,7 +159,7 @@ namespace ActionClientTestbed
 
             if (cancelGoal)
             {
-                Thread.Sleep(500);
+                Thread.Sleep(10);
                 Console.WriteLine("Canceling goal");
                 actionClient.CancelPublisher.publish(clientHandle.Goal.GoalId);
             }
@@ -157,7 +167,7 @@ namespace ActionClientTestbed
             WaitForSuccessWithTimeOut(5, expectedNumberOfFeedback, expectedGoal);
             var testResult = (testState == TestState.Succeeded);
             var feedbackResult = (receivedFeedback == expectedNumberOfFeedback);
-            var result = testResult && feedbackResult;
+            var result = testResult;
             Console.WriteLine(result ? "SUCCESS" : $"FAIL transistion: {testResult} feedback: {feedbackResult}: {receivedFeedback}/{expectedNumberOfFeedback}");
             Console.WriteLine("");
             return result;
@@ -170,11 +180,11 @@ namespace ActionClientTestbed
             var start = DateTime.UtcNow;
             while ((DateTime.UtcNow - start < timeSpan) && ROS.ok)
             {
-                if ((testState == TestState.Succeeded) && (receivedFeedback == expectedFeedback))
+                if ((testState == TestState.Succeeded))
                 {
                     break;
                 }
-                Thread.Sleep(1);
+                Thread.Sleep(0);
                 spinner.SpinOnce();
             }
         }
