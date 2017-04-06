@@ -353,37 +353,35 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-        public static void init(IDictionary<string, string> remapping_args)
+        public static void init(IDictionary<string, string> remappingArgs)
         {
-            foreach (string name in remapping_args.Keys)
+            foreach (string name in remappingArgs.Keys)
             {
-                string param = (string) remapping_args[name];
-                if (name.Length < 2) continue;
+                string param = remappingArgs[name];
+                if (name.Length < 2)
+                    continue;
                 if (name[0] == '_' && name[1] != '_')
                 {
-                    string local_name = "~" + name.Substring(1);
-                    int i = 0;
-                    bool success = int.TryParse(param, out i);
+                    string localName = "~" + name.Substring(1);
+                    bool success = int.TryParse(param, out int i);
                     if (success)
                     {
-                        set(names.resolve(local_name), i);
+                        set(names.resolve(localName), i);
                         continue;
                     }
-                    double d = 0;
-                    success = double.TryParse(param, out d);
+                    success = double.TryParse(param, out double d);
                     if (success)
                     {
-                        set(names.resolve(local_name), d);
+                        set(names.resolve(localName), d);
                         continue;
                     }
-                    bool b = false;
-                    success = bool.TryParse(param.ToLower(), out b);
+                    success = bool.TryParse(param.ToLower(), out bool b);
                     if (success)
                     {
-                        set(names.resolve(local_name), b);
+                        set(names.resolve(localName), b);
                         continue;
                     }
-                    set(names.resolve(local_name), param);
+                    set(names.resolve(localName), param);
                 }
             }
             XmlRpcManager.Instance.bind("paramUpdate", paramUpdateCallback);
