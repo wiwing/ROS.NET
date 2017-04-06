@@ -10,14 +10,16 @@ namespace Uml.Robotics.Ros
 {
     public class ConnectionManager
     {
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ConnectionManager>();
-        private static Lazy<ConnectionManager> _instance = new Lazy<ConnectionManager>(LazyThreadSafetyMode.ExecutionAndPublication);
-
         public static ConnectionManager Instance
         {
-            get { return _instance.Value; }
+            get { return instance.Value; }
         }
 
+        public static void Terminate()
+        {
+            Instance.Shutdown();
+            instance = new Lazy<ConnectionManager>(LazyThreadSafetyMode.ExecutionAndPublication);
+        }
 
         private uint connection_id_counter;
         private object connection_id_counter_mutex = new object();
@@ -26,6 +28,9 @@ namespace Uml.Robotics.Ros
         private List<Connection> dropped_connections = new List<Connection>();
         private object dropped_connections_mutex = new object();
         private TcpListener tcpserver_transport;
+        private WrappedTimer acceptor;
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ConnectionManager>();
+        private static Lazy<ConnectionManager> instance = new Lazy<ConnectionManager>(LazyThreadSafetyMode.ExecutionAndPublication);
 
 
         public int TCPPort
@@ -97,7 +102,7 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        public void shutdown()
+        public void Shutdown()
         {
             acceptor.Stop();
 
@@ -151,7 +156,6 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        private WrappedTimer acceptor;
 
         public void Start()
         {

@@ -168,7 +168,7 @@ namespace Uml.Robotics.Ros.Transforms
             {
                 if (storage.Count > 0 && storage.First().Key > new_data.stamp + max_storage_time)
                 {
-                    if (!SimTime.instance.IsTimeSimulated)
+                    if (!SimTime.Instance.IsTimeSimulated)
                         return false;
 
                     storage.Clear();

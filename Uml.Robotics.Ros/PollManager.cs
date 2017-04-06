@@ -111,7 +111,6 @@ namespace Uml.Robotics.Ros
     public class PollManager
     {
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<PollManager>();
-        private static Lazy<PollManager> _instance = new Lazy<PollManager>(LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static PollManager Instance
         {
@@ -121,9 +120,18 @@ namespace Uml.Robotics.Ros
         public PollSet poll_set;
         public bool shutting_down;
         public object signal_mutex = new object();
+        private static Lazy<PollManager> _instance = new Lazy<PollManager>(LazyThreadSafetyMode.ExecutionAndPublication);
         private List<PollSignal> signals = new List<PollSignal>();
         public TcpTransport tcpserver_transport;
         private Thread thread;
+
+
+        public static void Terminate()
+        {
+            Instance.Shutdown();
+            _instance = new Lazy<PollManager>(LazyThreadSafetyMode.ExecutionAndPublication);
+        }
+
 
         public PollManager()
         {
@@ -177,7 +185,8 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        public void shutdown()
+
+        public void Shutdown()
         {
             if (thread != null && !shutting_down)
             {

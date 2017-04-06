@@ -369,7 +369,7 @@ namespace Uml.Robotics.Ros
                     master.init(remappingArgs);
                     this_node.Init(name, remappingArgs, options);
                     Param.Init(remappingArgs);
-                    SimTime.instance.SimTimeEvent += SimTimeCallback;
+                    SimTime.Instance.SimTimeEvent += SimTimeCallback;
                     initialized = true;
                     GlobalNodeHandle = new NodeHandle(this_node.Namespace, remappingArgs);
                     RosOutAppender.Instance.start();
@@ -499,15 +499,16 @@ namespace Uml.Robotics.Ros
                 Logger.LogInformation("ROS is shutting down.");
                 started = false;
                 _ok = false;
-                RosOutAppender.Instance.shutdown();
+                SimTime.Terminate();
+                RosOutAppender.Terminate();
                 GlobalNodeHandle.shutdown();
                 GlobalCallbackQueue.Disable();
                 GlobalCallbackQueue.Clear();
-                TopicManager.Instance.shutdown();
                 ServiceManager.Instance.shutdown();
-                PollManager.Instance.shutdown();
+                TopicManager.Terminate();
+                PollManager.Terminate();
                 XmlRpcManager.Terminate();
-                ConnectionManager.Instance.shutdown();
+                ConnectionManager.Terminate();
                 ROS.Off = true;
             }
         }

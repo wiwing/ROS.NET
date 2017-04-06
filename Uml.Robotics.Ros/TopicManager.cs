@@ -16,13 +16,13 @@ namespace Uml.Robotics.Ros
 
         #endregion
 
-        private static Lazy<TopicManager> _instance = new Lazy<TopicManager>(LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static TopicManager Instance
         {
-            get { return _instance.Value; }
+            get { return instance.Value; }
         }
 
+        private static Lazy<TopicManager> instance = new Lazy<TopicManager>(LazyThreadSafetyMode.ExecutionAndPublication);
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<TopicManager>();
         private List<Publication> advertised_topics = new List<Publication>();
         private object advertised_topics_mutex = new object();
@@ -30,6 +30,14 @@ namespace Uml.Robotics.Ros
         private object shutting_down_mutex = new object();
         private object subs_mutex = new object();
         private List<Subscription> subscriptions = new List<Subscription>();
+
+
+        public static void Terminate()
+        {
+            Instance.Shutdown();
+            instance = new Lazy<TopicManager>(LazyThreadSafetyMode.ExecutionAndPublication);
+        }
+
 
         /// <summary>
         ///     Binds the XmlRpc requests to callback functions, signal to start
@@ -52,7 +60,7 @@ namespace Uml.Robotics.Ros
         /// <summary>
         ///     unbinds the XmlRpc requests to callback functions, signal to shutdown
         /// </summary>
-        public void shutdown()
+        public void Shutdown()
         {
             lock (shutting_down_mutex)
             {

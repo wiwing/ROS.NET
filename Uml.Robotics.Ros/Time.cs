@@ -11,17 +11,25 @@ namespace Uml.Robotics.Ros
         private static ILogger Logger { get; } = ApplicationLogging.CreateLogger<SimTime>();
         public delegate void SimTimeDelegate(TimeSpan ts);
 
-        private static Lazy<SimTime> _instance = new Lazy<SimTime>(LazyThreadSafetyMode.ExecutionAndPublication);
 
-        public static SimTime instance
+        public static SimTime Instance
         {
-            get { return _instance.Value; }
+            get { return instance.Value; }
         }
 
+        private static Lazy<SimTime> instance = new Lazy<SimTime>(LazyThreadSafetyMode.ExecutionAndPublication);
         private bool checkedSimTime;
-        private NodeHandle nh;
+        private NodeHandle nodeHandle;
         private bool simTime;
         private Subscriber<Clock> simTimeSubscriber;
+
+
+        public static void Terminate()
+        {
+            Instance.Shutdown();
+            instance = new Lazy<SimTime>(LazyThreadSafetyMode.ExecutionAndPublication);
+        }
+
 
         public SimTime()
         {
@@ -35,8 +43,8 @@ namespace Uml.Robotics.Ros
                     }
                     if (!ROS.shutting_down)
                     {
-                        nh = new NodeHandle();
-                        simTimeSubscriber = nh.subscribe<Clock>("/clock", 1, SimTimeCallback);
+                        nodeHandle = new NodeHandle();
+                        simTimeSubscriber = nodeHandle.subscribe<Clock>("/clock", 1, SimTimeCallback);
                     }
                 }
                 catch(Exception e)
@@ -46,9 +54,17 @@ namespace Uml.Robotics.Ros
             }).Start();
         }
 
+
         public bool IsTimeSimulated
         {
             get { return simTime; }
+        }
+
+
+        public void Shutdown()
+        {
+            simTimeSubscriber.shutdown();
+            nodeHandle.shutdown();
         }
 
         public event SimTimeDelegate SimTimeEvent;

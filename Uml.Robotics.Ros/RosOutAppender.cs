@@ -14,11 +14,9 @@ namespace Uml.Robotics.Ros
 
     public class RosOutAppender
     {
-        private static Lazy<RosOutAppender> _instance = new Lazy<RosOutAppender>(LazyThreadSafetyMode.ExecutionAndPublication);
-
         public static RosOutAppender Instance
         {
-            get { return _instance.Value; }
+            get { return instance.Value; }
         }
 
         internal enum ROSOUT_LEVEL
@@ -30,10 +28,19 @@ namespace Uml.Robotics.Ros
             FATAL = 16
         }
 
+        private static Lazy<RosOutAppender> instance = new Lazy<RosOutAppender>(LazyThreadSafetyMode.ExecutionAndPublication);
         private Queue<Log> log_queue = new Queue<Log>();
         private Thread publish_thread;
         private bool shutting_down;
         private Publisher<Log> publisher;
+
+
+        public static void Terminate()
+        {
+            Instance.Shutdown();
+            instance = new Lazy<RosOutAppender>(LazyThreadSafetyMode.ExecutionAndPublication);
+        }
+
 
         public RosOutAppender()
         {
@@ -55,7 +62,8 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        public void shutdown()
+
+        public void Shutdown()
         {
             shutting_down = true;
             if(started)
