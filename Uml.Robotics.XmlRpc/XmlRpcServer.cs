@@ -6,11 +6,14 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Xml.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.XmlRpc
 {
     public class XmlRpcServer : XmlRpcSource
     {
+        const string XMLRPC_VERSION = "XMLRPC++ 0.7";
+
         const string SYSTEM_MULTICALL = "system.multicall";
         const string METHODNAME = "methodName";
         const string PARAMS = "params";
@@ -21,8 +24,9 @@ namespace Uml.Robotics.XmlRpc
         const string METHOD_HELP = "system.methodHelp";
         const string MULTICALL = "system.multicall";
 
+        private ILogger Logger { get; } = XmlRpcLogging.CreateLogger<XmlRpcServer>();
         private XmlRpcDispatch _disp = new XmlRpcDispatch();
-        
+
         private bool _introspectionEnabled;     // whether the introspection API is supported by this server
         private XmlRpcServerMethod _listMethods;
         private XmlRpcServerMethod _methodHelp;
@@ -78,7 +82,7 @@ namespace Uml.Robotics.XmlRpc
                 return _methods[name];
             return null;
         }
-        
+
         public override Socket getSocket()
         {
             return listener?.Server;
@@ -93,8 +97,8 @@ namespace Uml.Robotics.XmlRpc
                 listener.Start(backlog);
                 _port = ((IPEndPoint)listener.Server.LocalEndPoint).Port;
                 _disp.AddSource(this, XmlRpcDispatch.EventType.ReadableEvent);
-                //listener.BeginAcceptTcpClient(new AsyncCallback(acceptClient), listener);
-                XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.WARNING, "XmlRpcServer::bindAndListen: server listening on port {0}", _port);
+
+                Logger.LogWarning("XmlRpcServer::bindAndListen: server listening on port {0}", _port);
             }
             catch (Exception ex)
             {
@@ -120,11 +124,11 @@ namespace Uml.Robotics.XmlRpc
                 try
                 {
                     _disp.AddSource(createConnection(listener.AcceptSocketAsync().Result), XmlRpcDispatch.EventType.ReadableEvent);
-                    XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.WARNING, "XmlRpcServer::acceptConnection: creating a connection");
+                    Logger.LogWarning("XmlRpcServer::acceptConnection: creating a connection");
                 }
                 catch (SocketException ex)
                 {
-                    XmlRpcUtil.error("XmlRpcServer::acceptConnection: Could not accept connection ({0}).", ex.Message);
+                    Logger.LogError("XmlRpcServer::acceptConnection: Could not accept connection ({0}).", ex.Message);
                     Thread.Sleep(10);
                 }
             }
@@ -202,7 +206,7 @@ namespace Uml.Robotics.XmlRpc
             string response = "";
             XmlRpcValue parms = new XmlRpcValue(), resultValue = new XmlRpcValue();
             string methodName = parseRequest(parms, request);
-            XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.WARNING, "XmlRpcServerConnection::executeRequest: server calling method '{0}'", methodName);
+            Logger.LogWarning("XmlRpcServerConnection::executeRequest: server calling method '{0}'", methodName);
 
             try
             {
@@ -214,7 +218,7 @@ namespace Uml.Robotics.XmlRpc
             }
             catch (XmlRpcException fault)
             {
-                XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.WARNING, "XmlRpcServerConnection::executeRequest: fault {0}.", fault.Message);
+                Logger.LogWarning("XmlRpcServerConnection::executeRequest: fault {0}.", fault.Message);
                 response = generateFaultResponse(fault.Message, fault.ErrorCode);
             }
             return response;
@@ -246,7 +250,7 @@ namespace Uml.Robotics.XmlRpc
             string body = RESPONSE_1 + resultXml + RESPONSE_2;
             string header = generateHeader(body);
             string result = header + body;
-            XmlRpcUtil.log(XmlRpcUtil.XMLRPC_LOG_LEVEL.MAX, "XmlRpcServerConnection::generateResponse:\n{0}\n", result);
+            Logger.LogDebug("XmlRpcServerConnection::generateResponse:\n{0}\n", result);
             return result;
         }
 
@@ -289,7 +293,7 @@ namespace Uml.Robotics.XmlRpc
                 "Server: {0}\r\n" +
                 "Content-Type: text/xml\r\n" +
                 "Content-length: {1}\r\n\r\n",
-                XmlRpcUtil.XMLRPC_VERSION,
+                XMLRPC_VERSION,
                 body.Length
             );
         }

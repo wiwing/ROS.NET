@@ -146,15 +146,15 @@ namespace Uml.Robotics.Ros
         /// <returns></returns>
         private bool isValid<T>(AdvertiseOptions<T> ops) where T : RosMessage, new()
         {
-            if (ops.datatype == "*")
+            if (ops.dataType == "*")
                 throw new Exception("Advertising with * as the datatype is not allowed.  Topic [" + ops.topic + "]");
-            if (ops.md5sum == "*")
+            if (ops.md5Sum == "*")
                 throw new Exception("Advertising with * as the md5sum is not allowed.  Topic [" + ops.topic + "]");
-            if (ops.md5sum == "")
+            if (ops.md5Sum == "")
                 throw new Exception("Advertising on topic [" + ops.topic + "] with an empty md5sum");
-            if (ops.datatype == "")
+            if (ops.dataType == "")
                 throw new Exception("Advertising on topic [" + ops.topic + "] with an empty datatype");
-            if (string.IsNullOrEmpty(ops.message_definition))
+            if (string.IsNullOrEmpty(ops.messageDefinition))
             {
                 this.Logger.LogWarning(
                     "Advertising on topic [" + ops.topic +
@@ -184,19 +184,19 @@ namespace Uml.Robotics.Ros
                 pub = lookupPublicationWithoutLock(ops.topic);
                 if (pub != null)
                 {
-                    if (pub.Md5sum != ops.md5sum)
+                    if (pub.Md5sum != ops.md5Sum)
                     {
                         this.Logger.LogError(
                             "Tried to advertise on topic [{0}] with md5sum [{1}] and datatype [{2}], but the topic is already advertised as md5sum [{3}] and datatype [{4}]",
-                            ops.topic, ops.md5sum,
-                            ops.datatype, pub.Md5sum, pub.DataType
+                            ops.topic, ops.md5Sum,
+                            ops.dataType, pub.Md5sum, pub.DataType
                         );
                         return false;
                     }
                 }
                 else
-                    pub = new Publication(ops.topic, ops.datatype, ops.md5sum, ops.message_definition, ops.queue_size,
-                        ops.latch, ops.has_header);
+                    pub = new Publication(ops.topic, ops.dataType, ops.md5Sum, ops.messageDefinition, ops.queueSize,
+                        ops.latch, ops.hasHeader);
                 pub.addCallbacks(callbacks);
                 advertised_topics.Add(pub);
             }
@@ -207,7 +207,7 @@ namespace Uml.Robotics.Ros
             {
                 foreach (Subscription s in subscriptions)
                 {
-                    if (s.name == ops.topic && md5sumsMatch(s.md5sum, ops.md5sum) && !s.IsDropped)
+                    if (s.name == ops.topic && md5sumsMatch(s.md5sum, ops.md5Sum) && !s.IsDropped)
                     {
                         found = true;
                         sub = s;
@@ -219,7 +219,7 @@ namespace Uml.Robotics.Ros
             if (found)
                 sub.addLocalConnection(pub);
 
-            var args = new XmlRpcValue(this_node.Name, ops.topic, ops.datatype, XmlRpcManager.Instance.Uri);
+            var args = new XmlRpcValue(this_node.Name, ops.topic, ops.dataType, XmlRpcManager.Instance.Uri);
             var result = new XmlRpcValue();
             var payload = new XmlRpcValue();
 

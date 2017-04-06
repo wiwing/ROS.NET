@@ -218,14 +218,14 @@ namespace Uml.Robotics.Ros
         public Publisher<M> advertise<M>(AdvertiseOptions<M> ops) where M : RosMessage, new()
         {
             ops.topic = resolveName(ops.topic);
-            if (ops.callback_queue == null)
+            if (ops.callbackQueue == null)
             {
-                ops.callback_queue = Callback;
+                ops.callbackQueue = Callback;
             }
-            var callbacks = new SubscriberCallbacks(ops.connectCB, ops.disconnectCB, ops.callback_queue);
+            var callbacks = new SubscriberCallbacks(ops.connectCB, ops.disconnectCB, ops.callbackQueue);
             if (TopicManager.Instance.advertise(ops, callbacks))
             {
-                var pub = new Publisher<M>(ops.topic, ops.md5sum, ops.datatype, this, callbacks);
+                var pub = new Publisher<M>(ops.topic, ops.md5Sum, ops.dataType, this, callbacks);
                 lock (collection.mutex)
                 {
                     collection.publishers.Add(pub);

@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Listener": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ROS_MASTER_URI": "http://XamlaMobyVM:11311"
+      }
+    }
+  }
+}

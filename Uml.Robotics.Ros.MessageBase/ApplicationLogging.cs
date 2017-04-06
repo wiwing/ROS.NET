@@ -35,5 +35,4 @@ namespace Uml.Robotics.Ros
         public static ILogger CreateLogger(string category) =>
             LoggerFactory.CreateLogger(category);
     }
-
 }

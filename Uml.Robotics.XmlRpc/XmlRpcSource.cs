@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
 
@@ -8,8 +10,9 @@ namespace Uml.Robotics.XmlRpc
     {
         private const int READ_BUFFER_LENGTH = 4096;
 
-        // In the client, keep connections open if you intend to make multiple calls.
-        private bool keepOpen;
+        private ILogger Logger { get; } = XmlRpcLogging.CreateLogger<XmlRpcSource>();
+
+        private bool keepOpen;      // In the client, keep connections open if you intend to make multiple calls.
 
         public bool KeepOpen
         {
@@ -46,31 +49,31 @@ namespace Uml.Robotics.XmlRpc
             {
                 throw new Exception("Could not access network stream");
             }
+
             byte[] data = new byte[READ_BUFFER_LENGTH];
             try
             {
                 dataLen = stream.Read(data, 0, READ_BUFFER_LENGTH);
 
                 if (dataLen == 0)
-                    return false; // If it is disconnect
+                    return false;   // If it is disconnect
 
                 if (header == null)
                 {
                     header = new HttpHeader(Encoding.ASCII.GetString(data, 0, dataLen));
-                    if (header.HeaderStatus == HttpHeader.ParseStatus.UNINITIALIZED)
-                        return false; //should only happen if the constructor's invocation of Append did not happen as desired
+                    Debug.Assert(header.HeaderStatus != HttpHeader.ParseStatus.UNINITIALIZED);
                 }
                 else if (header.Append(Encoding.ASCII.GetString(data, 0, dataLen)) == HttpHeader.ParseStatus.PARTIAL_HEADER)
                     return true; //if we successfully append a piece of the header, return true, but DO NOT change states
             }
             catch (SocketException ex)
             {
-                XmlRpcUtil.error("XmlRpcServerConnection::readHeader: error while reading header ({0}).", ex.Message);
+                Logger.LogError("XmlRpcServerConnection::readHeader: error while reading header ({0}).", ex.Message);
                 return false;
             }
             catch (Exception ex)
             {
-                XmlRpcUtil.error("XmlRpcServerConnection::readHeader: error while reading header ({0}).", ex.Message);
+                Logger.LogError("XmlRpcServerConnection::readHeader: error while reading header ({0}).", ex.Message);
                 return false;
             }
 
@@ -80,14 +83,10 @@ namespace Uml.Robotics.XmlRpc
             return true;
         }
 
-        #region IDisposable Members
-
         public void Dispose()
         {
             Close();
         }
-
-        #endregion
 
         // In the server, a new source (XmlRpcServerConnection) is created
         // for each connected client. When each connection is closed, the

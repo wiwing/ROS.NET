@@ -6,52 +6,53 @@ namespace Uml.Robotics.Ros
 {
     public class AdvertiseOptions<T> where T : RosMessage, new()
     {
-        public ICallbackQueue callback_queue;
+        public ICallbackQueue callbackQueue;
         public SubscriberStatusCallback connectCB;
-        public string datatype = "";
         public SubscriberStatusCallback disconnectCB;
-        public bool has_header;
+        public string dataType = "";
+        public bool hasHeader;
         public bool latch;
-        public string md5sum = "";
-        public string message_definition = "";
-        public int queue_size;
+        public string md5Sum = "";
+        public string messageDefinition = "";
+        public int queueSize;
         public string topic = "";
 
         public AdvertiseOptions()
         {
         }
 
-        public AdvertiseOptions(string t, int q_size, string md5, string dt, string message_def,
-            SubscriberStatusCallback connectcallback)
-            : this(t, q_size, md5, dt, message_def, connectcallback, null)
+        public AdvertiseOptions(string topic, int queueSize, string md5, string dt, string messageDefinition,
+            SubscriberStatusCallback connectCallback)
+            : this(topic, queueSize, md5, dt, messageDefinition, connectCallback, null)
         {
         }
 
 
-        public AdvertiseOptions(string t, int q_size, string md5, string dt, string message_def)
-            : this(t, q_size, md5, dt, message_def, null, null)
+        public AdvertiseOptions(string topic, int queueSize, string md5, string dt, string messageDefinition)
+            : this(topic, queueSize, md5, dt, messageDefinition, null, null)
         {
         }
 
-        public AdvertiseOptions(string t, int q_size, string md5, string dt, string message_def,
+        public AdvertiseOptions(
+            string topic,
+            int queueSize,
+            string md5,
+            string dt,
+            string messageDefinition,
             SubscriberStatusCallback connectcallback,
             SubscriberStatusCallback disconnectcallback)
         {
-            topic = t;
-            queue_size = q_size;
-            md5sum = md5;
+            this.topic = topic;
+            this.queueSize = queueSize;
+            md5Sum = md5;
             T tt = new T();
-            if (dt.Length > 0)
-                datatype = dt;
+            dataType = dt.Length > 0 ? dt : tt.MessageType;
+
+            if (string.IsNullOrEmpty(messageDefinition))
+                this.messageDefinition = tt.MessageDefinition();
             else
-            {
-                datatype = tt.MessageType;
-            }
-            if (message_def.Length == 0)
-                message_definition = tt.MessageDefinition();
-            else
-                message_definition = message_def;
-            has_header = tt.HasHeader();
+                this.messageDefinition = messageDefinition;
+            hasHeader = tt.HasHeader();
             connectCB = connectcallback;
             disconnectCB = disconnectcallback;
         }
@@ -61,21 +62,34 @@ namespace Uml.Robotics.Ros
         {
         }
 
-        public AdvertiseOptions(string t, int q_size, SubscriberStatusCallback connectcallback,
-            SubscriberStatusCallback disconnectcallback) :
-                this(
-                t, q_size, new T().MD5Sum(),
-                new T().MessageType,
-                new T().MessageDefinition(),
-                connectcallback, disconnectcallback)
+        public AdvertiseOptions(
+            string t,
+            int queueSize,
+            SubscriberStatusCallback connectCallback,
+            SubscriberStatusCallback disconnectCallback
+        )
+        : this(
+            t,
+            queueSize,
+            new T().MD5Sum(),
+            new T().MessageType,
+            new T().MessageDefinition(),
+            connectCallback,
+            disconnectCallback
+        )
         {
         }
 
-        public static AdvertiseOptions<M> Create<M>(string topic, int q_size, SubscriberStatusCallback connectcallback,
-            SubscriberStatusCallback disconnectcallback, ICallbackQueue queue)
+        public static AdvertiseOptions<M> Create<M>(
+            string topic,
+            int queueSize,
+            SubscriberStatusCallback connectcallback,
+            SubscriberStatusCallback disconnectcallback,
+            ICallbackQueue queue
+        )
             where M : RosMessage, new()
         {
-            return new AdvertiseOptions<M>(topic, q_size, connectcallback, disconnectcallback) {callback_queue = queue};
+            return new AdvertiseOptions<M>(topic, queueSize, connectcallback, disconnectcallback) { callbackQueue = queue };
         }
     }
 }

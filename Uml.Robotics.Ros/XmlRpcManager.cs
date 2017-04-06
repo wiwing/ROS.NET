@@ -47,16 +47,6 @@ namespace Uml.Robotics.Ros
 
         public XmlRpcManager()
         {
-            XmlRpcUtil.SetLogLevel(
-#if !DEBUG
-                XmlRpcUtil.XMLRPC_LOG_LEVEL.ERROR
-#elif TRACE
-                XmlRpcUtil.XMLRPC_LOG_LEVEL.INFO
-#else
-                XmlRpcUtil.XMLRPC_LOG_LEVEL.WARNING
-#endif
-            );
-
             this.server = new XmlRpcServer();
             this.getPid = (parms, result) => responseInt(1, "", Process.GetCurrentProcess().Id)(result);
         }
@@ -215,7 +205,6 @@ namespace Uml.Robotics.Ros
             }
             unbindRequested = false;
         }
-
 
         public static Action<XmlRpcValue> responseStr(IntPtr target, int code, string msg, string response)
         {

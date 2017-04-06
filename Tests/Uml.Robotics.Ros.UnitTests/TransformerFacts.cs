@@ -22,16 +22,13 @@ namespace Uml.Robotics.Ros.UnitTests
         public TransformerFacts(RosFixture rosFixture)
         {
             when = ROS.GetTime();
-            //
-            // TODO: Add constructor logic here
-            //
             transformer = new tf.Transformer();
         }
 
 
         [Fact]
         public void Should_AddThreeTransforms()
-        {               
+        {
             tf.Transform a2b = new tf.Transform(
                 new tf.Quaternion(),
                 new tf.Vector3(0.0, 0.0, 1.0),//1.0, 0.0, 0.5),

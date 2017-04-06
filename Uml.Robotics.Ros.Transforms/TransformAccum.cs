@@ -9,16 +9,16 @@ namespace Uml.Robotics.Ros.Transforms
     public abstract class ATransformAccum
     {
         public TransformStorage st;
-        public abstract uint gather(TimeCache cache, ulong time, ref string error_str);
+        public abstract uint gather(TimeCache cache, ulong time, out string error_str);
         public abstract void accum(bool source);
         public abstract void finalize(WalkEnding end, ulong time);
     }
 
     public class CanTransformAccum : ATransformAccum
     {
-        public override uint gather(TimeCache cache, ulong time, ref string error_str)
+        public override uint gather(TimeCache cache, ulong time, out string error_str)
         {
-            return cache.getParent(time, ref error_str);
+            return cache.getParent(time, out error_str);
         }
 
         public override void accum(bool source)
@@ -40,9 +40,9 @@ namespace Uml.Robotics.Ros.Transforms
         public Vector3 target_to_top_vec = new Vector3();
         public ulong time;
 
-        public override uint gather(TimeCache cache, ulong time_, ref string error_str)
+        public override uint gather(TimeCache cache, ulong time_, out string error_str)
         {
-            if (!cache.getData(time_, ref st, ref error_str))
+            if (!cache.getData(time_, ref st, out error_str))
                 return 0;
             return st.frame_id;
         }

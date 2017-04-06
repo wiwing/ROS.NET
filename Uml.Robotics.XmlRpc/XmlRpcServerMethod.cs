@@ -8,12 +8,12 @@
         private XmlRpcServer server;
         private XmlRpcFunc func;
 
-        public XmlRpcServerMethod(string functionName, XmlRpcFunc func, XmlRpcServer server)
+        public XmlRpcServerMethod(string functionName, XmlRpcFunc func, XmlRpcServer server, bool autoAddToServer = true)
         {
             name = functionName;
             this.server = server;
             this.func = func;
-            if (server != null)
+            if (server != null && autoAddToServer)
                 server.AddMethod(this);
         }
 

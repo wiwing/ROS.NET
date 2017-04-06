@@ -24,9 +24,6 @@ namespace Uml.Robotics.Ros
             base.Op = update;
         }
 
-        /// <summary>
-        ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
         public new void Dispose()
         {
             base.Dispose();
@@ -37,7 +34,7 @@ namespace Uml.Robotics.Ros
         public delegate void DisposingDelegate();
 
         public event DisposingDelegate DisposingEvent;
-        
+
         public bool addSocket(Socket s, SocketUpdateFunc update_func)
         {
             return addSocket(s, update_func, null);

@@ -304,13 +304,11 @@ namespace Uml.Robotics.Ros
 
                 if (!skip)
                 {
-                    //Info.func.BeginInvoke(Info.revents & (Info.events | POLLERR | POLLHUP | POLLNVAL), Info.func.EndInvoke, null);
                     Info.func(Info.revents & (Info.events | POLLERR | POLLHUP | POLLNVAL));
                 }
             }
             Info.revents = 0;
         }
-
 
         internal void _poll()
         {

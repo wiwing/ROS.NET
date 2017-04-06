@@ -100,16 +100,16 @@ namespace Uml.Robotics.Ros.Transforms
 
         public bool lookupTransform(string target_frame, string source_frame, Time time, out Transform transform)
         {
-            string error_string = null;
-            bool result = lookupTransform(target_frame, source_frame, time, out transform, ref error_string);
+            bool result = lookupTransform(target_frame, source_frame, time, out transform, out string error_string);
             if (!result && error_string != null)
                 ROS.Error()(error_string);
             return result;
         }
 
-        public bool lookupTransform(string target_frame, string source_frame, Time time, out Transform transform, ref string error_string)
+        public bool lookupTransform(string target_frame, string source_frame, Time time, out Transform transform, out string error_string)
         {
             transform = null;
+            error_string = null;
 
             string mapped_tgt = resolve(tf_prefix, target_frame);
             string mapped_src = resolve(tf_prefix, source_frame);
@@ -131,7 +131,7 @@ namespace Uml.Robotics.Ros.Transforms
 
             TransformAccum accum = new TransformAccum();
 
-            retval = walkToTopParent(accum, TimeCache.toLong(time.data), target_id, source_id, ref error_string);
+            retval = walkToTopParent(accum, TimeCache.toLong(time.data), target_id, source_id, out error_string);
             if (retval != TF_STATUS.NO_ERROR)
             {
                 error_string = error_string ?? "UNSPECIFIED";
@@ -217,8 +217,10 @@ namespace Uml.Robotics.Ros.Transforms
             stamped_out.frame_id = vecout.frame_id;
         }
 
-        public TF_STATUS walkToTopParent<F>(F f, ulong time, uint target_id, uint source_id, ref string error_str) where F : ATransformAccum
+        public TF_STATUS walkToTopParent<F>(F f, ulong time, uint target_id, uint source_id, out string error_str) where F : ATransformAccum
         {
+            error_str = null;
+
             if (target_id == source_id)
             {
                 f.finalize(WalkEnding.Identity, time);
@@ -226,7 +228,7 @@ namespace Uml.Robotics.Ros.Transforms
             }
             if (time == 0)
             {
-                TF_STATUS retval = getLatestCommonTime(target_id, source_id, ref time, ref error_str);
+                TF_STATUS retval = getLatestCommonTime(target_id, source_id, ref time, out error_str);
                 if (retval != TF_STATUS.NO_ERROR)
                     return retval;
             }
@@ -241,7 +243,7 @@ namespace Uml.Robotics.Ros.Transforms
                     break;
                 }
                 TimeCache cache = frames[frame];
-                uint parent = f.gather(cache, time, ref error_str);
+                uint parent = f.gather(cache, time, out error_str);
                 if (parent == 0)
                 {
                     top_parent = frame;
@@ -277,7 +279,7 @@ namespace Uml.Robotics.Ros.Transforms
                     break;
                 TimeCache cache = frames[frame];
 
-                uint parent = f.gather(cache, time, ref error_str);
+                uint parent = f.gather(cache, time, out error_str);
 
                 if (parent == 0)
                 {
@@ -320,8 +322,9 @@ namespace Uml.Robotics.Ros.Transforms
             return TF_STATUS.NO_ERROR;
         }
 
-        private TF_STATUS getLatestCommonTime(uint target_id, uint source_id, ref ulong time, ref string error_str)
+        private TF_STATUS getLatestCommonTime(uint target_id, uint source_id, ref ulong time, out string error_str)
         {
+            error_str = null;
             if (target_id == source_id)
             {
                 time = TimeCache.toLong(ROS.GetTime(DateTime.Now).data);
@@ -465,33 +468,33 @@ namespace Uml.Robotics.Ros.Transforms
             return frame.insertData(new TransformStorage(mapped_transform, frame_number, child_frame_number));
         }
 
-        public bool waitForTransform(string target_frame, string source_frame, Time time, Duration timeout, ref string error_msg)
+        public bool waitForTransform(string target_frame, string source_frame, Time time, Duration timeout, out string error_msg)
         {
-            return waitForTransform(target_frame, source_frame, time, timeout, ref error_msg, null);
+            return waitForTransform(target_frame, source_frame, time, timeout, out error_msg, null);
         }
 
-        public bool waitForTransform(string target_frame, Time target_time, string source_frame, Time source_time, Duration timeout, ref string error_msg)
+        public bool waitForTransform(string target_frame, Time target_time, string source_frame, Time source_time, Duration timeout, out string error_msg)
         {
-            return waitForTransform(target_frame, target_time, source_frame, source_time, timeout, ref error_msg, null);
+            return waitForTransform(target_frame, target_time, source_frame, source_time, timeout, out error_msg, null);
         }
 
-        public bool waitForTransform(string target_frame, Time target_time, string source_frame, Time source_time, Duration timeout, ref string error_msg, Duration pollingSleepDuration)
+        public bool waitForTransform(string target_frame, Time target_time, string source_frame, Time source_time, Duration timeout, out string error_msg, Duration pollingSleepDuration)
         {
-            return waitForTransform(target_frame, source_frame, target_time, timeout, ref error_msg, pollingSleepDuration) &&
-                   waitForTransform(target_frame, source_frame, source_time, timeout, ref error_msg, pollingSleepDuration);
+            return waitForTransform(target_frame, source_frame, target_time, timeout, out error_msg, pollingSleepDuration) &&
+                   waitForTransform(target_frame, source_frame, source_time, timeout, out error_msg, pollingSleepDuration);
         }
 
-        public bool waitForTransform(string target_frame, string source_frame, Time time, Duration timeout, ref string error_msg, Duration pollingSleepDuration)
+        public bool waitForTransform(string target_frame, string source_frame, Time time, Duration timeout, out string error_msg, Duration pollingSleepDuration)
         {
             TimeSpan? ts = null;
             if (pollingSleepDuration != null)
                 ts = ROS.GetTime(pollingSleepDuration);
             return waitForTransform(target_frame, source_frame, time,
                 ROS.GetTime(timeout),
-                ref error_msg, ts);
+                out error_msg, ts);
         }
 
-        private bool waitForTransform(string target_frame, string source_frame, Time time, TimeSpan timeout, ref string error_msg, TimeSpan? pollingSleepDuration)
+        private bool waitForTransform(string target_frame, string source_frame, Time time, TimeSpan timeout, out string error_msg, TimeSpan? pollingSleepDuration)
         {
             if (pollingSleepDuration == null)
                 pollingSleepDuration = new TimeSpan(0, 0, 0, 0, 100);
@@ -501,7 +504,7 @@ namespace Uml.Robotics.Ros.Transforms
 
             do
             {
-                if (canTransform(mapped_target, mapped_source, time, ref error_msg))
+                if (canTransform(mapped_target, mapped_source, time, out error_msg))
                     return true;
                 if (!ROS.ok || !(DateTime.Now.Subtract(start_time).TotalMilliseconds < timeout.TotalMilliseconds))
                     break;
@@ -513,28 +516,29 @@ namespace Uml.Robotics.Ros.Transforms
         public bool waitForTransform(string target_frame, string source_frame, Time time, Duration timeout, Duration pollingSleepDuration)
         {
             string error_msg = null;
-            return waitForTransform(target_frame, source_frame, time, timeout, ref error_msg, pollingSleepDuration);
+            return waitForTransform(target_frame, source_frame, time, timeout, out error_msg, pollingSleepDuration);
         }
 
         public bool waitForTransform(string target_frame, Time target_time, string source_frame, Time source_time, Duration timeout, Duration pollingSleepDuration)
         {
             string error_msg = null;
-            return waitForTransform(target_frame, target_time, source_frame, source_time, timeout, ref error_msg, pollingSleepDuration);
+            return waitForTransform(target_frame, target_time, source_frame, source_time, timeout, out error_msg, pollingSleepDuration);
         }
 
         private bool waitForTransform(string target_frame, string source_frame, Time time, TimeSpan timeout, TimeSpan? pollingSleepDuration)
         {
             string error_msg = null;
-            return waitForTransform(target_frame, source_frame, time, timeout, ref error_msg, pollingSleepDuration);
+            return waitForTransform(target_frame, source_frame, time, timeout, out error_msg, pollingSleepDuration);
         }
 
-        private bool canTransform(string target_frame, Time target_time, string source_frame, Time source_time, ref string error_msg)
+        private bool canTransform(string target_frame, Time target_time, string source_frame, Time source_time, out string error_msg)
         {
-            return canTransform(target_frame, source_frame, target_time, ref error_msg) && canTransform(target_frame, source_frame, source_time, ref error_msg);
+            return canTransform(target_frame, source_frame, target_time, out error_msg) && canTransform(target_frame, source_frame, source_time, out error_msg);
         }
 
-        private bool canTransform(string target_frame, string source_frame, Time time, ref string error_msg)
+        private bool canTransform(string target_frame, string source_frame, Time time, out string error_msg)
         {
+            error_msg = null;
             string mapped_target = resolve(tf_prefix, target_frame);
             string mapped_source = resolve(tf_prefix, source_frame);
             if (mapped_target == mapped_source)
@@ -545,25 +549,26 @@ namespace Uml.Robotics.Ros.Transforms
 
             uint target_id = getFrameIDInternal(mapped_target);
             uint source_id = getFrameIDInternal(mapped_source);
-            return canTransformNoLock(target_id, source_id, time, ref error_msg);
+            return canTransformNoLock(target_id, source_id, time, out error_msg);
         }
 
-        private bool canTransformNoLock(uint target_id, uint source_id, Time time, ref string error_msg)
+        private bool canTransformNoLock(uint target_id, uint source_id, Time time, out string error_msg)
         {
+            error_msg = null;
             if (target_id == 0 || source_id == 0)
                 return false;
 
             CanTransformAccum accum = new CanTransformAccum();
-            if (walkToTopParent(accum, TimeCache.toLong(time.data), target_id, source_id, ref error_msg) == TF_STATUS.NO_ERROR)
+            if (walkToTopParent(accum, TimeCache.toLong(time.data), target_id, source_id, out error_msg) == TF_STATUS.NO_ERROR)
             {
                 return true;
             }
             return false;
         }
 
-        private bool canTransformInternal(uint target_id, uint source_id, Time time, ref string error_msg)
+        private bool canTransformInternal(uint target_id, uint source_id, Time time, out string error_msg)
         {
-            return canTransformNoLock(target_id, source_id, time, ref error_msg);
+            return canTransformNoLock(target_id, source_id, time, out error_msg);
         }
     }
 }

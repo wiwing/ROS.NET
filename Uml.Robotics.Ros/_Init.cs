@@ -259,6 +259,7 @@ namespace Uml.Robotics.Ros
         public static void SetLoggerFactory(ILoggerFactory factory)
         {
             ApplicationLogging.LoggerFactory = factory;
+
             // recreate logger to make sure the new log settings form the factory are used
             Logger = ApplicationLogging.CreateLogger(nameof(ROS));
             if (initialized)

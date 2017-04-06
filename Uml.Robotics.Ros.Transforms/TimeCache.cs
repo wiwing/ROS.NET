@@ -12,7 +12,7 @@ namespace Uml.Robotics.Ros.Transforms
         private const Int64 DEFAULT_MAX_STORAGE_TIME = 1000000000;
 
         private ulong max_storage_time;
-        private volatile SortedList<ulong, TransformStorage> storage = new SortedList<ulong, TransformStorage>();
+        private readonly SortedList<ulong, TransformStorage> storage = new SortedList<ulong, TransformStorage>();
 
         public TimeCache()
             : this(DEFAULT_MAX_STORAGE_TIME)
@@ -29,13 +29,14 @@ namespace Uml.Robotics.Ros.Transforms
             return (ulong)td.Ticks;
         }
 
-        private byte findClosest(ref TransformStorage one, ref TransformStorage two, ulong target_time, ref string error_str)
+        private int findClosest(ref TransformStorage one, ref TransformStorage two, ulong target_time, out string error_str)
         {
+            error_str = null;
             lock (storage)
             {
                 if (storage.Count == 0)
                 {
-                    createEmptyException(ref error_str);
+                    error_str = createEmptyException();
                     return 0;
                 }
 
@@ -53,7 +54,7 @@ namespace Uml.Robotics.Ros.Transforms
                         one = ts;
                         return 1;
                     }
-                    createExtrapolationException1(target_time, ts.stamp, ref error_str);
+                    error_str = createExtrapolationException1(target_time, ts.stamp);
                     return 0;
                 }
 
@@ -71,27 +72,27 @@ namespace Uml.Robotics.Ros.Transforms
                 }
                 if (target_time > latest_time)
                 {
-                    createExtrapolationException2(target_time, latest_time, ref error_str);
+                    error_str = createExtrapolationException2(target_time, latest_time);
                     return 0;
                 }
                 if (target_time < earliest_time)
                 {
-                    createExtrapolationException3(target_time, earliest_time, ref error_str);
+                    error_str = createExtrapolationException3(target_time, earliest_time);
                     return 0;
                 }
 
                 ulong i = 0;
-                ulong j = storage.Last((kvp) =>
-                                           {
-                                               //look for the first keyvaluepair in the sorted list with a key greater than our target.
-                                               //i is the last keyvaluepair's key, aka, the highest stamp
-                                               if (kvp.Key <= target_time)
-                                               {
-                                                   i = kvp.Key;
-                                                   return false;
-                                               }
-                                               return true;
-                                           }).Key;
+                ulong j = storage.Last(kvp =>
+                {
+                    // look for the first keyvaluepair in the sorted list with a key greater than our target.
+                    // if it is the last keyvaluepair's key, aka, the highest stamp
+                    if (kvp.Key <= target_time)
+                    {
+                        i = kvp.Key;
+                        return false;
+                    }
+                    return true;
+                }).Key;
                 one = storage[i];
                 two = storage[j];
             }
@@ -129,15 +130,15 @@ namespace Uml.Robotics.Ros.Transforms
                 storage.RemoveAt(0);
         }
 
-        public bool getData(TimeData time_, ref TransformStorage data_out, ref string error_str)
+        public bool getData(TimeData time_, ref TransformStorage data_out, out string error_str)
         {
-            return getData(toLong(time_), ref data_out, ref error_str);
+            return getData(toLong(time_), ref data_out, out error_str);
         }
 
-        public bool getData(ulong time_, ref TransformStorage data_out, ref string error_str)
+        public bool getData(ulong time_, ref TransformStorage data_out, out string error_str)
         {
             TransformStorage temp1 = null, temp2 = null;
-            int num_nodes = findClosest(ref temp1, ref temp2, time_, ref error_str);
+            int num_nodes = findClosest(ref temp1, ref temp2, time_, out error_str);
             switch (num_nodes)
             {
                 case 0:
@@ -166,12 +167,12 @@ namespace Uml.Robotics.Ros.Transforms
             lock (storage)
             {
                 if (storage.Count > 0 && storage.First().Key > new_data.stamp + max_storage_time)
-                    if (SimTime.instance.IsTimeSimulated)
-                    {
-                        storage.Clear();
-                    }
-                    else
+                {
+                    if (!SimTime.instance.IsTimeSimulated)
                         return false;
+
+                    storage.Clear();
+                }
                 storage[new_data.stamp] = new_data;
                 pruneList();
             }
@@ -180,22 +181,25 @@ namespace Uml.Robotics.Ros.Transforms
 
         public void clearList()
         {
-            lock(storage)
+            lock (storage)
+            {
                 storage.Clear();
+            }
         }
 
-        public uint getParent(ulong time, ref string error_str)
+        public uint getParent(ulong time, out string error_str)
         {
             TransformStorage temp1 = null, temp2 = null;
+            int num_nodes = findClosest(ref temp1, ref temp2, time, out error_str);
+            if (num_nodes == 0)
+                return 0;
 
-            int num_nodes = findClosest(ref temp1, ref temp2, time, ref error_str);
-            if (num_nodes == 0) return 0;
             return temp1.frame_id;
         }
 
-        public uint getParent(TimeData time_, ref string error_str)
+        public uint getParent(TimeData time_, out string error_str)
         {
-            return getParent(toLong(time_), ref error_str);
+            return getParent(toLong(time_), out error_str);
         }
 
         public TimeAndFrameID getLatestTimeAndParent()
@@ -235,28 +239,24 @@ namespace Uml.Robotics.Ros.Transforms
             }
         }
 
-        #region ERROR THROWERS
-
-        private void createEmptyException(ref string error_str)
+        private string createEmptyException()
         {
-            if (error_str != null) error_str = "Cache is empty!";
+            return "Cache is empty!";
         }
 
-        private void createExtrapolationException1(ulong t0, ulong t1, ref string error_str)
+        private string createExtrapolationException1(ulong t0, ulong t1)
         {
-            if (error_str != null) error_str = "Lookup would require extrapolation at time \n" + t0 + ", but only time \n" + t1 + " is in the buffer";
+            return "Lookup would require extrapolation at time \n" + t0 + ", but only time \n" + t1 + " is in the buffer";
         }
 
-        private void createExtrapolationException2(ulong t0, ulong t1, ref string error_str)
+        private string createExtrapolationException2(ulong t0, ulong t1)
         {
-            if (error_str != null) error_str = "Lookup would require extrapolation into the future. Requested time \n" + t0 + " but the latest data is at the time \n" + t1;
+            return "Lookup would require extrapolation into the future. Requested time \n" + t0 + " but the latest data is at the time \n" + t1;
         }
 
-        private void createExtrapolationException3(ulong t0, ulong t1, ref string error_str)
+        private string createExtrapolationException3(ulong t0, ulong t1)
         {
-            if (error_str != null) error_str = "Lookup would require extrapolation into the past. Requested time \n" + t0 + " but the earliest data is at the time \n" + t1;
+            return "Lookup would require extrapolation into the past. Requested time \n" + t0 + " but the earliest data is at the time \n" + t1;
         }
-
-        #endregion
     }
 }
