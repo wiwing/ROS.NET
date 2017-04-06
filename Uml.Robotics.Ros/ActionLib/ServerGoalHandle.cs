@@ -143,7 +143,7 @@ namespace Uml.Robotics.Ros.ActionLib
             this.GoalStatus.status = goalStatus;
             this.text = text ?? "";
             actionServer.PublishResult(GoalStatus, result);
-            DestructionTime = DateTime.Now;
+            DestructionTime = DateTime.UtcNow;
         }
 
 

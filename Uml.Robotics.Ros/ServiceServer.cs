@@ -5,9 +5,6 @@ namespace Uml.Robotics.Ros
 {
     public class ServiceServer
     {
-        internal double constructed =
-            (int) Math.Floor(DateTime.Now.Subtract(Process.GetCurrentProcess().StartTime).TotalMilliseconds);
-
         internal NodeHandle nodeHandle;
         internal string service = "";
         internal bool unadvertised;

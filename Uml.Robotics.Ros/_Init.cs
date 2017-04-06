@@ -19,6 +19,7 @@ namespace Uml.Robotics.Ros
     /// </summary>
     public static class ROS
     {
+        public static bool Off { get; set; } = true;
         private static ILogger Logger { get; set;} = ApplicationLogging.CreateLogger(nameof(ROS));
 
         private static ICallbackQueue globalCallbackQueue;
@@ -160,13 +161,13 @@ namespace Uml.Robotics.Ros
         /// <returns> </returns>
         public static std_msgs.Time GetTime()
         {
-            return GetTime(DateTime.Now);
+            return GetTime(DateTime.UtcNow);
         }
 
         private static void SimTimeCallback(TimeSpan ts)
         {
             lastSimTime = ts;
-            lastSimTimeReceived = DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0));
+            lastSimTimeReceived = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1, 0, 0, 0));
         }
 
         /// <summary>
@@ -346,6 +347,7 @@ namespace Uml.Robotics.Ros
                 // run the actual ROS initialization
                 if (!initialized)
                 {
+                    ROS.Off = false;
                     var msgRegistry = MessageTypeRegistry.Default;
                     var srvRegistry = ServiceTypeRegistry.Default;
 
@@ -385,8 +387,13 @@ namespace Uml.Robotics.Ros
                 if (!shutdown_requested || _shutting_down)
                     return;
             }
+
             _shutdown();
-            shutdown_requested = false;
+
+            lock (shutting_down_mutex)
+            {
+                shutdown_requested = false;
+            }
         }
 
         /// <summary>
@@ -414,7 +421,7 @@ namespace Uml.Robotics.Ros
         /// </summary>
         public static void waitForShutdown()
         {
-            while (_ok)
+            while (!ROS.Off)
             {
                 Thread.Sleep(WallDuration);
             }
@@ -469,7 +476,10 @@ namespace Uml.Robotics.Ros
         /// </summary>
         public static void shutdown()
         {
-            shutdown_requested = true;
+            lock (shutting_down_mutex)
+            {
+                shutdown_requested = true;
+            }
         }
 
         /// <summary>
@@ -482,12 +492,11 @@ namespace Uml.Robotics.Ros
                 if (_shutting_down)
                     return;
                 _shutting_down = true;
-
-                Logger.LogInformation("ROS is shutting down.");
             }
 
             if (started)
             {
+                Logger.LogInformation("ROS is shutting down.");
                 started = false;
                 _ok = false;
                 RosOutAppender.Instance.shutdown();
@@ -499,6 +508,7 @@ namespace Uml.Robotics.Ros
                 PollManager.Instance.shutdown();
                 XmlRpcManager.Terminate();
                 ConnectionManager.Instance.shutdown();
+                ROS.Off = true;
             }
         }
     }

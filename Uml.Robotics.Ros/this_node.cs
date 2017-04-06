@@ -35,7 +35,7 @@ namespace Uml.Robotics.Ros
                 Namespace = "/";
             }
 
-            long walltime = DateTime.Now.Subtract(Process.GetCurrentProcess().StartTime).Ticks;
+            long walltime = DateTime.UtcNow.Subtract(Process.GetCurrentProcess().StartTime).Ticks;
             names.Init(remappings);
             if (Name.Contains("/"))
                 throw new ArgumentException("Slashes '/' are not allowed in names", nameof(name));

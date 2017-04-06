@@ -148,10 +148,10 @@ namespace Uml.Robotics.Ros
             TimeSpan wallDuration = new TimeSpan(0, 0, 0, 0, ROS.WallDuration);
             while (ROS.ok)
             {
-                DateTime begin = DateTime.Now;
+                DateTime begin = DateTime.UtcNow;
                 if (!CallAvailable(ROS.WallDuration))
                     break;
-                DateTime end = DateTime.Now;
+                DateTime end = DateTime.UtcNow;
                 if (wallDuration.Subtract(end.Subtract(begin)).Ticks > 0)
                     Thread.Sleep(wallDuration.Subtract(end.Subtract(begin)));
             }

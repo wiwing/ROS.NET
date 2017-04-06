@@ -74,9 +74,9 @@ namespace ActionClientSample
 
                 while (!Console.KeyAvailable)
                 {
-                    var now = DateTime.Now;
+                    var now = DateTime.UtcNow;
                     semaphore.WaitOne();
-                    Console.WriteLine($"Waited: {DateTime.Now - now}");
+                    Console.WriteLine($"Waited: {DateTime.UtcNow - now}");
                     var goal = new Messages.actionlib.TestGoal();
                     goal.goal = counter;
                     dict[counter] = goal;
@@ -108,8 +108,8 @@ namespace ActionClientSample
 
                 Console.WriteLine("Wait for 15s for open goals");
                 var timeOut = new TimeSpan(0, 0, 15);
-                var start = DateTime.Now;
-                while ((DateTime.Now - start <= timeOut) && (dict.Count > 0))
+                var start = DateTime.UtcNow;
+                while ((DateTime.UtcNow - start <= timeOut) && (dict.Count > 0))
                 {
                     Thread.Sleep(1);
                 }

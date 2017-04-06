@@ -141,7 +141,7 @@ namespace Uml.Robotics.Ros
         {
             try
             {
-                DateTime startTime = DateTime.Now;
+                DateTime startTime = DateTime.UtcNow;
                 string master_host = host;
                 int master_port = port;
 

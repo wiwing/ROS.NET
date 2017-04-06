@@ -76,8 +76,6 @@ namespace Uml.Robotics.Ros
     public class IServiceClient
     {
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<IServiceClient>();
-        internal double constructed =
-            (int) Math.Floor(DateTime.Now.Subtract(Process.GetCurrentProcess().StartTime).TotalMilliseconds);
 
         internal IDictionary<string, string> header_values;
         internal bool is_shutdown;

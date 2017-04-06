@@ -40,7 +40,7 @@ namespace Uml.Robotics.Ros.ActionLib
         {
             this.goalHandles = new Dictionary<string, ServerGoalHandle<TGoal, TResult, TFeedback>>();
             this.nodeHandle = new NodeHandle(nodeHandle, actionName);
-            this.lastCancel = DateTime.Now;
+            this.lastCancel = DateTime.UtcNow;
             this.started = false;
         }
 
@@ -119,8 +119,8 @@ namespace Uml.Robotics.Ros.ActionLib
             {
                 var split = SplitSeconds(StatusFrequencySeconds);
                 statusInterval = new TimeSpan(0, 0, split.seconds, split.milliseconds);
-                nextStatusPublishTime = DateTime.Now + statusInterval;
-                spinCallbackId = (ulong)(DateTime.Now.Ticks + (new Random()).Next());
+                nextStatusPublishTime = DateTime.UtcNow + statusInterval;
+                spinCallbackId = (ulong)(DateTime.UtcNow.Ticks + (new Random()).Next());
                 ROS.GlobalCallbackQueue.AddCallback(new SpinCallbackImplementation(SpinCallback), spinCallbackId);
             }
 
@@ -167,7 +167,7 @@ namespace Uml.Robotics.Ros.ActionLib
 
         public void PublishStatus()
         {
-            var now = DateTime.Now;
+            var now = DateTime.UtcNow;
             var statusArray = new GoalStatusArray();
             statusArray.header = new Messages.std_msgs.Header();
             statusArray.header.stamp = ROS.GetTime(now);
@@ -203,7 +203,7 @@ namespace Uml.Robotics.Ros.ActionLib
 
             if (goalId.id == null)
             {
-                var timeZero = DateTime.Now;
+                var timeZero = DateTime.UtcNow;
 
                 foreach(var valuePair in goalHandles)
                 {
@@ -286,10 +286,10 @@ namespace Uml.Robotics.Ros.ActionLib
 
         private void SpinCallback()
         {
-            if (DateTime.Now > nextStatusPublishTime)
+            if (DateTime.UtcNow > nextStatusPublishTime)
             {
                 PublishStatus();
-                nextStatusPublishTime = DateTime.Now + statusInterval;
+                nextStatusPublishTime = DateTime.UtcNow + statusInterval;
             }
         }
 

@@ -51,7 +51,7 @@ namespace Uml.Robotics.Ros
         public static bool waitForService(string serviceName, TimeSpan timeout)
         {
             string mapped_name = names.resolve(serviceName);
-            DateTime start_time = DateTime.Now;
+            DateTime start_time = DateTime.UtcNow;
             bool printed = false;
             while (ROS.ok)
             {
@@ -62,7 +62,7 @@ namespace Uml.Robotics.Ros
                 printed = true;
                 if (timeout >= TimeSpan.Zero)
                 {
-                    if (DateTime.Now.Subtract(start_time) > timeout)
+                    if (DateTime.UtcNow.Subtract(start_time) > timeout)
                         return false;
                 }
                 Thread.Sleep(ROS.WallDuration);

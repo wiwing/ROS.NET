@@ -77,7 +77,7 @@ namespace Uml.Robotics.Ros.ActionLib
         /// </summary>
         public void CancelGoalsAtAndBeforeTime()
         {
-            var time = DateTime.Now;
+            var time = DateTime.UtcNow;
             CancelGoalsAtAndBeforeTime(ROS.GetTime(time));
         }
 
@@ -153,7 +153,7 @@ namespace Uml.Robotics.Ros.ActionLib
         /// <returns>True if the server connected in the allocated time, false on timeout</returns>
         public bool WaitForActionServerToStart(TimeSpan timeout)
         {
-            var tic = DateTime.Now;
+            var tic = DateTime.UtcNow;
             while (ROS.ok) {
                 if (IsServerConnected())
                 {
@@ -162,7 +162,7 @@ namespace Uml.Robotics.Ros.ActionLib
 
                 if (timeout != null)
                 {
-                    var toc = DateTime.Now;
+                    var toc = DateTime.UtcNow;
                     if (toc - tic > timeout)
                     {
                         return false;
@@ -181,7 +181,7 @@ namespace Uml.Robotics.Ros.ActionLib
         /// </summary>
         public bool WaitForActionServerToStartSpinning(TimeSpan timeout, SingleThreadSpinner spinner)
         {
-            var tic = DateTime.Now;
+            var tic = DateTime.UtcNow;
             while (ROS.ok)
             {
                 if (IsServerConnected())
@@ -191,7 +191,7 @@ namespace Uml.Robotics.Ros.ActionLib
 
                 if (timeout != null)
                 {
-                    var toc = DateTime.Now;
+                    var toc = DateTime.UtcNow;
                     if (toc - tic > timeout)
                     {
                         return false;

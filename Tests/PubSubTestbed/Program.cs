@@ -72,11 +72,12 @@ namespace Testbed
         private void WaitForLatchedMessage(TimeSpan timeOut)
         {
             var receivedMessage = false;
-            ROS.GlobalNodeHandle.subscribe<Messages.std_msgs.String>("/PubSubTestbed", 10, (message) =>
+            var s = ROS.GlobalNodeHandle.subscribe<Messages.std_msgs.String>("/PubSubTestbed", 10, (message) =>
             {
                 Logger.LogInformation("Received message");
                 receivedMessage = true;
             });
+            s.shutdown();
 
             var startTime = DateTime.UtcNow;
             while(!receivedMessage)
@@ -102,7 +103,7 @@ namespace Testbed
             Console.WriteLine("Subscribe");
             /*var subscriber = ROS.GlobalNodeHandle.subscribe<Messages.xamla_msgs.StressTest>("/StressTest", 10, (msg) =>
             {
-                Console.WriteLine($"Message #{msg.messageNumber} Took: {(DateTime.Now - ROS.GetTime(msg.sentTime)).Ticks} ticks");
+                Console.WriteLine($"Message #{msg.messageNumber} Took: {(DateTime.UtcNow - ROS.GetTime(msg.sentTime)).Ticks} ticks");
             });*/
 
             Thread.Sleep(1000);

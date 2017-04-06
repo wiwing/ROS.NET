@@ -79,7 +79,7 @@ namespace Uml.Robotics.Ros
             if (reason == Connection.DropReason.TransportDisconnect)
             {
                 needs_retry = true;
-                next_retry = DateTime.Now.Add(retry_period);
+                next_retry = DateTime.UtcNow.Add(retry_period);
                 if (retry_timer == null)
                 {
                     retry_timer = ROS.timer_manager.StartTimer(onRetryTimer, 100);
@@ -178,7 +178,7 @@ namespace Uml.Robotics.Ros
             if (dropping)
                 return;
 
-            if (needs_retry && DateTime.Now.Subtract(next_retry).TotalMilliseconds < 0)
+            if (needs_retry && DateTime.UtcNow.Subtract(next_retry).TotalMilliseconds < 0)
             {
                 retry_period =
                     TimeSpan.FromSeconds((retry_period.TotalSeconds > 20) ? 20 : (2 * retry_period.TotalSeconds));

@@ -70,7 +70,7 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        public double constructed = DateTime.Now.Subtract(Process.GetCurrentProcess().StartTime).Ticks;
+        public double constructed = DateTime.UtcNow.Subtract(Process.GetCurrentProcess().StartTime).Ticks;
         public ISubscriptionCallbackHelper helper;
         public NodeHandle nodehandle;
         protected Subscription subscription;

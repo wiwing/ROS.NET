@@ -26,11 +26,11 @@ namespace ActionClientTestbed
                 Thread.Sleep(1);
             }
 
-            (new Program()).Start();
+            (new Program()).Start(5);
         }
 
 
-        private void Start()
+        private void Start(int numberOfRuns)
         {
             Console.WriteLine("Start ROS");
             ROS.Init(new string[0], "ActionClient");
@@ -38,45 +38,52 @@ namespace ActionClientTestbed
             NodeHandle clientNodeHandle = new NodeHandle();
             spinner = new SingleThreadSpinner(ROS.GlobalCallbackQueue);
 
-            Console.WriteLine("Create client");
-            actionClient = new ActionClient<Messages.actionlib.TestGoal, Messages.actionlib.TestResult,
-                Messages.actionlib.TestFeedback>("test_action", clientNodeHandle);
-
-            Console.WriteLine("Wait for client and server to negotiate connection");
-            bool started = actionClient.WaitForActionServerToStartSpinning(new TimeSpan(0, 0, 3), spinner);
-
-            TestParams.Add(new TestParameters("Reject Goal", GoalStatus.REJECTED, 0, false, null));
-            TestParams.Add(new TestParameters("Cancel not yet accepted goal", GoalStatus.RECALLED, 0, true, null));
-            TestParams.Add(new TestParameters("Cancel accepted goal", GoalStatus.PREEMPTED, 0, true, null));
-            TestParams.Add(new TestParameters("Abort Goal", GoalStatus.ABORTED, 20, false, null));
-            TestParams.Add(new TestParameters("Get Result 123", GoalStatus.SUCCEEDED, 20, false, 123));
-
-            bool testError = false;
-            if (started)
+            for (int i = 0; i < numberOfRuns; i++)
             {
-                Console.WriteLine("Server connected, start tests");
-                foreach(var parameter in TestParams)
+                Console.WriteLine("Create client");
+                actionClient = new ActionClient<Messages.actionlib.TestGoal, Messages.actionlib.TestResult,
+                    Messages.actionlib.TestFeedback>("test_action", clientNodeHandle);
+
+                Console.WriteLine("Wait for client and server to negotiate connection");
+                bool started = actionClient.WaitForActionServerToStartSpinning(new TimeSpan(0, 0, 3), spinner);
+
+                TestParams.Add(new TestParameters("Reject Goal", GoalStatus.REJECTED, 0, false, null));
+                TestParams.Add(new TestParameters("Cancel not yet accepted goal", GoalStatus.RECALLED, 0, true, null));
+                TestParams.Add(new TestParameters("Cancel accepted goal", GoalStatus.PREEMPTED, 0, true, null));
+                TestParams.Add(new TestParameters("Abort Goal", GoalStatus.ABORTED, 20, false, null));
+                TestParams.Add(new TestParameters("Get Result 123", GoalStatus.SUCCEEDED, 20, false, 123));
+
+                bool testError = false;
+                if (started)
                 {
-                    if (!TestCase(parameter.Name, parameter.ExpectedState, parameter.ExpectedFeedback,
-                        parameter.CancelGoal, parameter.ExpectedGoal))
+                    Console.WriteLine("Server connected, start tests");
+                    foreach (var parameter in TestParams)
                     {
-                        testError = true;
-                        break;
+                        if (!TestCase(parameter.Name, parameter.ExpectedState, parameter.ExpectedFeedback,
+                            parameter.CancelGoal, parameter.ExpectedGoal))
+                        {
+                            testError = true;
+                            break;
+                        }
+                        Thread.Sleep(1000);
                     }
-                    Thread.Sleep(1000);
                 }
-            }
-            else
-            {
-                Logger.LogError("Could not connect to server");
-            }
+                else
+                {
+                    Logger.LogError("Could not connect to server");
+                }
 
-            if (testError)
-            {
-                Logger.LogError("Errors ocured during testing!");
-            } else
-            {
-                Logger.LogInformation("Testbed completed successfully");
+                if (testError)
+                {
+                    Logger.LogError("Errors ocured during testing!");
+                }
+                else
+                {
+                    Logger.LogInformation("Testbed completed successfully");
+                }
+
+                Console.WriteLine("Shutdown client");
+                actionClient.Shutdown();
             }
 
             Console.WriteLine("All done, press any key to exit");
@@ -84,6 +91,7 @@ namespace ActionClientTestbed
             {
                 Thread.Sleep(1);
             }
+
             actionClient.Shutdown();
             clientNodeHandle.shutdown();
             ROS.shutdown();
@@ -159,8 +167,8 @@ namespace ActionClientTestbed
         private void WaitForSuccessWithTimeOut(int timeOutInSeconds, int expectedFeedback, int? expectedGoal)
         {
             var timeSpan = new TimeSpan(0, 0, timeOutInSeconds);
-            var start = DateTime.Now;
-            while ((DateTime.Now - start < timeSpan) && ROS.ok)
+            var start = DateTime.UtcNow;
+            while ((DateTime.UtcNow - start < timeSpan) && ROS.ok)
             {
                 if ((testState == TestState.Succeeded) && (receivedFeedback == expectedFeedback))
                 {

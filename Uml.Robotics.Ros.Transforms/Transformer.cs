@@ -121,7 +121,7 @@ namespace Uml.Robotics.Ros.Transforms
                 transform.basis = new Quaternion();
                 transform.child_frame_id = mapped_src;
                 transform.frame_id = mapped_tgt;
-                transform.stamp = ROS.GetTime(DateTime.Now);
+                transform.stamp = ROS.GetTime(DateTime.UtcNow);
                 return true;
             }
 
@@ -327,7 +327,7 @@ namespace Uml.Robotics.Ros.Transforms
             error_str = null;
             if (target_id == source_id)
             {
-                time = TimeCache.toLong(ROS.GetTime(DateTime.Now).data);
+                time = TimeCache.toLong(ROS.GetTime(DateTime.UtcNow).data);
                 return TF_STATUS.NO_ERROR;
             }
 
@@ -498,7 +498,7 @@ namespace Uml.Robotics.Ros.Transforms
         {
             if (pollingSleepDuration == null)
                 pollingSleepDuration = new TimeSpan(0, 0, 0, 0, 100);
-            DateTime start_time = DateTime.Now;
+            DateTime start_time = DateTime.UtcNow;
             string mapped_target = resolve(tf_prefix, target_frame);
             string mapped_source = resolve(tf_prefix, source_frame);
 
@@ -506,10 +506,10 @@ namespace Uml.Robotics.Ros.Transforms
             {
                 if (canTransform(mapped_target, mapped_source, time, out error_msg))
                     return true;
-                if (!ROS.ok || !(DateTime.Now.Subtract(start_time).TotalMilliseconds < timeout.TotalMilliseconds))
+                if (!ROS.ok || !(DateTime.UtcNow.Subtract(start_time).TotalMilliseconds < timeout.TotalMilliseconds))
                     break;
                 Thread.Sleep(pollingSleepDuration.Value);
-            } while (ROS.ok && (DateTime.Now.Subtract(start_time).TotalMilliseconds < timeout.TotalMilliseconds));
+            } while (ROS.ok && (DateTime.UtcNow.Subtract(start_time).TotalMilliseconds < timeout.TotalMilliseconds));
             return false;
         }
 

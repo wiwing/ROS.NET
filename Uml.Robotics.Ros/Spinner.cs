@@ -43,12 +43,12 @@ namespace Uml.Robotics.Ros
             Logger.LogInformation("Start spinning");
             while (ROS.ok)
             {
-                DateTime begin = DateTime.Now;
+                DateTime begin = DateTime.UtcNow;
                 var notCallbackAvail = !callbackQueue.CallAvailable(ROS.WallDuration);
                 var cancelReq = (token?.IsCancellationRequested ?? false);
                 if ( notCallbackAvail || cancelReq )
                     break;
-                DateTime end = DateTime.Now;
+                DateTime end = DateTime.UtcNow;
                 if (wallDuration.Subtract(end.Subtract(begin)).Ticks > 0)
                     Thread.Sleep(wallDuration.Subtract(end.Subtract(begin)));
             }
