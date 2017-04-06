@@ -38,6 +38,8 @@ namespace Uml.Robotics.Ros.Samples
             }
             catch (Exception ex)
             {
+                Console.WriteLine("Caught exception: ");
+                Console.WriteLine(ex.Message);
             }
 
             if (args.Length == 1 && OP != op.list)
@@ -48,25 +50,25 @@ namespace Uml.Robotics.Ros.Samples
             switch (OP)
             {
                 case op.del:
-                    if (!Param.del(names.resolve(args[1])))
+                    if (!Param.Del(names.resolve(args[1])))
                             Console.WriteLine("Failed to delete "+args[1]);
                     break;
                 case op.get:
                 {
                     string s = null;
-                    Param.get(args[1], ref s);
+                    Param.Get(args[1], out s);
                     if (s != null)
                         Console.WriteLine(s);
                 }
                     break;
                 case op.list:
                 {
-                    foreach (string s in Param.list())
+                    foreach (string s in Param.List())
                         Console.WriteLine(s);
                 }
                     break;
                 case op.set:
-                    Param.set(args[1], args[2]);
+                    Param.Set(args[1], args[2]);
                     break;
             }
         }
@@ -93,9 +95,22 @@ namespace Uml.Robotics.Ros.Samples
             network.init(remappings);
             master.init(remappings);
             this_node.Init("", remappings, (int) (InitOption.AnonymousName | InitOption.NoRousout));
-            Param.init(remappings);
+            Param.Init(remappings);
             //ROS.Init(args, "");
             new Program(args).result();
+
+            // Demo how to get/set parameters directly
+            Param.Set("/test/string", "Hello");
+            Param.Set("/test/number", 42);
+            string result;
+            if(Param.Get("/test/string", out result))
+            {
+                Console.WriteLine($"Got {result}");
+            }
+            else
+            {
+                Console.WriteLine("Haven't got any value for /test/string");
+            }
         }
     }
 }

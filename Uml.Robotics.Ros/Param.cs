@@ -29,7 +29,7 @@ namespace Uml.Robotics.Ros
             if (!BoolCallbacks.ContainsKey(key))
                 BoolCallbacks.Add(key, new List<ParamBoolDelegate>());
             BoolCallbacks[key].Add(del);
-            update(key, getParam(key, true));
+            Update(key, GetParam(key, true));
         }
 
         public static void Subscribe(string key, ParamIntDelegate del)
@@ -37,7 +37,7 @@ namespace Uml.Robotics.Ros
             if (!IntCallbacks.ContainsKey(key))
                 IntCallbacks.Add(key, new List<ParamIntDelegate>());
             IntCallbacks[key].Add(del);
-            update(key, getParam(key, true));
+            Update(key, GetParam(key, true));
         }
 
         public static void Subscribe(string key, ParamDoubleDelegate del)
@@ -45,7 +45,7 @@ namespace Uml.Robotics.Ros
             if (!DoubleCallbacks.ContainsKey(key))
                 DoubleCallbacks.Add(key, new List<ParamDoubleDelegate>());
             DoubleCallbacks[key].Add(del);
-            update(key, getParam(key, true));
+            Update(key, GetParam(key, true));
         }
 
         public static void Subscribe(string key, ParamStringDelegate del)
@@ -53,7 +53,7 @@ namespace Uml.Robotics.Ros
             if (!StringCallbacks.ContainsKey(key))
                 StringCallbacks.Add(key, new List<ParamStringDelegate>());
             StringCallbacks[key].Add(del);
-            update(key, getParam(key, true));
+            Update(key, GetParam(key, true));
         }
 
         public static void Subscribe(string key, ParamDelegate del)
@@ -61,47 +61,22 @@ namespace Uml.Robotics.Ros
             if (!Callbacks.ContainsKey(key))
                 Callbacks.Add(key, new List<ParamDelegate>());
             Callbacks[key].Add(del);
-            update(key, getParam(key, true));
+            Update(key, GetParam(key, true));
         }
 
         /// <summary>
         ///     Sets the paramater on the parameter server
         /// </summary>
-        /// <param name="key">Name of the parameter</param>
+        /// <param name="mapped_key">Fully mapped name of the parameter to be set</param>
         /// <param name="val">Value of the paramter</param>
-        public static void set(string key, XmlRpcValue val)
+        private static void SetOnServer(string mapped_key, XmlRpcValue parm)
         {
-            string mapped_key = names.resolve(key);
-            XmlRpcValue parm = new XmlRpcValue(), response = new XmlRpcValue(), payload = new XmlRpcValue();
             parm.Set(0, this_node.Name);
             parm.Set(1, mapped_key);
-            parm.Set(2, val);
-            lock (parms_mutex)
-            {
-                if (master.execute("setParam", parm, response, payload, true))
-                {
-                    if (subscribed_params.Contains(mapped_key))
-                        parms.Add(mapped_key, val);
-                }
-                else
-                {
-                    throw new RosException("RPC call setParam for key " + key + " failed. ");
-                }
-            }
-        }
+            // parm.Set(2, ...), the value to be set on the parameter server was stored in parm by the calling function already )
 
-        /// <summary>
-        ///     Sets the paramater on the parameter server
-        /// </summary>
-        /// <param name="key">Name of the parameter</param>
-        /// <param name="val">Value of the paramter</param>
-        public static void set(string key, string val)
-        {
-            string mapped_key = names.resolve(key);
-            XmlRpcValue parm = new XmlRpcValue(), response = new XmlRpcValue(), payload = new XmlRpcValue();
-            parm.Set(0, this_node.Name);
-            parm.Set(1, mapped_key);
-            parm.Set(2, val);
+            var response = new XmlRpcValue();
+            var payload = new XmlRpcValue();
             lock (parms_mutex)
             {
                 if (master.execute("setParam", parm, response, payload, true))
@@ -111,7 +86,7 @@ namespace Uml.Robotics.Ros
                 }
                 else
                 {
-                    throw new RosException("RPC call setParam for key " + key + " failed. ");
+                    throw new RosException("RPC call setParam for key " + mapped_key + " failed. ");
                 }
             }
         }
@@ -121,25 +96,11 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="key">Name of the parameter</param>
         /// <param name="val">Value of the paramter</param>
-        public static void set(string key, double val)
+        public static void Set(string key, XmlRpcValue val)
         {
-            string mapped_key = names.resolve(key);
-            XmlRpcValue parm = new XmlRpcValue(), response = new XmlRpcValue(), payload = new XmlRpcValue();
-            parm.Set(0, this_node.Name);
-            parm.Set(1, mapped_key);
+            XmlRpcValue parm = new XmlRpcValue();
             parm.Set(2, val);
-            lock (parms_mutex)
-            {
-                if (master.execute("setParam", parm, response, payload, true))
-                {
-                    if (subscribed_params.Contains(mapped_key))
-                        parms.Add(mapped_key, parm);
-                }
-                else
-                {
-                    throw new RosException("RPC call setParam for key " + key + " failed. ");
-                }
-            }
+            SetOnServer(names.resolve(key), parm);
         }
 
         /// <summary>
@@ -147,25 +108,11 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="key">Name of the parameter</param>
         /// <param name="val">Value of the paramter</param>
-        public static void set(string key, int val)
+        public static void Set(string key, string val)
         {
-            string mapped_key = names.resolve(key);
-            XmlRpcValue parm = new XmlRpcValue(), response = new XmlRpcValue(), payload = new XmlRpcValue();
-            parm.Set(0, this_node.Name);
-            parm.Set(1, mapped_key);
+            XmlRpcValue parm = new XmlRpcValue();
             parm.Set(2, val);
-            lock (parms_mutex)
-            {
-                if (master.execute("setParam", parm, response, payload, true))
-                {
-                    if (subscribed_params.Contains(mapped_key))
-                        parms.Add(mapped_key, parm);
-                }
-                else
-                {
-                    throw new RosException("RPC call setParam for key " + key + " failed. ");
-                }
-            }
+            SetOnServer(names.resolve(key), parm);
         }
 
         /// <summary>
@@ -173,25 +120,35 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="key">Name of the parameter</param>
         /// <param name="val">Value of the paramter</param>
-        public static void set(string key, bool val)
+        public static void Set(string key, double val)
         {
-            string mapped_key = names.resolve(key);
-            XmlRpcValue parm = new XmlRpcValue(), response = new XmlRpcValue(), payload = new XmlRpcValue();
-            parm.Set(0, this_node.Name);
-            parm.Set(1, mapped_key);
+            XmlRpcValue parm = new XmlRpcValue();
             parm.Set(2, val);
-            lock (parms_mutex)
-            {
-                if (master.execute("setParam", parm, response, payload, true))
-                {
-                    if (subscribed_params.Contains(mapped_key))
-                        parms.Add(mapped_key, parm);
-                }
-                else
-                {
-                    throw new RosException("RPC call setParam for key " + key + " failed. ");
-                }
-            }
+            SetOnServer(names.resolve(key), parm);
+        }
+
+        /// <summary>
+        ///     Sets the paramater on the parameter server
+        /// </summary>
+        /// <param name="key">Name of the parameter</param>
+        /// <param name="val">Value of the paramter</param>
+        public static void Set(string key, int val)
+        {
+            XmlRpcValue parm = new XmlRpcValue();
+            parm.Set(2, val);
+            SetOnServer(names.resolve(key), parm);
+        }
+
+        /// <summary>
+        ///     Sets the paramater on the parameter server
+        /// </summary>
+        /// <param name="key">Name of the parameter</param>
+        /// <param name="val">Value of the paramter</param>
+        public static void Set(string key, bool val)
+        {
+            XmlRpcValue parm = new XmlRpcValue();
+            parm.Set(2, val);
+            SetOnServer(names.resolve(key), parm);
         }
 
         /// <summary>
@@ -199,24 +156,27 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="key">Name of the parameter</param>
         /// <returns></returns>
-        internal static XmlRpcValue getParam(String key, bool use_cache = false)
+        internal static XmlRpcValue GetParam(String key, bool use_cache = false)
         {
             string mapped_key = names.resolve(key);
-            XmlRpcValue payload = new XmlRpcValue();
-            if (!getImpl(mapped_key, ref payload, use_cache))
+            XmlRpcValue payload;
+            if (!GetImpl(mapped_key, out payload, use_cache))
                 payload = null;
             return payload;
         }
 
-        private static bool safeGet<T>(string key, ref T dest, T def = default(T))
+        private static bool SafeGet<T>(string key, out T dest, T def = default(T))
         {
             try
             {
-                XmlRpcValue v = getParam(key);
+                XmlRpcValue v = GetParam(key);
                 if (v == null || !v.IsEmpty)
                 {
                     if (def == null)
+                    {
+                        dest=default(T);
                         return false;
+                    }
                     dest = def;
                     return true;
                 }
@@ -242,56 +202,61 @@ namespace Uml.Robotics.Ros
                 {
                     dest = (T)(object)v;
                 }
+                else
+                {
+                    dest=default(T);
+                }
 
                 return true;
             }
             catch
             {
+                dest=default(T);
                 return false;
             }
         }
 
-        public static bool get(string key, ref XmlRpcValue dest)
+        public static bool Get(string key, out XmlRpcValue dest)
         {
-            return safeGet(key, ref dest);
+            return SafeGet(key, out dest);
         }
 
-        public static bool get(string key, ref bool dest)
+        public static bool Get(string key, out bool dest)
         {
-            return safeGet(key, ref dest);
+            return SafeGet(key, out dest);
         }
 
-        public static bool get(string key, ref bool dest, bool def)
+        public static bool Get(string key, out bool dest, bool def)
         {
-            return safeGet(key, ref dest, def);
+            return SafeGet(key, out dest, def);
         }
 
-        public static bool get(string key, ref int dest)
+        public static bool Get(string key, out int dest)
         {
-            return safeGet(key, ref dest);
+            return SafeGet(key, out dest);
         }
 
-        public static bool get(string key, ref int dest, int def)
+        public static bool Get(string key, out int dest, int def)
         {
-            return safeGet(key, ref dest, def);
+            return SafeGet(key, out dest, def);
         }
 
-        public static bool get(string key, ref double dest)
+        public static bool Get(string key, out double dest)
         {
-            return safeGet(key, ref dest);
+            return SafeGet(key, out dest);
         }
 
-        public static bool get(string key, ref double dest, double def)
+        public static bool Get(string key, out double dest, double def)
         {
-            return safeGet(key, ref dest, def);
+            return SafeGet(key, out dest, def);
         }
 
-        public static bool get(string key, ref string dest, string def = null)
+        public static bool Get(string key, out string dest, string def = null)
         {
-            return safeGet(key, ref dest, dest);
+            return SafeGet(key, out dest, def);
         }
 
-        public static List<string> list()
+        public static List<string> List()
         {
             List<string> ret = new List<string>();
             XmlRpcValue parm = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
@@ -315,7 +280,7 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="key">Name of the paramerer</param>
         /// <returns></returns>
-        public static bool has(string key)
+        public static bool Has(string key)
         {
             XmlRpcValue parm = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
             parm.Set(0, this_node.Name);
@@ -332,7 +297,7 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public static bool del(string key)
+        public static bool Del(string key)
         {
             string mapped_key = names.resolve(key);
             lock (parms_mutex)
@@ -353,7 +318,7 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-        public static void init(IDictionary<string, string> remappingArgs)
+        public static void Init(IDictionary<string, string> remappingArgs)
         {
             foreach (string name in remappingArgs.Keys)
             {
@@ -366,25 +331,25 @@ namespace Uml.Robotics.Ros
                     bool success = int.TryParse(param, out int i);
                     if (success)
                     {
-                        set(names.resolve(localName), i);
+                        Set(names.resolve(localName), i);
                         continue;
                     }
                     success = double.TryParse(param, out double d);
                     if (success)
                     {
-                        set(names.resolve(localName), d);
+                        Set(names.resolve(localName), d);
                         continue;
                     }
                     success = bool.TryParse(param.ToLower(), out bool b);
                     if (success)
                     {
-                        set(names.resolve(localName), b);
+                        Set(names.resolve(localName), b);
                         continue;
                     }
-                    set(names.resolve(localName), param);
+                    Set(names.resolve(localName), param);
                 }
             }
-            XmlRpcManager.Instance.bind("paramUpdate", paramUpdateCallback);
+            XmlRpcManager.Instance.bind("paramUpdate", ParamUpdateCallback);
         }
 
         /// <summary>
@@ -392,7 +357,7 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="key">Name of parameter</param>
         /// <param name="v">Value to update param to</param>
-        public static void update(string key, XmlRpcValue v)
+        public static void Update(string key, XmlRpcValue v)
         {
             if (v == null)
                 return;
@@ -436,19 +401,20 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="parm">Name of parameter</param>
         /// <param name="result">New value of parameter</param>
-        public static void paramUpdateCallback(XmlRpcValue val, XmlRpcValue result)
+        public static void ParamUpdateCallback(XmlRpcValue val, XmlRpcValue result)
         {
             val.Set(0, 1);
             val.Set(1, "");
             val.Set(2, 0);
             //update(XmlRpcValue.LookUp(parm)[1].Get<string>(), XmlRpcValue.LookUp(parm)[2]);
             /// TODO: check carefully this stuff. It looks strange
-            update(val[1].GetString(), val[2]);
+            Update(val[1].GetString(), val[2]);
         }
 
-        public static bool getImpl(string key, ref XmlRpcValue v, bool use_cache)
+        public static bool GetImpl(string key, out XmlRpcValue v, bool use_cache)
         {
             string mapped_key = names.resolve(key);
+            v=new XmlRpcValue();
 
             if (use_cache)
             {

@@ -57,7 +57,7 @@ namespace Uml.Robotics.Ros
         {
             if (!checkedSimTime)
             {
-                if (Param.get("/use_sim_time", ref simTime))
+                if (Param.Get("/use_sim_time", out simTime))
                 {
                     checkedSimTime = true;
                 }

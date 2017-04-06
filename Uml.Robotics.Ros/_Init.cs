@@ -366,7 +366,7 @@ namespace Uml.Robotics.Ros
                     network.init(remappingArgs);
                     master.init(remappingArgs);
                     this_node.Init(name, remappingArgs, options);
-                    Param.init(remappingArgs);
+                    Param.Init(remappingArgs);
                     SimTime.instance.SimTimeEvent += SimTimeCallback;
                     initialized = true;
                     GlobalNodeHandle = new NodeHandle(this_node.Namespace, remappingArgs);

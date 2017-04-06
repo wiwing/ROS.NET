@@ -100,15 +100,15 @@ namespace Uml.Robotics.Ros.ActionLib
 
             // Read the frequency with which to publish status from the parameter server
             // If not specified locally explicitly, use search param to find actionlib_status_frequency
-            double statusFrequency = 0;
-            bool success = Param.get(ACTIONLIB_STATUS_FREQUENCY, ref statusFrequency);
+            double statusFrequency;
+            bool success = Param.Get(ACTIONLIB_STATUS_FREQUENCY, out statusFrequency);
             if (success)
             {
                 StatusFrequencySeconds = statusFrequency;
             }
 
-            double statusListTimeout = 0;
-            success = Param.get(STATUS_LIST_TIMEOUT, ref statusListTimeout);
+            double statusListTimeout;
+            success = Param.Get(STATUS_LIST_TIMEOUT, out statusListTimeout);
             if (success)
             {
                 var split = SplitSeconds(statusListTimeout);
