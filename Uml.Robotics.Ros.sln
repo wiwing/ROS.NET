@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26228.9
+VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uml.Robotics.XmlRpc", "Uml.Robotics.XmlRpc\Uml.Robotics.XmlRpc.csproj", "{89241CC9-5E28-4B95-B682-37A0AC58D306}"
 EndProject
@@ -38,6 +38,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ActionClientSample", "Samples\ActionClientSample\ActionClientSample.csproj", "{4F0E93D5-6CC7-4971-BB91-A5139CF4B05E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ActionServerSample", "Samples\ActionServerSample\ActionServerSample.csproj", "{3041CF5C-222C-412E-8EE6-289C1DE0E567}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PubSubTestbed", "Tests\PubSubTestbed\PubSubTestbed.csproj", "{1C8D0504-5236-4FFF-AA8F-2CFF6C564DC0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -109,6 +111,10 @@ Global
 		{3041CF5C-222C-412E-8EE6-289C1DE0E567}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3041CF5C-222C-412E-8EE6-289C1DE0E567}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3041CF5C-222C-412E-8EE6-289C1DE0E567}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C8D0504-5236-4FFF-AA8F-2CFF6C564DC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C8D0504-5236-4FFF-AA8F-2CFF6C564DC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C8D0504-5236-4FFF-AA8F-2CFF6C564DC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C8D0504-5236-4FFF-AA8F-2CFF6C564DC0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -124,5 +130,6 @@ Global
 		{353EDE41-B3E9-4CFE-BD24-EFA47018E0FD} = {9C75EAAD-EACA-4E4F-B9DA-D7BADB3B7577}
 		{4F0E93D5-6CC7-4971-BB91-A5139CF4B05E} = {9C75EAAD-EACA-4E4F-B9DA-D7BADB3B7577}
 		{3041CF5C-222C-412E-8EE6-289C1DE0E567} = {9C75EAAD-EACA-4E4F-B9DA-D7BADB3B7577}
+		{1C8D0504-5236-4FFF-AA8F-2CFF6C564DC0} = {EEE8759B-47AD-455B-8F32-0A36EAE2512B}
 	EndGlobalSection
 EndGlobal
