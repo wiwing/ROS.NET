@@ -38,7 +38,8 @@ namespace Uml.Robotics.Ros
         {
             lock (drop_mutex)
             {
-                if (dropped) return;
+                if (dropped)
+                    return;
             }
 
             if (subscriber != null)
@@ -49,7 +50,8 @@ namespace Uml.Robotics.Ros
         {
             lock (drop_mutex)
             {
-                if (dropped) return;
+                if (dropped)
+                    return;
                 dropped = true;
             }
             if (subscriber != null)

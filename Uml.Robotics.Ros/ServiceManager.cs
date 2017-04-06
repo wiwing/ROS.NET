@@ -120,7 +120,8 @@ namespace Uml.Robotics.Ros
 
         internal void removeServiceServerLink(IServiceServerLink issl)
         {
-            if (shutting_down) return;
+            if (shutting_down)
+                return;
             lock (service_server_links_mutex)
             {
                 if (service_server_links.Contains(issl))
@@ -245,10 +246,9 @@ namespace Uml.Robotics.Ros
             {
                 unregisterSuccess = master.execute("unregisterService", args, result, payload, false);
             }
-            // Ignore exception during unregister
-            catch (Exception e)
+            catch
             {
-                // Logger.LogError(e.Message);
+                // ignore exception during unregister
             }
             return unregisterSuccess;
         }

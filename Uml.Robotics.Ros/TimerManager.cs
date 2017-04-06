@@ -208,7 +208,8 @@ namespace Uml.Robotics.Ros
         {
             if (timer == null)
                 throw new NullReferenceException("Timer instance has already been disposed");
-            if (running) return;
+            if (running)
+                return;
             try
             {
                 timer.Change(_delay, _period);
@@ -258,7 +259,8 @@ namespace Uml.Robotics.Ros
         {
             if (timer == null)
                 throw new NullReferenceException("Timer instance has already been disposed");
-            if (!running) return;
+            if (!running)
+                return;
             try
             {
                 timer.Change(Timeout.Infinite, Timeout.Infinite);

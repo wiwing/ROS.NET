@@ -73,7 +73,8 @@ namespace Uml.Robotics.Ros
             int called = 0;
             lock (mutex)
             {
-                if (!enabled) return false;
+                if (!enabled)
+                    return false;
             }
             if (count == 0 && timeout != 0)
             {

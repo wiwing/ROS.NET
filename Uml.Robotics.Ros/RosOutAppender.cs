@@ -100,7 +100,8 @@ namespace Uml.Robotics.Ros
                 {
                     publisher.publish(localqueue.Dequeue());
                 }
-                if (shutting_down) return;
+                if (shutting_down)
+                    return;
                 Thread.Sleep(100);
             }
         }

@@ -225,7 +225,8 @@ namespace Uml.Robotics.Ros.Transforms
         {
             lock (storage)
             {
-                if (storage.Count == 0) return 0;
+                if (storage.Count == 0)
+                    return 0;
                 return storage.Last().Key;
             }
         }
@@ -234,7 +235,8 @@ namespace Uml.Robotics.Ros.Transforms
         {
             lock (storage)
             {
-                if (storage.Count == 0) return 0;
+                if (storage.Count == 0)
+                    return 0;
                 return storage.First().Key;
             }
         }
