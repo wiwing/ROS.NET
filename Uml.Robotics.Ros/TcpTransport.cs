@@ -160,7 +160,8 @@ namespace Uml.Robotics.Ros
                 close();
             lock (close_mutex)
             {
-                if (closed) return;
+                if (closed)
+                    return;
             }
             if (!expecting_read && poll_set != null)
             {
@@ -178,7 +179,8 @@ namespace Uml.Robotics.Ros
                 close();
             lock (close_mutex)
             {
-                if (closed) return;
+                if (closed)
+                    return;
             }
             if (expecting_read && poll_set != null)
             {
@@ -195,7 +197,8 @@ namespace Uml.Robotics.Ros
             if (!sock.Connected) close();
             lock (close_mutex)
             {
-                if (closed) return;
+                if (closed)
+                    return;
             }
             if (!expecting_write && poll_set != null)
             {
@@ -212,7 +215,8 @@ namespace Uml.Robotics.Ros
             if (!sock.Connected) close();
             lock (close_mutex)
             {
-                if (closed) return;
+                if (closed)
+                    return;
             }
             if (expecting_write && poll_set != null)
             {
@@ -569,7 +573,8 @@ namespace Uml.Robotics.Ros
         {
             lock (close_mutex)
             {
-                if (closed) return;
+                if (closed)
+                    return;
             }
 
             if (is_server)

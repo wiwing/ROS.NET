@@ -240,7 +240,8 @@ namespace Uml.Robotics.Ros
             {
                 throw new ArgumentException($"Wrong size {size}", nameof(size));
             }
-            if (!success) return false;
+            if (!success)
+                return false;
 
             byte ok = buf[0];
             int len = BitConverter.ToInt32(buf, 1);

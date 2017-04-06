@@ -160,7 +160,8 @@ namespace Uml.Robotics.Ros
             {
                 signal();
                 Thread.Sleep(ROS.WallDuration);
-                if (shutting_down) return;
+                if (shutting_down)
+                    return;
             }
             Logger.LogDebug("PollManager thread finished");
         }

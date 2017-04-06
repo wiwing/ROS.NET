@@ -14,7 +14,7 @@ namespace Uml.Robotics.Ros
 
     public class TLS
     {
-        private volatile List<CallbackInfo> _queue = new List<CallbackInfo>();
+        private readonly List<CallbackInfo> _queue = new List<CallbackInfo>();
         public int calling_in_this_thread = -1;
 
         public int Count
@@ -34,7 +34,9 @@ namespace Uml.Robotics.Ros
             {
                 lock (_queue)
                 {
-                    if (_queue.Count == 0) return null;
+                    if (_queue.Count == 0)
+                        return null;
+
                     return _queue[0];
                 }
             }
@@ -46,7 +48,9 @@ namespace Uml.Robotics.Ros
             {
                 lock (_queue)
                 {
-                    if (_queue.Count == 0) return null;
+                    if (_queue.Count == 0)
+                        return null;
+
                     return _queue[_queue.Count - 1];
                 }
             }
@@ -54,23 +58,26 @@ namespace Uml.Robotics.Ros
 
         public CallbackInfo Dequeue()
         {
-            CallbackInfo tmp;
             lock (_queue)
             {
                 if (_queue.Count == 0)
                     return null;
-                tmp = _queue[0];
+
+                CallbackInfo result = _queue[0];
                 _queue.RemoveAt(0);
+                return result;
             }
-            return tmp;
         }
 
         public void Enqueue(CallbackInfo info)
         {
             if (info.Callback == null)
                 return;
+
             lock (_queue)
+            {
                 _queue.Add(info);
+            }
         }
 
         public CallbackInfo SpliceOut(CallbackInfo info)

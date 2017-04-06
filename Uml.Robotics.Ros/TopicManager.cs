@@ -276,7 +276,8 @@ namespace Uml.Robotics.Ros
             Subscription sub = null;
             lock (subs_mutex)
             {
-                if (shutting_down) return false;
+                if (shutting_down)
+                    return false;
                 foreach (Subscription s in subscriptions)
                 {
                     if (s.name == topic)

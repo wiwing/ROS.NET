@@ -52,12 +52,22 @@ namespace Uml.Robotics.XmlRpc
         public override XmlRpcDispatch.EventType HandleEvent(XmlRpcDispatch.EventType eventType)
         {
             if (_connectionState == ServerConnectionState.READ_HEADER)
-                if (! readHeader(ref header)) return 0;
+            {
+                if (!readHeader(ref header))
+                    return 0;
+            }
+
             if (_connectionState == ServerConnectionState.READ_REQUEST)
-                if (! readRequest()) return 0;
+            {
+                if (!readRequest())
+                    return 0;
+            }
 
             if (_connectionState == ServerConnectionState.WRITE_RESPONSE)
-                if (! writeResponse(header.DataString)) return 0;
+            {
+                if (!writeResponse(header.DataString))
+                    return 0;
+            }
 
             return (_connectionState == ServerConnectionState.WRITE_RESPONSE)
                 ? XmlRpcDispatch.EventType.WritableEvent : XmlRpcDispatch.EventType.ReadableEvent;

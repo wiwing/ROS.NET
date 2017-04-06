@@ -130,7 +130,8 @@ namespace Uml.Robotics.Ros
 
         private void onConnectionDropped(Connection conn, Connection.DropReason reason)
         {
-            if (conn != connection || parent == null) return;
+            if (conn != connection || parent == null)
+                return;
             lock (parent)
             {
                 parent.removeServiceClientLink(this);
@@ -139,7 +140,8 @@ namespace Uml.Robotics.Ros
 
         public virtual bool onRequestLength(Connection conn, byte[] buffer, int size, bool success)
         {
-            if (!success) return false;
+            if (!success)
+                return false;
 
             if (conn != connection || size != 4)
                 throw new Exception("Invalid request length read");
@@ -158,16 +160,20 @@ namespace Uml.Robotics.Ros
 
         public virtual bool onRequest(Connection conn, byte[] buffer, int size, bool success)
         {
-            if (!success) return false;
+            if (!success)
+                return false;
+
             if (conn != connection)
                 throw new ArgumentException("Unkown connection", nameof(conn));
 
             if (parent != null)
+            {
                 lock (parent)
                 {
                     parent.processRequest(ref buffer, size, this);
                     return true;
                 }
+            }
             return false;
         }
 

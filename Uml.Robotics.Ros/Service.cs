@@ -6,32 +6,29 @@ namespace Uml.Robotics.Ros
 {
     public static class Service
     {
-        public static bool exists(string service_name, bool print_failure_reason)
+        public static bool exists(string serviceName, bool logFailureReason = false)
         {
-            string mapped_name = names.resolve(service_name);
+            string mappedName = names.resolve(serviceName);
 
             string host = "";
             int port = 0;
 
-            if (ServiceManager.Instance.lookUpService(mapped_name, ref host, ref port))
+            if (ServiceManager.Instance.lookUpService(mappedName, ref host, ref port))
             {
-                TcpTransport transport = new TcpTransport();
-
-                IDictionary<string, string> m = new Dictionary<string, string>
-                {
-                    { "probe", "1" },
-                    { "md5sum", "*" },
-                    { "callerid", this_node.Name },
-                    { "service", mapped_name }
-                };
-
-                byte[] headerbuf = null;
-                int size = 0;
-                Header h = new Header();
-                h.Write(m, out headerbuf, out size);
-
+                var transport = new TcpTransport();
                 if (transport.connect(host, port))
                 {
+                    var m = new Dictionary<string, string>
+                    {
+                        { "probe", "1" },
+                        { "md5sum", "*" },
+                        { "callerid", this_node.Name },
+                        { "service", mappedName }
+                    };
+
+                    var h = new Header();
+                    h.Write(m, out byte[] headerbuf, out int size);
+
                     byte[] sizebuf = BitConverter.GetBytes(size);
 
                     transport.write(sizebuf, 0, sizebuf.Length);
@@ -39,33 +36,33 @@ namespace Uml.Robotics.Ros
 
                     return true;
                 }
-                if (print_failure_reason)
+                if (logFailureReason)
                 {
-                    ROS.Info()("waitForService: Service[{0}] could not connect to host [{1}:{2}], waiting...", mapped_name, host, port);
+                    ROS.Info()("waitForService: Service[{0}] could not connect to host [{1}:{2}], waiting...", mappedName, host, port);
                 }
             }
-            else if (print_failure_reason)
+            else if (logFailureReason)
             {
-                ROS.Info()("waitForService: Service[{0}] has not been advertised, waiting...", mapped_name);
+                ROS.Info()("waitForService: Service[{0}] has not been advertised, waiting...", mappedName);
             }
             return false;
         }
 
-        public static bool waitForService(string service_name, TimeSpan ts)
+        public static bool waitForService(string serviceName, TimeSpan timeout)
         {
-            string mapped_name = names.resolve(service_name);
+            string mapped_name = names.resolve(serviceName);
             DateTime start_time = DateTime.Now;
             bool printed = false;
             while (ROS.ok)
             {
-                if (exists(service_name, !printed))
+                if (exists(serviceName, !printed))
                 {
                     break;
                 }
                 printed = true;
-                if (ts >= TimeSpan.Zero)
+                if (timeout >= TimeSpan.Zero)
                 {
-                    if (DateTime.Now.Subtract(start_time) > ts)
+                    if (DateTime.Now.Subtract(start_time) > timeout)
                         return false;
                 }
                 Thread.Sleep(ROS.WallDuration);

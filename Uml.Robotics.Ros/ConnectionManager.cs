@@ -1,6 +1,4 @@
-﻿#define TCPSERVER
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -20,31 +18,23 @@ namespace Uml.Robotics.Ros
             get { return _instance.Value; }
         }
 
+
         private uint connection_id_counter;
         private object connection_id_counter_mutex = new object();
         private List<Connection> connections = new List<Connection>();
         private object connections_mutex = new object();
         private List<Connection> dropped_connections = new List<Connection>();
         private object dropped_connections_mutex = new object();
-#if TCPSERVER
-        public TcpListener tcpserver_transport;
-#else
-        public TcpTransport tcpserver_transport;
-#endif
+        private TcpListener tcpserver_transport;
+
 
         public int TCPPort
         {
             get
             {
-#if TCPSERVER
                 if (tcpserver_transport == null || tcpserver_transport.LocalEndpoint == null)
                     return -1;
                 return ((IPEndPoint) tcpserver_transport.LocalEndpoint).Port;
-#else
-                if (tcpserver_transport == null || tcpserver_transport.LocalEndPoint == null)
-                    return -1;
-                return ((IPEndPoint)tcpserver_transport.LocalEndPoint).Port;
-#endif
             }
         }
 
@@ -109,18 +99,12 @@ namespace Uml.Robotics.Ros
 
         public void shutdown()
         {
-#if TCPSERVER
             acceptor.Stop();
-#endif
+
             if (tcpserver_transport != null)
             {
-#if TCPSERVER
                 tcpserver_transport.Stop();
                 tcpserver_transport = null;
-#else
-                tcpserver_transport.close();
-                tcpserver_transport = null;
-#endif
             }
             PollManager.Instance.removePollThreadListener(removeDroppedConnections);
 
@@ -159,7 +143,6 @@ namespace Uml.Robotics.Ros
             return ret;
         }
 
-#if TCPSERVER
         public void CheckAndAccept(object nothing)
         {
             while (tcpserver_transport != null && tcpserver_transport.Pending())
@@ -169,22 +152,15 @@ namespace Uml.Robotics.Ros
         }
 
         private WrappedTimer acceptor;
-#endif
 
         public void Start()
         {
             PollManager.Instance.addPollThreadListener(removeDroppedConnections);
 
-#if TCPSERVER
             tcpserver_transport = new TcpListener(IPAddress.Any, network.tcpros_server_port);
             tcpserver_transport.Start(10);
             acceptor = ROS.timer_manager.StartTimer(CheckAndAccept, 100, 100);
-#else
-            tcpserver_transport = new TcpTransport(PollManager.Instance.poll_set);
-            tcpserver_transport.listen(network.tcpros_server_port, 10, (t)=> {
-                tcpRosAcceptConnection(t.accept());
-            });
-#endif
+
         }
     }
 }
