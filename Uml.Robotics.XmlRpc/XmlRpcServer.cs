@@ -37,6 +37,7 @@ namespace Uml.Robotics.XmlRpc
         public void Shutdown()
         {
             _disp.Clear();
+            listener.Stop();
         }
 
         public int Port
@@ -144,14 +145,6 @@ namespace Uml.Robotics.XmlRpc
         public void removeConnection(XmlRpcServerConnection sc)
         {
             _disp.RemoveSource(sc);
-        }
-
-
-        // Close the server socket file descriptor and stop monitoring connections
-        private void shutdown()
-        {
-            // This closes and destroys all connections as well as closing this socket
-            _disp.Clear();
         }
 
 

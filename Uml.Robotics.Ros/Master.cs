@@ -103,7 +103,7 @@ namespace Uml.Robotics.Ros
             if (!execute("lookupNode", args, resp, payl, true))
                 return null;
 
-            if (!XmlRpcManager.Instance.validateXmlRpcResponse("lookupNode", resp, payl))
+            if (!XmlRpcManager.Instance.ValidateXmlRpcResponse("lookupNode", resp, payl))
                 return null;
 
             string nodeUri = payl.GetString();
@@ -123,7 +123,7 @@ namespace Uml.Robotics.Ros
             req.Set(0, this_node.Name);
             req.Set(1, $"Node '{this_node.Name}' requests shutdown.");
             var respose = cl.Execute("shutdown", req);
-            if (!respose.Success || !XmlRpcManager.Instance.validateXmlRpcResponse("shutdown", respose.Value, payl))
+            if (!respose.Success || !XmlRpcManager.Instance.ValidateXmlRpcResponse("shutdown", respose.Value, payl))
                 return false;
 
             return true;
@@ -163,7 +163,7 @@ namespace Uml.Robotics.Ros
                         {
                             // validateXmlrpcResponse logs error in case of validation error
                             // So we don't need any logging here.
-                            if (XmlRpcManager.Instance.validateXmlRpcResponse(method, result.Value, payload))
+                            if (XmlRpcManager.Instance.ValidateXmlRpcResponse(method, result.Value, payload))
                                 return true;
                             else
                                 return false;

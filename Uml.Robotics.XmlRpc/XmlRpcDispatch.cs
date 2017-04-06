@@ -17,13 +17,14 @@ namespace Uml.Robotics.XmlRpc
 
         private bool _doClear;
         private double _endTime;
-
         private List<DispatchRecord> sources = new List<DispatchRecord>();
+
 
         public void AddSource(XmlRpcSource source, EventType eventMask)
         {
             sources.Add(new DispatchRecord { client = source, mask = eventMask });
         }
+
 
         public void RemoveSource(XmlRpcSource source)
         {
@@ -37,6 +38,7 @@ namespace Uml.Robotics.XmlRpc
             }
         }
 
+
         public void SetSourceEvents(XmlRpcSource source, EventType eventMask)
         {
             foreach (var record in sources)
@@ -47,6 +49,7 @@ namespace Uml.Robotics.XmlRpc
                 }
             }
         }
+
 
         private void CheckSources(IEnumerable<DispatchRecord> sources, double timeout, List<XmlRpcSource> toRemove)
         {
@@ -134,6 +137,7 @@ namespace Uml.Robotics.XmlRpc
             }
         }
 
+
         public void Work(double timeout)
         {
             _endTime = (timeout < 0.0) ? -1.0 : (getTime() + timeout);
@@ -172,11 +176,12 @@ namespace Uml.Robotics.XmlRpc
             //work(instance, msTime);
         }
 
+
         public void Clear()
         {
             try
             {
-                //clear(instance);
+                sources.Clear();
             }
             catch (Exception e)
             {
@@ -184,10 +189,12 @@ namespace Uml.Robotics.XmlRpc
             }
         }
 
+
         public double getTime()
         {
             return 0.001 * Environment.TickCount;
         }
+
 
         private class DispatchRecord
         {

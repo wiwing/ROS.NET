@@ -349,7 +349,7 @@ namespace Uml.Robotics.Ros
                     Set(names.resolve(localName), param);
                 }
             }
-            XmlRpcManager.Instance.bind("paramUpdate", ParamUpdateCallback);
+            XmlRpcManager.Instance.Bind("paramUpdate", ParamUpdateCallback);
         }
 
         /// <summary>

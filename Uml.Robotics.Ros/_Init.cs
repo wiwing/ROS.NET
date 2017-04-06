@@ -406,7 +406,7 @@ namespace Uml.Robotics.Ros
                 Logger.LogInformation("Reason given for shutdown: [" + reason + "]");
                 shutdown();
             }
-            XmlRpcManager.responseInt(1, "", 0)(r);
+            XmlRpcManager.ResponseInt(1, "", 0)(r);
         }
 
         /// <summary>
@@ -432,7 +432,7 @@ namespace Uml.Robotics.Ros
                     return;
 
                 PollManager.Instance.addPollThreadListener(checkForShutdown);
-                XmlRpcManager.Instance.bind("shutdown", shutdownCallback);
+                XmlRpcManager.Instance.Bind("shutdown", shutdownCallback);
                 //initInternalTimerManager();
                 TopicManager.Instance.Start();
                 try
@@ -497,7 +497,7 @@ namespace Uml.Robotics.Ros
                 TopicManager.Instance.shutdown();
                 ServiceManager.Instance.shutdown();
                 PollManager.Instance.shutdown();
-                XmlRpcManager.Instance.shutdown();
+                XmlRpcManager.Terminate();
                 ConnectionManager.Instance.shutdown();
             }
         }

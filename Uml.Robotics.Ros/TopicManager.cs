@@ -40,12 +40,12 @@ namespace Uml.Robotics.Ros
             {
                 shutting_down = false;
 
-                XmlRpcManager.Instance.bind("publisherUpdate", publisherUpdateCallback);
-                XmlRpcManager.Instance.bind("requestTopic", requestTopicCallback);
-                XmlRpcManager.Instance.bind("getBusStats", getBusStatsCallback);
-                XmlRpcManager.Instance.bind("getBusInfo", getBusInfoCallback);
-                XmlRpcManager.Instance.bind("getSubscriptions", getSubscriptionsCallback);
-                XmlRpcManager.Instance.bind("getPublications", getPublicationsCallback);
+                XmlRpcManager.Instance.Bind("publisherUpdate", publisherUpdateCallback);
+                XmlRpcManager.Instance.Bind("requestTopic", requestTopicCallback);
+                XmlRpcManager.Instance.Bind("getBusStats", getBusStatsCallback);
+                XmlRpcManager.Instance.Bind("getBusInfo", getBusInfoCallback);
+                XmlRpcManager.Instance.Bind("getSubscriptions", getSubscriptionsCallback);
+                XmlRpcManager.Instance.Bind("getPublications", getPublicationsCallback);
             }
         }
 
@@ -64,12 +64,12 @@ namespace Uml.Robotics.Ros
                     shutting_down = true;
                 }
 
-                XmlRpcManager.Instance.unbind("publisherUpdate");
-                XmlRpcManager.Instance.unbind("requestTopic");
-                XmlRpcManager.Instance.unbind("getBusStats");
-                XmlRpcManager.Instance.unbind("getBusInfo");
-                XmlRpcManager.Instance.unbind("getSubscriptions");
-                XmlRpcManager.Instance.unbind("getPublications");
+                XmlRpcManager.Instance.Unbind("publisherUpdate");
+                XmlRpcManager.Instance.Unbind("requestTopic");
+                XmlRpcManager.Instance.Unbind("getBusStats");
+                XmlRpcManager.Instance.Unbind("getBusInfo");
+                XmlRpcManager.Instance.Unbind("getSubscriptions");
+                XmlRpcManager.Instance.Unbind("getPublications");
 
                 bool failedOnceToUnadvertise = false;
                 lock (advertised_topics_mutex)
@@ -688,12 +688,12 @@ namespace Uml.Robotics.Ros
             for (int idx = 0; idx < parm[2].Count; idx++)
                 pubs.Add(parm[2][idx].GetString());
             if (pubUpdate(parm[1].GetString(), pubs))
-                XmlRpcManager.responseInt(1, "", 0)(result);
+                XmlRpcManager.ResponseInt(1, "", 0)(result);
             else
             {
                 const string error = "Unknown error while handling XmlRpc call to pubUpdate";
                 this.Logger.LogError(error);
-                XmlRpcManager.responseInt(0, error, 0)(result);
+                XmlRpcManager.ResponseInt(0, error, 0)(result);
             }
         }
 
@@ -706,7 +706,7 @@ namespace Uml.Robotics.Ros
             {
                 const string error = "Unknown error while handling XmlRpc call to requestTopic";
                 this.Logger.LogError(error);
-                XmlRpcManager.responseInt(0, error, 0)(res);
+                XmlRpcManager.ResponseInt(0, error, 0)(res);
             }
         }
 

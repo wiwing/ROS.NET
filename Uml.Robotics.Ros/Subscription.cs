@@ -313,7 +313,7 @@ namespace Uml.Robotics.Ros
                 }
 
                 var proto = new XmlRpcValue();
-                if (!XmlRpcManager.Instance.validateXmlRpcResponse("requestTopic", resultValue, proto))
+                if (!XmlRpcManager.Instance.ValidateXmlRpcResponse("requestTopic", resultValue, proto))
                 {
                     Logger.LogWarning($"Negotiating for {name} has failed.");
                     return;
