@@ -17,7 +17,7 @@ namespace Uml.Robotics.Ros.ActionLib
         where TFeedback : InnerActionMessage, new()
     {
         public string Name { get; private set; }
-        public int QueueSize { get; set; } = 50;
+        public int QueueSize { get; private set; }
         public Publisher<GoalActionMessage<TGoal>> GoalPublisher { get; private set; }
         public Publisher<GoalID> CancelPublisher { get; private set; }
         public Time LatestStatusTime { get; private set; }
@@ -37,9 +37,10 @@ namespace Uml.Robotics.Ros.ActionLib
         private Object lockGoalHandles = new Object();
 
 
-        public ActionClient(string name, NodeHandle parentNodeHandle)
+        public ActionClient(string name, NodeHandle parentNodeHandle, int queueSize = 50)
         {
             this.Name = name;
+            this.QueueSize = queueSize;
             this.nodeHandle = new NodeHandle(parentNodeHandle, name);
             this.statusReceived = false;
             this.goalHandles = new Dictionary<string, ClientGoalHandle<TGoal, TResult, TFeedback>>();
