@@ -361,7 +361,7 @@ namespace Uml.Robotics.Ros
                         connection.initialize(transport, false, null);
                         pubLink.initialize(connection);
 
-                        ConnectionManager.Instance.addConnection(connection);
+                        ConnectionManager.Instance.AddConnection(connection);
 
                         lock (publisher_links_mutex)
                         {

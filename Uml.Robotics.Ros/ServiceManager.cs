@@ -10,34 +10,45 @@ namespace Uml.Robotics.Ros
 {
     public class ServiceManager
     {
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ServiceManager>();
-        private static Lazy<ServiceManager> _instance = new Lazy<ServiceManager>(LazyThreadSafetyMode.ExecutionAndPublication);
-
         public static ServiceManager Instance
         {
-            get { return _instance.Value; }
+            get { return instance.Value; }
         }
 
-        private ConnectionManager connection_manager;
-        private PollManager poll_manager;
-        private List<IServicePublication> service_publications = new List<IServicePublication>();
-        private object service_publications_mutex = new object();
-        private List<IServiceServerLink> service_server_links = new List<IServiceServerLink>();
-        private object service_server_links_mutex = new object();
-        private bool shutting_down;
-        private object shutting_down_mutex = new object();
-        private XmlRpcManager xmlrpc_manager;
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ServiceManager>();
+        private static Lazy<ServiceManager> instance = new Lazy<ServiceManager>(LazyThreadSafetyMode.ExecutionAndPublication);
+        private ConnectionManager connectionManager;
+        private PollManager pollManager;
+        private List<IServicePublication> servicePublications = new List<IServicePublication>();
+        private object servicePublicationsMutex = new object();
+        private List<IServiceServerLink> serviceServerLinks = new List<IServiceServerLink>();
+        private object serviceServerLinksMutex = new object();
+        private bool shuttingDown;
+        private object shuttingDownMutex = new object();
+        private XmlRpcManager xmlrpcManager;
 
-        ~ServiceManager()
+
+        public static void Terminate()
         {
-            shutdown();
+            Instance.Shutdown();
+            instance = new Lazy<ServiceManager>(LazyThreadSafetyMode.ExecutionAndPublication);
         }
 
-        internal IServicePublication lookupServicePublication(string name)
+
+        public void Start()
         {
-            lock (service_publications_mutex)
+            shuttingDown = false;
+            pollManager = PollManager.Instance;
+            connectionManager = ConnectionManager.Instance;
+            xmlrpcManager = XmlRpcManager.Instance;
+        }
+
+
+        internal IServicePublication LookupServicePublication(string name)
+        {
+            lock (servicePublicationsMutex)
             {
-                foreach (IServicePublication sp in service_publications)
+                foreach (IServicePublication sp in servicePublications)
                 {
                     if (sp.name == name)
                         return sp;
@@ -46,28 +57,29 @@ namespace Uml.Robotics.Ros
             return null;
         }
 
-        internal ServiceServerLink<S> createServiceServerLink<S>(string service, bool persistent, string request_md5sum, string response_md5sum, IDictionary<string, string> header_values)
+
+        internal ServiceServerLink<S> CreateServiceServerLink<S>(string service, bool persistent, string request_md5sum, string response_md5sum, IDictionary<string, string> header_values)
             where S : RosService, new()
         {
-            lock (shutting_down_mutex)
+            lock (shuttingDownMutex)
             {
-                if (shutting_down)
+                if (shuttingDown)
                     return null;
             }
 
             int serv_port = -1;
             string serv_host = "";
-            if (!lookupService(service, ref serv_host, ref serv_port))
+            if (!LookupService(service, ref serv_host, ref serv_port))
                 return null;
 
-            TcpTransport transport = new TcpTransport(poll_manager.poll_set);
+            TcpTransport transport = new TcpTransport(pollManager.poll_set);
             if (transport.connect(serv_host, serv_port))
             {
                 Connection connection = new Connection();
-                connection_manager.addConnection(connection);
+                connectionManager.AddConnection(connection);
                 ServiceServerLink<S> client = new ServiceServerLink<S>(service, persistent, request_md5sum, response_md5sum, header_values);
-                lock (service_server_links_mutex)
-                    service_server_links.Add(client);
+                lock (serviceServerLinksMutex)
+                    serviceServerLinks.Add(client);
                 connection.initialize(transport, false, null);
                 client.initialize(connection);
                 return client;
@@ -75,29 +87,30 @@ namespace Uml.Robotics.Ros
             return null;
         }
 
-        internal ServiceServerLink<M, T> createServiceServerLink<M, T>(string service, bool persistent, string request_md5sum,
+
+        internal ServiceServerLink<M, T> CreateServiceServerLink<M, T>(string service, bool persistent, string request_md5sum,
                                                                        string response_md5sum, IDictionary<string, string> header_values)
             where M : RosMessage, new()
             where T : RosMessage, new()
         {
-            lock (shutting_down_mutex)
+            lock (shuttingDownMutex)
             {
-                if (shutting_down)
+                if (shuttingDown)
                     return null;
             }
 
             int serv_port = -1;
             string serv_host = "";
-            if (!lookupService(service, ref serv_host, ref serv_port))
+            if (!LookupService(service, ref serv_host, ref serv_port))
                 return null;
-            TcpTransport transport = new TcpTransport(poll_manager.poll_set);
+            TcpTransport transport = new TcpTransport(pollManager.poll_set);
             if (transport.connect(serv_host, serv_port))
             {
                 Connection connection = new Connection();
-                connection_manager.addConnection(connection);
+                connectionManager.AddConnection(connection);
                 ServiceServerLink<M, T> client = new ServiceServerLink<M, T>(service, persistent, request_md5sum, response_md5sum, header_values);
-                lock (service_server_links_mutex)
-                    service_server_links.Add(client);
+                lock (serviceServerLinksMutex)
+                    serviceServerLinks.Add(client);
                 connection.initialize(transport, false, null);
                 client.initialize(connection);
                 return client;
@@ -105,40 +118,44 @@ namespace Uml.Robotics.Ros
             return null;
         }
 
-        internal void removeServiceServerLink<M, T>(ServiceServerLink<M, T> issl)
+
+        internal void RemoveServiceServerLink<M, T>(ServiceServerLink<M, T> issl)
             where M : RosMessage, new()
             where T : RosMessage, new()
         {
-            removeServiceServerLink((IServiceServerLink) issl);
+            RemoveServiceServerLink((IServiceServerLink) issl);
         }
 
-        internal void removeServiceServerLink<S>(ServiceServerLink<S> issl)
+
+        internal void RemoveServiceServerLink<S>(ServiceServerLink<S> issl)
             where S : RosService, new()
         {
-            removeServiceServerLink((IServiceServerLink) issl);
+            RemoveServiceServerLink((IServiceServerLink) issl);
         }
 
-        internal void removeServiceServerLink(IServiceServerLink issl)
+
+        internal void RemoveServiceServerLink(IServiceServerLink issl)
         {
-            if (shutting_down)
+            if (shuttingDown)
                 return;
-            lock (service_server_links_mutex)
+            lock (serviceServerLinksMutex)
             {
-                if (service_server_links.Contains(issl))
-                    service_server_links.Remove(issl);
+                if (serviceServerLinks.Contains(issl))
+                    serviceServerLinks.Remove(issl);
             }
         }
 
-        internal bool advertiseService<MReq, MRes>(AdvertiseServiceOptions<MReq, MRes> ops) where MReq : RosMessage, new() where MRes : RosMessage, new()
+
+        internal bool AdvertiseService<MReq, MRes>(AdvertiseServiceOptions<MReq, MRes> ops) where MReq : RosMessage, new() where MRes : RosMessage, new()
         {
-            lock (shutting_down_mutex)
+            lock (shuttingDownMutex)
             {
-                if (shutting_down)
+                if (shuttingDown)
                     return false;
             }
-            lock (service_publications_mutex)
+            lock (servicePublicationsMutex)
             {
-                if (isServiceAdvertised(ops.service))
+                if (IsServiceAdvertised(ops.service))
                 {
                     Logger.LogWarning("Tried to advertise  a service that is already advertised in this node [{0}]", ops.service);
                     return false;
@@ -146,14 +163,14 @@ namespace Uml.Robotics.Ros
                 if (ops.helper == null)
                     ops.helper = new ServiceCallbackHelper<MReq, MRes>(ops.srv_func);
                 ServicePublication<MReq, MRes> pub = new ServicePublication<MReq, MRes>(ops.service, ops.md5sum, ops.datatype, ops.req_datatype, ops.res_datatype, ops.helper, ops.callback_queue, ops.tracked_object);
-                service_publications.Add(pub);
+                servicePublications.Add(pub);
             }
 
             XmlRpcValue args = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
             args.Set(0, this_node.Name);
             args.Set(1, ops.service);
-            args.Set(2, string.Format("rosrpc://{0}:{1}", network.host, connection_manager.TCPPort));
-            args.Set(3, xmlrpc_manager.Uri);
+            args.Set(2, string.Format("rosrpc://{0}:{1}", network.host, connectionManager.TCPPort));
+            args.Set(3, xmlrpcManager.Uri);
             if (!master.execute("registerService", args, result, payload, true))
             {
                 throw new RosException("RPC \"registerService\" for service " + ops.service + " failed.");
@@ -161,57 +178,59 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-        internal bool unadvertiseService(string service)
+
+        internal bool UnadvertiseService(string service)
         {
-            lock (shutting_down_mutex)
+            lock (shuttingDownMutex)
             {
-                if (shutting_down)
+                if (shuttingDown)
                     return false;
             }
             IServicePublication pub = null;
-            lock (service_publications_mutex)
+            lock (servicePublicationsMutex)
             {
-                foreach (IServicePublication sp in service_publications)
+                foreach (IServicePublication sp in servicePublications)
                 {
                     if (sp.name == service && !sp.isDropped)
                     {
                         pub = sp;
-                        service_publications.Remove(sp);
+                        servicePublications.Remove(sp);
                         break;
                     }
                 }
             }
             if (pub != null)
             {
-                unregisterService(pub.name);
+                UnregisterService(pub.name);
                 pub.drop();
                 return true;
             }
             return false;
         }
 
-        internal void shutdown()
+
+        internal void Shutdown()
         {
-            lock (shutting_down_mutex)
+            lock (shuttingDownMutex)
             {
-                if (shutting_down)
+                if (shuttingDown)
                     return;
             }
-            shutting_down = true;
-            lock (service_publications_mutex)
+            shuttingDown = true;
+            lock (servicePublicationsMutex)
             {
-                foreach (IServicePublication sp in service_publications)
+                foreach (IServicePublication sp in servicePublications)
                 {
-                    unregisterService(sp.name);
+                    UnregisterService(sp.name);
                     sp.drop();
                 }
-                service_publications.Clear();
+                servicePublications.Clear();
             }
             List<IServiceServerLink> local_service_clients;
-            lock (service_server_links)
+            lock (serviceServerLinks)
             {
-                local_service_clients = new List<IServiceServerLink>(service_server_links);
-                service_server_links.Clear();
+                local_service_clients = new List<IServiceServerLink>(serviceServerLinks);
+                serviceServerLinks.Clear();
             }
             foreach (IServiceServerLink issl in local_service_clients)
             {
@@ -220,40 +239,8 @@ namespace Uml.Robotics.Ros
             local_service_clients.Clear();
         }
 
-        public void Start()
-        {
-            shutting_down = false;
-            poll_manager = PollManager.Instance;
-            connection_manager = ConnectionManager.Instance;
-            xmlrpc_manager = XmlRpcManager.Instance;
-        }
 
-        private bool isServiceAdvertised(string serv_name)
-        {
-            List<IServicePublication> sp = new List<IServicePublication>(service_publications);
-            return sp.Any(s => s.name == serv_name && !s.isDropped);
-        }
-
-        private bool unregisterService(string service)
-        {
-            XmlRpcValue args = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
-            args.Set(0, this_node.Name);
-            args.Set(1, service);
-            args.Set(2, string.Format("rosrpc://{0}:{1}", network.host, connection_manager.TCPPort));
-
-            bool unregisterSuccess = false;
-            try
-            {
-                unregisterSuccess = master.execute("unregisterService", args, result, payload, false);
-            }
-            catch
-            {
-                // ignore exception during unregister
-            }
-            return unregisterSuccess;
-        }
-
-        internal bool lookupService(string name, ref string serv_host, ref int serv_port)
+        internal bool LookupService(string name, ref string serv_host, ref int serv_port)
         {
             XmlRpcValue args = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
             args.Set(0, this_node.Name);
@@ -277,14 +264,43 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-        internal bool lookUpService(string mapped_name, string host, int port)
+
+        internal bool LookUpService(string mapped_name, string host, int port)
         {
-            return lookupService(mapped_name, ref host, ref port);
+            return LookupService(mapped_name, ref host, ref port);
         }
 
-        internal bool lookUpService(string mapped_name, ref string host, ref int port)
+
+        internal bool LookUpService(string mapped_name, ref string host, ref int port)
         {
-            return lookupService(mapped_name, ref host, ref port);
+            return LookupService(mapped_name, ref host, ref port);
+        }
+
+
+        private bool IsServiceAdvertised(string serv_name)
+        {
+            List<IServicePublication> sp = new List<IServicePublication>(servicePublications);
+            return sp.Any(s => s.name == serv_name && !s.isDropped);
+        }
+
+
+        private bool UnregisterService(string service)
+        {
+            XmlRpcValue args = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
+            args.Set(0, this_node.Name);
+            args.Set(1, service);
+            args.Set(2, string.Format("rosrpc://{0}:{1}", network.host, connectionManager.TCPPort));
+
+            bool unregisterSuccess = false;
+            try
+            {
+                unregisterSuccess = master.execute("unregisterService", args, result, payload, false);
+            }
+            catch
+            {
+                // ignore exception during unregister
+            }
+            return unregisterSuccess;
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Uml.Robotics.Ros
             this.persistent = persistent;
             this.header_values = header_values;
             this.md5sum = md5sum;
-            linkmaker = () => ServiceManager.Instance.createServiceServerLink<MReq, MRes>(service, persistent, md5sum, md5sum, header_values);
+            linkmaker = () => ServiceManager.Instance.CreateServiceServerLink<MReq, MRes>(service, persistent, md5sum, md5sum, header_values);
             if (persistent)
             {
                 server_link = linkmaker();
@@ -48,7 +48,7 @@ namespace Uml.Robotics.Ros
             this.persistent = persistent;
             this.header_values = header_values;
             this.md5sum = md5sum;
-            linkmaker = () => ServiceManager.Instance.createServiceServerLink<MSrv>(service, persistent, md5sum, md5sum, header_values);
+            linkmaker = () => ServiceManager.Instance.CreateServiceServerLink<MSrv>(service, persistent, md5sum, md5sum, header_values);
             if (persistent)
             {
                 server_link = linkmaker();
@@ -134,7 +134,7 @@ namespace Uml.Robotics.Ros
                 is_shutdown = true;
                 if (!persistent && server_link != null)
                 {
-                    ServiceManager.Instance.removeServiceServerLink(server_link);
+                    ServiceManager.Instance.RemoveServiceServerLink(server_link);
                     server_link = null;
                 }
             }

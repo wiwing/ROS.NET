@@ -13,7 +13,7 @@ namespace Uml.Robotics.Ros
             string host = "";
             int port = 0;
 
-            if (ServiceManager.Instance.lookUpService(mappedName, ref host, ref port))
+            if (ServiceManager.Instance.LookUpService(mappedName, ref host, ref port))
             {
                 var transport = new TcpTransport();
                 if (transport.connect(host, port))

@@ -10,12 +10,7 @@ namespace Uml.Robotics.Ros
 {
     public class TopicManager
     {
-        #region Delegates
-
         public delegate byte[] SerializeFunc();
-
-        #endregion
-
 
         public static TopicManager Instance
         {
@@ -24,11 +19,11 @@ namespace Uml.Robotics.Ros
 
         private static Lazy<TopicManager> instance = new Lazy<TopicManager>(LazyThreadSafetyMode.ExecutionAndPublication);
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<TopicManager>();
-        private List<Publication> advertised_topics = new List<Publication>();
-        private object advertised_topics_mutex = new object();
-        private bool shutting_down;
-        private object shutting_down_mutex = new object();
-        private object subs_mutex = new object();
+        private List<Publication> advertisedTopics = new List<Publication>();
+        private object advertisedTopicsMutex = new object();
+        private bool shuttingDown;
+        private object shuttingDownMutex = new object();
+        private object subcriptionsMutex = new object();
         private List<Subscription> subscriptions = new List<Subscription>();
 
 
@@ -44,9 +39,9 @@ namespace Uml.Robotics.Ros
         /// </summary>
         public void Start()
         {
-            lock (shutting_down_mutex)
+            lock (shuttingDownMutex)
             {
-                shutting_down = false;
+                shuttingDown = false;
 
                 XmlRpcManager.Instance.Bind("publisherUpdate", publisherUpdateCallback);
                 XmlRpcManager.Instance.Bind("requestTopic", requestTopicCallback);
@@ -57,19 +52,20 @@ namespace Uml.Robotics.Ros
             }
         }
 
+
         /// <summary>
         ///     unbinds the XmlRpc requests to callback functions, signal to shutdown
         /// </summary>
         public void Shutdown()
         {
-            lock (shutting_down_mutex)
+            lock (shuttingDownMutex)
             {
-                if (shutting_down)
+                if (shuttingDown)
                     return;
 
-                lock (subs_mutex)
+                lock (subcriptionsMutex)
                 {
-                    shutting_down = true;
+                    shuttingDown = true;
                 }
 
                 XmlRpcManager.Instance.Unbind("publisherUpdate");
@@ -80,9 +76,9 @@ namespace Uml.Robotics.Ros
                 XmlRpcManager.Instance.Unbind("getPublications");
 
                 bool failedOnceToUnadvertise = false;
-                lock (advertised_topics_mutex)
+                lock (advertisedTopicsMutex)
                 {
-                    foreach (Publication p in advertised_topics)
+                    foreach (Publication p in advertisedTopics)
                     {
                         if (!p.Dropped && !failedOnceToUnadvertise)
                         {
@@ -90,11 +86,11 @@ namespace Uml.Robotics.Ros
                         }
                         p.drop();
                     }
-                    advertised_topics.Clear();
+                    advertisedTopics.Clear();
                 }
 
                 bool failedOnceToUnsubscribe = false;
-                lock (subs_mutex)
+                lock (subcriptionsMutex)
                 {
                     foreach (Subscription s in subscriptions)
                     {
@@ -109,17 +105,19 @@ namespace Uml.Robotics.Ros
             }
         }
 
+
         /// <summary>
         ///     gets the list of advertised topics.
         /// </summary>
         /// <param name="topics">List of topics to update</param>
         public void getAdvertisedTopics(out string[] topics)
         {
-            lock (advertised_topics_mutex)
+            lock (advertisedTopicsMutex)
             {
-                topics = advertised_topics.Select(a => a.Name).ToArray();
+                topics = advertisedTopics.Select(a => a.Name).ToArray();
             }
         }
+
 
         /// <summary>
         ///     gets the list of subscribed topics.
@@ -127,11 +125,12 @@ namespace Uml.Robotics.Ros
         /// <param name="topics"></param>
         public void getSubscribedTopics(out string[] topics)
         {
-            lock (subs_mutex)
+            lock (subcriptionsMutex)
             {
                 topics = subscriptions.Select(s => s.name).ToArray();
             }
         }
+
 
         /// <summary>
         ///     Looks up all current publishers on a given topic
@@ -140,11 +139,12 @@ namespace Uml.Robotics.Ros
         /// <returns></returns>
         public Publication lookupPublication(string topic)
         {
-            lock (advertised_topics_mutex)
+            lock (advertisedTopicsMutex)
             {
                 return lookupPublicationWithoutLock(topic);
             }
         }
+
 
         /// <summary>
         ///     Checks if the given topic is valid.
@@ -172,6 +172,7 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
+
         /// <summary>
         ///     Register as a publisher on a topic.
         /// </summary>
@@ -185,9 +186,9 @@ namespace Uml.Robotics.Ros
                 return false;
 
             Publication pub = null;
-            lock (advertised_topics_mutex)
+            lock (advertisedTopicsMutex)
             {
-                if (shutting_down)
+                if (shuttingDown)
                     return false;
                 pub = lookupPublicationWithoutLock(ops.topic);
                 if (pub != null)
@@ -206,12 +207,12 @@ namespace Uml.Robotics.Ros
                     pub = new Publication(ops.topic, ops.dataType, ops.md5Sum, ops.messageDefinition, ops.queueSize,
                         ops.latch, ops.hasHeader);
                 pub.addCallbacks(callbacks);
-                advertised_topics.Add(pub);
+                advertisedTopics.Add(pub);
             }
 
             bool found = false;
             Subscription sub = null;
-            lock (subs_mutex)
+            lock (subcriptionsMutex)
             {
                 foreach (Subscription s in subscriptions)
                 {
@@ -240,13 +241,14 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
+
         public bool subscribe<T>(SubscribeOptions<T> ops) where T : RosMessage, new()
         {
-            lock (subs_mutex)
+            lock (subcriptionsMutex)
             {
                 if (addSubCallback(ops))
                     return true;
-                if (shutting_down)
+                if (shuttingDown)
                     return false;
             }
             if (string.IsNullOrEmpty(ops.md5sum))
@@ -267,24 +269,26 @@ namespace Uml.Robotics.Ros
                 return false;
             }
 
-            lock (subs_mutex)
+            lock (subcriptionsMutex)
             {
                 subscriptions.Add(s);
             }
             return true;
         }
 
+
         public Exception subscribeFail<T>(SubscribeOptions<T> ops, string reason) where T : RosMessage, new()
         {
             return new Exception("Subscribing to topic [" + ops.topic + "] " + reason);
         }
 
+
         public bool unsubscribe(string topic, ISubscriptionCallbackHelper sbch)
         {
             Subscription sub = null;
-            lock (subs_mutex)
+            lock (subcriptionsMutex)
             {
-                if (shutting_down)
+                if (shuttingDown)
                     return false;
                 foreach (Subscription s in subscriptions)
                 {
@@ -302,7 +306,7 @@ namespace Uml.Robotics.Ros
             sub.removeCallback(sbch);
             if (sub.NumCallbacks == 0)
             {
-                lock (subs_mutex)
+                lock (subcriptionsMutex)
                 {
                     subscriptions.Remove(sub);
                 }
@@ -316,11 +320,12 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
+
         internal Subscription getSubscription(string topic)
         {
-            lock (subs_mutex)
+            lock (subcriptionsMutex)
             {
-                if (shutting_down)
+                if (shuttingDown)
                     return null;
 
                 foreach (Subscription t in subscriptions)
@@ -332,13 +337,15 @@ namespace Uml.Robotics.Ros
             return null;
         }
 
+
         public int getNumSubscriptions()
         {
-            lock (subs_mutex)
+            lock (subcriptionsMutex)
             {
                 return subscriptions.Count;
             }
         }
+
 
         public void publish(Publication p, RosMessage msg, SerializeFunc serfunc = null)
         {
@@ -356,7 +363,7 @@ namespace Uml.Robotics.Ros
                 p.connection_header.Values["latching"] = Convert.ToString(p.Latch);
             }
 
-            if (!ROS.ok || shutting_down)
+            if (!ROS.ok || shuttingDown)
                 return;
 
             if (p.HasSubscribers || p.Latch)
@@ -375,7 +382,7 @@ namespace Uml.Robotics.Ros
                 p.publish(new MessageAndSerializerFunc(msg, serfunc, serialize, nocopy));
 
                 if (serialize)
-                    PollManager.Instance.poll_set.signal();
+                    PollManager.Instance.poll_set.ContinueThreads();
             }
             else
             {
@@ -383,12 +390,14 @@ namespace Uml.Robotics.Ros
             }
         }
 
+
         public void incrementSequence(string topic)
         {
             Publication pub = lookupPublication(topic);
             if (pub != null)
                 pub.incrementSequence();
         }
+
 
         public bool isLatched(string topic)
         {
@@ -398,10 +407,12 @@ namespace Uml.Robotics.Ros
             return false;
         }
 
+
         public bool md5sumsMatch(string lhs, string rhs)
         {
             return (lhs == "*" || rhs == "*" || lhs == rhs);
         }
+
 
         public bool addSubCallback<M>(SubscribeOptions<M> ops) where M : RosMessage, new()
         {
@@ -409,7 +420,7 @@ namespace Uml.Robotics.Ros
             bool found_topic = false;
             Subscription sub = null;
 
-            if (shutting_down)
+            if (shuttingDown)
                 return false;
 
             foreach (Subscription s in subscriptions)
@@ -440,6 +451,7 @@ namespace Uml.Robotics.Ros
             }
             return found;
         }
+
 
         public bool requestTopic(string topic, XmlRpcValue protos, ref XmlRpcValue ret)
         {
@@ -482,10 +494,12 @@ namespace Uml.Robotics.Ros
             return false;
         }
 
+
         public bool isTopicAdvertised(string topic)
         {
-            return advertised_topics.Count(o => o.Name == topic) > 0;
+            return advertisedTopics.Count(o => o.Name == topic) > 0;
         }
+
 
         public bool registerSubscriber(Subscription s, string datatype)
         {
@@ -512,9 +526,9 @@ namespace Uml.Robotics.Ros
             bool self_subscribed = false;
             Publication pub = null;
             string sub_md5sum = s.md5sum;
-            lock (advertised_topics_mutex)
+            lock (advertisedTopicsMutex)
             {
-                foreach (Publication p in advertised_topics)
+                foreach (Publication p in advertisedTopics)
                 {
                     pub = p;
                     string pub_md5sum = pub.Md5sum;
@@ -531,6 +545,7 @@ namespace Uml.Robotics.Ros
                 s.addLocalConnection(pub);
             return true;
         }
+
 
         public bool unregisterSubscriber(string topic)
         {
@@ -551,6 +566,7 @@ namespace Uml.Robotics.Ros
             return unregisterSuccess;
         }
 
+
         public bool unregisterPublisher(string topic)
         {
             var args = new XmlRpcValue(this_node.Name, topic, XmlRpcManager.Instance.Uri);
@@ -570,10 +586,12 @@ namespace Uml.Robotics.Ros
             return unregisterSuccess;
         }
 
+
         public Publication lookupPublicationWithoutLock(string topic)
         {
-            return advertised_topics.FirstOrDefault(p => p.Name == topic && !p.Dropped);
+            return advertisedTopics.FirstOrDefault(p => p.Name == topic && !p.Dropped);
         }
+
 
         public XmlRpcValue getBusStats()
         {
@@ -582,17 +600,17 @@ namespace Uml.Robotics.Ros
             var service_stats = new XmlRpcValue();
 
             int pidx = 0;
-            lock (advertised_topics_mutex)
+            lock (advertisedTopicsMutex)
             {
-                publish_stats.SetArray(advertised_topics.Count);
-                foreach (Publication t in advertised_topics)
+                publish_stats.SetArray(advertisedTopics.Count);
+                foreach (Publication t in advertisedTopics)
                 {
                     publish_stats.Set(pidx++, t.GetStats());
                 }
             }
 
             int sidx = 0;
-            lock (subs_mutex)
+            lock (subcriptionsMutex)
             {
                 subscribe_stats.SetArray(subscriptions.Count);
                 foreach (Subscription t in subscriptions)
@@ -611,18 +629,19 @@ namespace Uml.Robotics.Ros
             return stats;
         }
 
+
         public XmlRpcValue getBusInfo()
         {
             var info = new XmlRpcValue();
             info.SetArray(0);
-            lock (advertised_topics_mutex)
+            lock (advertisedTopicsMutex)
             {
-                foreach (Publication t in advertised_topics)
+                foreach (Publication t in advertisedTopics)
                 {
                     t.getInfo(info);
                 }
             }
-            lock (subs_mutex)
+            lock (subcriptionsMutex)
             {
                 foreach (Subscription t in subscriptions)
                 {
@@ -632,10 +651,11 @@ namespace Uml.Robotics.Ros
             return info;
         }
 
+
         public void getSubscriptions(ref XmlRpcValue subs)
         {
             subs.SetArray(0);
-            lock (subs_mutex)
+            lock (subcriptionsMutex)
             {
                 int sidx = 0;
                 foreach (Subscription t in subscriptions)
@@ -645,13 +665,14 @@ namespace Uml.Robotics.Ros
             }
         }
 
+
         public void getPublications(ref XmlRpcValue pubs)
         {
             pubs.SetArray(0);
-            lock (advertised_topics_mutex)
+            lock (advertisedTopicsMutex)
             {
                 int sidx = 0;
-                foreach (Publication t in advertised_topics)
+                foreach (Publication t in advertisedTopics)
                 {
                     XmlRpcValue pub = new XmlRpcValue();
                     pub.Set(0, t.Name);
@@ -661,6 +682,7 @@ namespace Uml.Robotics.Ros
             }
         }
 
+
         public bool pubUpdate(string topic, List<string> pubs)
         {
             using (this.Logger.BeginScope ($"{ nameof(pubUpdate) }"))
@@ -668,9 +690,9 @@ namespace Uml.Robotics.Ros
                 this.Logger.LogDebug("TopicManager is updating publishers for " + topic);
 
                 Subscription sub = null;
-                lock (subs_mutex)
+                lock (subcriptionsMutex)
                 {
-                    if (shutting_down)
+                    if (shuttingDown)
                         return false;
 
                     foreach (Subscription s in subscriptions)
@@ -690,6 +712,7 @@ namespace Uml.Robotics.Ros
             }
         }
 
+
         private void publisherUpdateCallback(XmlRpcValue parm, XmlRpcValue result)
         {
             var pubs = new List<string>();
@@ -705,6 +728,7 @@ namespace Uml.Robotics.Ros
             }
         }
 
+
         private void requestTopicCallback(XmlRpcValue parm, XmlRpcValue res)
         {
             //XmlRpcValue res = XmlRpcValue.Create(ref result)
@@ -718,6 +742,7 @@ namespace Uml.Robotics.Ros
             }
         }
 
+
         private void getBusStatsCallback(XmlRpcValue parm, XmlRpcValue res)
         {
             res.Set(0, 1);
@@ -726,6 +751,7 @@ namespace Uml.Robotics.Ros
             res.Set(2, response);
         }
 
+
         private void getBusInfoCallback(XmlRpcValue parm, XmlRpcValue res)
         {
             res.Set(0, 1);
@@ -733,6 +759,7 @@ namespace Uml.Robotics.Ros
             var response = getBusInfo();
             res.Set(2, response);
         }
+
 
         private void getSubscriptionsCallback(XmlRpcValue parm, XmlRpcValue res)
         {
@@ -743,6 +770,7 @@ namespace Uml.Robotics.Ros
             res.Set(2, response);
         }
 
+
         private void getPublicationsCallback(XmlRpcValue parm, XmlRpcValue res)
         {
             res.Set(0, 1);
@@ -752,12 +780,13 @@ namespace Uml.Robotics.Ros
             res.Set(2, response);
         }
 
+
         public bool unadvertise(string topic, SubscriberCallbacks callbacks)
         {
             Publication pub = null;
-            lock (advertised_topics_mutex)
+            lock (advertisedTopicsMutex)
             {
-                foreach (Publication p in advertised_topics)
+                foreach (Publication p in advertisedTopics)
                 {
                     if (p.Name == topic && !p.Dropped)
                     {
@@ -770,13 +799,13 @@ namespace Uml.Robotics.Ros
                 return false;
 
             pub.removeCallbacks(callbacks);
-            lock (advertised_topics_mutex)
+            lock (advertisedTopicsMutex)
             {
                 if (pub.NumCallbacks == 0)
                 {
                     unregisterPublisher(pub.Name);
                     pub.drop();
-                    advertised_topics.Remove(pub);
+                    advertisedTopics.Remove(pub);
                 }
             }
             return true;

@@ -97,7 +97,7 @@ namespace Uml.Robotics.Ros
 
             clearCalls();
 
-            ServiceManager.Instance.removeServiceServerLink(this);
+            ServiceManager.Instance.RemoveServiceServerLink(this);
 
             IsValid = false;
         }

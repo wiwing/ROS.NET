@@ -8,13 +8,16 @@ namespace Uml.Robotics.Ros
 {
     public class PollSignal : IDisposable
     {
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<PollSignal>();
         public MethodInfo Method;
         public object Target;
         public delegate void PollSignalFunc();
+
+        internal static event PollSignalFunc SignalEvent;
+
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<PollSignal>();
         private Thread thread;
         private Action _op;
-        private AutoResetEvent _go = new AutoResetEvent(false);
+        private AutoResetEvent resetEvent = new AutoResetEvent(false);
         private bool disposed = false;
 
         /// <summary>
@@ -32,11 +35,11 @@ namespace Uml.Robotics.Ros
                 ManualOp = value;
                 if (value != null)
                 {
-                    SignalEvent += signal;
+                    SignalEvent += ContinueThreads;
                 }
                 else
                 {
-                    SignalEvent -= signal;
+                    SignalEvent -= ContinueThreads;
                 }
             }
         }
@@ -54,7 +57,7 @@ namespace Uml.Robotics.Ros
             {
                 try
                 {
-                    SignalEvent -= signal;
+                    SignalEvent -= ContinueThreads;
                 }
                 catch { }
 
@@ -64,7 +67,6 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        internal static event PollSignalFunc SignalEvent;
 
         public PollSignal(Action psf)
         {
@@ -72,57 +74,62 @@ namespace Uml.Robotics.Ros
             {
                 Op = psf;
             }
-            thread = new Thread(threadFunc) { IsBackground = true };
+            thread = new Thread(ThreadFunc) { IsBackground = true };
             thread.Start();
         }
 
-        internal void signal()
+
+        internal void ContinueThreads()
         {
-            _go.Set();
+            resetEvent.Set();
         }
 
-        private void threadFunc()
+
+        private void ThreadFunc()
         {
             while (ROS.ok && !disposed)
             {
-                _go.WaitOne();
+                resetEvent.WaitOne();
                 if (ROS.ok && !disposed)
                     Op();
             }
             thread = null;
         }
 
+
         internal static void Signal()
         {
             if (SignalEvent != null) SignalEvent.Invoke();
         }
 
+
         public void Dispose()
         {
-            SignalEvent -= signal;
+            SignalEvent -= ContinueThreads;
             disposed = true;
             do
             {
-                signal();
+                ContinueThreads();
             } while (thread != null && !thread.Join(1));
         }
     }
 
+
     public class PollManager
     {
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<PollManager>();
+        public PollSet poll_set;
+        public bool shutting_down;
+        public object signal_mutex = new object();
+        public TcpTransport tcpserver_transport;
 
         public static PollManager Instance
         {
             get { return _instance.Value; }
         }
 
-        public PollSet poll_set;
-        public bool shutting_down;
-        public object signal_mutex = new object();
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<PollManager>();
         private static Lazy<PollManager> _instance = new Lazy<PollManager>(LazyThreadSafetyMode.ExecutionAndPublication);
         private List<PollSignal> signals = new List<PollSignal>();
-        public TcpTransport tcpserver_transport;
         private Thread thread;
 
 
@@ -138,35 +145,39 @@ namespace Uml.Robotics.Ros
             poll_set = new PollSet();
         }
 
-        public void addPollThreadListener(Action poll)
+
+        public void AddPollThreadListener(Action poll)
         {
             Logger.LogDebug("Adding pollthreadlistener " + poll.Target + ":" + poll.GetMethodInfo().Name);
             lock (signal_mutex)
             {
                 signals.Add(new PollSignal(poll));
             }
-            signal();
+            CallSignal();
         }
 
-        private void signal()
+
+        private void CallSignal()
         {
             PollSignal.Signal();
         }
 
-        public void removePollThreadListener(Action poll)
+
+        public void RemovePollThreadListener(Action poll)
         {
             lock (signal_mutex)
             {
                 signals.RemoveAll((s) => s.Op == poll);
             }
-            signal();
+            CallSignal();
         }
 
-        private void threadFunc()
+
+        private void ThreadFunc()
         {
             while (!shutting_down)
             {
-                signal();
+                CallSignal();
                 Thread.Sleep(ROS.WallDuration);
                 if (shutting_down)
                     return;
@@ -180,7 +191,7 @@ namespace Uml.Robotics.Ros
             if (thread == null)
             {
                 shutting_down = false;
-                thread = new Thread(threadFunc);
+                thread = new Thread(ThreadFunc);
                 thread.Start();
             }
         }

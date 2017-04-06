@@ -344,7 +344,7 @@ namespace Uml.Robotics.Ros
             {
                 ops.callback_queue = Callback;
             }
-            if (ServiceManager.Instance.advertiseService(ops))
+            if (ServiceManager.Instance.AdvertiseService(ops))
             {
                 ServiceServer srv = new ServiceServer(ops.service, this);
                 lock (collection.mutex)

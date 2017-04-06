@@ -44,17 +44,19 @@ namespace Uml.Robotics.Ros
 
         public RosOutAppender()
         {
-            publish_thread = new Thread(logThread) { IsBackground = true };
+            publish_thread = new Thread(LogThread) { IsBackground = true };
         }
 
-        public bool started
+
+        public bool Started
         {
             get { return publish_thread != null && (publish_thread.ThreadState == System.Threading.ThreadState.Running || publish_thread.ThreadState == System.Threading.ThreadState.Background); }
         }
 
-        public void start()
+
+        public void Start()
         {
-            if (!shutting_down && !started)
+            if (!shutting_down && !Started)
             {
                 if (publisher == null)
                     publisher = ROS.GlobalNodeHandle.advertise<Log>("/rosout", 0);
@@ -66,7 +68,7 @@ namespace Uml.Robotics.Ros
         public void Shutdown()
         {
             shutting_down = true;
-            if(started)
+            if(Started)
             {
                 publish_thread.Join();
             }
@@ -76,6 +78,7 @@ namespace Uml.Robotics.Ros
                 publisher = null;
             }
         }
+
 
         internal void Append(string message, ROSOUT_LEVEL level, CallerInfo callerInfo)
         {
@@ -94,7 +97,8 @@ namespace Uml.Robotics.Ros
                 log_queue.Enqueue(logMessage);
         }
 
-        private void logThread()
+
+        private void LogThread()
         {
             Queue<Log> localqueue;
             while (!shutting_down)

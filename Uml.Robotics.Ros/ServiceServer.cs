@@ -35,7 +35,7 @@ namespace Uml.Robotics.Ros
             if (!unadvertised)
             {
                 unadvertised = true;
-                ServiceManager.Instance.unadvertiseService(service);
+                ServiceManager.Instance.UnadvertiseService(service);
             }
         }
     }

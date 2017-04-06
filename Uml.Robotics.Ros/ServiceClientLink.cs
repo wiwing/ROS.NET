@@ -37,7 +37,7 @@ namespace Uml.Robotics.Ros
 
             //ROS.Debug()("Service client [{0}] wants service [{1}] with md5sum [{2}]", client_callerid, service, md5sum);
             Logger.LogDebug($"Service client [{client_callerid}] wants service [{service}] with md5sum [{md5sum}]" );
-            IServicePublication isp = ServiceManager.Instance.lookupServicePublication(service);
+            IServicePublication isp = ServiceManager.Instance.LookupServicePublication(service);
             if (isp == null)
             {
                 string bbq = string.Format("Received a TcpRos connection for a nonexistent service [{0}]", service);

@@ -114,7 +114,7 @@ namespace Uml.Robotics.Ros
                     return;
 
                 subscriber_links.Add(link);
-                PollManager.Instance.addPollThreadListener(processPublishQueue);
+                PollManager.Instance.AddPollThreadListener(processPublishQueue);
             }
 
             if (Latch && last_message != null)
@@ -137,7 +137,7 @@ namespace Uml.Robotics.Ros
                     lnk = link;
                     subscriber_links.Remove(lnk);
                     if (subscriber_links.Count == 0)
-                        PollManager.Instance.removePollThreadListener(processPublishQueue);
+                        PollManager.Instance.RemovePollThreadListener(processPublishQueue);
                 }
             }
             if (lnk != null)

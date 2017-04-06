@@ -8,15 +8,15 @@ namespace Uml.Robotics.Ros
 {
     public class SimTime
     {
-        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger<SimTime>();
         public delegate void SimTimeDelegate(TimeSpan ts);
-
+        public event SimTimeDelegate SimTimeEvent;
 
         public static SimTime Instance
         {
             get { return instance.Value; }
         }
 
+        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger<SimTime>();
         private static Lazy<SimTime> instance = new Lazy<SimTime>(LazyThreadSafetyMode.ExecutionAndPublication);
         private bool checkedSimTime;
         private NodeHandle nodeHandle;
@@ -67,7 +67,6 @@ namespace Uml.Robotics.Ros
             nodeHandle.shutdown();
         }
 
-        public event SimTimeDelegate SimTimeEvent;
 
         private void SimTimeCallback(Clock time)
         {
