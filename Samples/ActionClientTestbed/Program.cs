@@ -26,7 +26,7 @@ namespace ActionClientTestbed
                 Thread.Sleep(1);
             }
 
-            (new Program()).Start(20000);
+            (new Program()).Start(2000);
         }
 
 
@@ -38,26 +38,26 @@ namespace ActionClientTestbed
             NodeHandle clientNodeHandle = new NodeHandle();
             spinner = new SingleThreadSpinner(ROS.GlobalCallbackQueue);
 
-            TestParams.Add(new TestParameters("Reject Goal", GoalStatus.REJECTED, 0, false, null));
+            /*TestParams.Add(new TestParameters("Reject Goal", GoalStatus.REJECTED, 0, false, null));
             TestParams.Add(new TestParameters("Cancel not yet accepted goal", GoalStatus.RECALLED, 0, true, null));
             TestParams.Add(new TestParameters("Cancel accepted goal", GoalStatus.PREEMPTED, 0, true, null));
-            TestParams.Add(new TestParameters("Abort Goal", GoalStatus.ABORTED, 100, false, null));
+            TestParams.Add(new TestParameters("Abort Goal", GoalStatus.ABORTED, 100, false, null));*/
             TestParams.Add(new TestParameters("Get Result 123", GoalStatus.SUCCEEDED, 100, false, 123));
             var successfulTestCount = 0;
             var failedTestCount = 0;
+
+            Console.WriteLine("Create client");
+            actionClient = new ActionClient<Messages.actionlib.TestGoal, Messages.actionlib.TestResult,
+                Messages.actionlib.TestFeedback>("test_action", clientNodeHandle, 120);
+
+            Console.WriteLine("Wait for client and server to negotiate connection");
+            bool started = actionClient.WaitForActionServerToStartSpinning(new TimeSpan(0, 0, 3), spinner);
 
             var sw = Stopwatch.StartNew();
             DateTime? firstFail = null;
             var startTime = DateTime.Now;
             for (int i = 0; i < numberOfRuns; i++)
             {
-                Console.WriteLine("Create client");
-                actionClient = new ActionClient<Messages.actionlib.TestGoal, Messages.actionlib.TestResult,
-                    Messages.actionlib.TestFeedback>("test_action", clientNodeHandle, 120);
-
-                Console.WriteLine("Wait for client and server to negotiate connection");
-                bool started = actionClient.WaitForActionServerToStartSpinning(new TimeSpan(0, 0, 3), spinner);
-
                 bool testError = false;
                 if (started)
                 {
@@ -92,13 +92,10 @@ namespace ActionClientTestbed
                     successfulTestCount++;
                     Logger.LogInformation("Testbed completed successfully");
                 }
-
-                Console.WriteLine("Shutdown client");
-                actionClient.Shutdown();
             }
 
             Console.WriteLine("-----------");
-            Console.WriteLine($"Test took {sw.Elapsed} StartTime: {startTime}");
+            Console.WriteLine($"Test took {sw.Elapsed} StartTime: {startTime} Goals/s {numberOfRuns/sw.Elapsed.TotalSeconds}");
             Console.WriteLine($"Successful: {successfulTestCount} Failed: {failedTestCount} FirstFail: {firstFail}");
             Console.WriteLine("All done, press any key to exit");
             Console.WriteLine("-----------");
@@ -108,6 +105,7 @@ namespace ActionClientTestbed
                 Thread.Sleep(1);
             }
 
+            Console.WriteLine("Shutdown client");
             actionClient.Shutdown();
             clientNodeHandle.shutdown();
             ROS.shutdown();
@@ -165,7 +163,7 @@ namespace ActionClientTestbed
 
             if (cancelGoal)
             {
-                Thread.Sleep(10);
+                Thread.Sleep(100);
                 Console.WriteLine("Canceling goal");
                 actionClient.CancelPublisher.publish(clientHandle.Goal.GoalId);
             }
