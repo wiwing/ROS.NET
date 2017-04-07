@@ -30,16 +30,20 @@ namespace Uml.Robotics.Ros
                 Values[chunks[0].Trim()] = chunks[1].Trim();
                 i += thispiece;
             }
-            bool res = (i == size);
-            if (!res)
+
+            if (i != size)
+            {
                 Logger.LogWarning("Could not parse connection header.");
-            return res;
+                return false;
+            }
+
+            return true;
         }
 
         public void Write(IDictionary<string, string> dict, out byte[] buffer, out int totallength)
         {
             var ms = new MemoryStream();
-            using(var writer=new BinaryWriter(ms, Encoding.ASCII)) 
+            using (var writer = new BinaryWriter(ms, Encoding.ASCII))
             {
                 foreach (string k in dict.Keys)
                 {
@@ -54,8 +58,7 @@ namespace Uml.Robotics.Ros
                 }
             }
 
-            ArraySegment<byte> result;
-            ms.TryGetBuffer(out result);
+            ms.TryGetBuffer(out ArraySegment<byte> result);
             buffer = new byte[result.Count];
             Array.Copy(result.Array, result.Offset, buffer, 0, result.Count);
             totallength = result.Count;

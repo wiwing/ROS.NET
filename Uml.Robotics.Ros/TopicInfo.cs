@@ -2,13 +2,13 @@
 {
     public class TopicInfo
     {
-        public TopicInfo(string name, string data_type)
+        public TopicInfo(string name, string dataType)
         {
-            this.name = name;
-            this.data_type = data_type;
+            this.Name = name;
+            this.DataType = dataType;
         }
 
-        public string data_type { get; set; }
-        public string name { get; set; }
+        public string DataType { get; private set; }
+        public string Name { get; private set; }
     }
 }

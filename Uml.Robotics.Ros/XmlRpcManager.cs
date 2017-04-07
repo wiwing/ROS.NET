@@ -17,12 +17,15 @@ namespace Uml.Robotics.Ros
 
         private static Lazy<XmlRpcManager> instance = new Lazy<XmlRpcManager>(LazyThreadSafetyMode.ExecutionAndPublication);
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<XmlRpcManager>();
-        private List<IAsyncXmlRpcConnection> addedConnections = new List<IAsyncXmlRpcConnection>();
-        private List<IAsyncXmlRpcConnection> removedConnections = new List<IAsyncXmlRpcConnection>();
-        private List<IAsyncXmlRpcConnection> connections = new List<IAsyncXmlRpcConnection>();
+
+        private class FunctionInfo
+        {
+            public XmlRpcFunc function;
+            public string name;
+            public XmlRpcServerMethod wrapper;
+        }
+
         private Dictionary<string, FunctionInfo> functions = new Dictionary<string, FunctionInfo>();
-        private object addedConnectionsGate = new object();
-        private object removedConnectionsGate = new object();
         private object functionsGate = new object();
         private XmlRpcFunc getPid;
         private XmlRpcServer server;
@@ -111,16 +114,6 @@ namespace Uml.Robotics.Ros
                 {
                     throw new NullReferenceException("XmlRpcManager is not initialized yet!");
                 }
-                lock (addedConnectionsGate)
-                {
-                    foreach (var con in addedConnections)
-                    {
-                        //Logger.LogDebug("Completed ASYNC XmlRpc connection to: " + ((con as PendingConnection) != null ? ((PendingConnection) con).RemoteUri : "SOMEWHERE OVER THE RAINBOW"));
-                        con.AddToDispatch(server.Dispatch);
-                        connections.Add(con);
-                    }
-                    addedConnections.Clear();
-                }
 
                 lock (functionsGate)
                 {
@@ -130,22 +123,6 @@ namespace Uml.Robotics.Ros
                 while (unbindRequested)
                 {
                     Thread.Sleep(ROS.WallDuration);
-                }
-
-                foreach (var con in connections)
-                {
-                    if (con.Check())
-                        RemoveAsyncXMLRPCClient(con);
-                }
-
-                lock (removedConnectionsGate)
-                {
-                    foreach (var con in removedConnections)
-                    {
-                        con.RemoveFromDispatch(server.Dispatch);
-                        connections.Remove(con);
-                    }
-                    removedConnections.Clear();
                 }
             }
         }
@@ -199,20 +176,6 @@ namespace Uml.Robotics.Ros
         {
             Logger.LogDebug("XML-RPC Call [{0}] {1} failed validation", method, string.Format(errorFormat, args));
             return false;
-        }
-
-
-        public void AddAsyncConnection(IAsyncXmlRpcConnection conn)
-        {
-            lock (addedConnectionsGate)
-                addedConnections.Add(conn);
-        }
-
-
-        public void RemoveAsyncXMLRPCClient(IAsyncXmlRpcConnection conn)
-        {
-            lock (removedConnectionsGate)
-                removedConnections.Add(conn);
         }
 
 
@@ -300,32 +263,8 @@ namespace Uml.Robotics.Ros
             {
                 functions.Clear();
             }
-            if (server != null)
-            {
-                foreach (var ass in connections)
-                {
-                    ass.RemoveFromDispatch(server.Dispatch);
-                }
-            }
-            connections.Clear();
-            lock (addedConnectionsGate)
-            {
-                addedConnections.Clear();
-            }
-            lock (removedConnectionsGate)
-            {
-                removedConnections.Clear();
-            }
 
             Logger.LogDebug("XmlRpc Server shutted down.");
-        }
-
-
-        private class FunctionInfo
-        {
-            public XmlRpcFunc function;
-            public string name;
-            public XmlRpcServerMethod wrapper;
         }
     }
 }
