@@ -63,8 +63,7 @@ namespace Testbed
         {
             Logger.LogInformation($"Stop ROS #{runNumber}");
             spinner.Stop();
-            ROS.shutdown();
-            ROS.waitForShutdown();
+            var stopped = ROS.shutdown().GetAwaiter().GetResult();
             Logger.LogInformation("Stopped");
         }
 
@@ -74,10 +73,9 @@ namespace Testbed
             var receivedMessage = false;
             var s = ROS.GlobalNodeHandle.subscribe<Messages.std_msgs.String>("/PubSubTestbed", 10, (message) =>
             {
-                Logger.LogInformation("Received message");
+                Logger.LogInformation("--- Received message");
                 receivedMessage = true;
             });
-            s.shutdown();
 
             var startTime = DateTime.UtcNow;
             while(!receivedMessage)

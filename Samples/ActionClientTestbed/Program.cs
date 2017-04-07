@@ -26,7 +26,7 @@ namespace ActionClientTestbed
                 Thread.Sleep(1);
             }
 
-            (new Program()).Start(20);
+            (new Program()).Start(20000);
         }
 
 
@@ -47,6 +47,8 @@ namespace ActionClientTestbed
             var failedTestCount = 0;
 
             var sw = Stopwatch.StartNew();
+            DateTime? firstFail = null;
+            var startTime = DateTime.Now;
             for (int i = 0; i < numberOfRuns; i++)
             {
                 Console.WriteLine("Create client");
@@ -66,6 +68,10 @@ namespace ActionClientTestbed
                             parameter.CancelGoal, parameter.ExpectedGoal))
                         {
                             testError = true;
+                            if (firstFail == null)
+                            {
+                                firstFail = DateTime.Now;
+                            }
                             break;
                         }
                     }
@@ -92,8 +98,8 @@ namespace ActionClientTestbed
             }
 
             Console.WriteLine("-----------");
-            Console.WriteLine($"Test took {sw.Elapsed}");
-            Console.WriteLine($"Successful: {successfulTestCount} Failed: {failedTestCount}");
+            Console.WriteLine($"Test took {sw.Elapsed} StartTime: {startTime}");
+            Console.WriteLine($"Successful: {successfulTestCount} Failed: {failedTestCount} FirstFail: {firstFail}");
             Console.WriteLine("All done, press any key to exit");
             Console.WriteLine("-----------");
 

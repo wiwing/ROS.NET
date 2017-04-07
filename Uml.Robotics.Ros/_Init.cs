@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Uml.Robotics.XmlRpc;
 using std_msgs = Messages.std_msgs;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Uml.Robotics.Ros
 {
@@ -474,13 +475,26 @@ namespace Uml.Robotics.Ros
         /// <summary>
         ///     Tells ROS that it should shutdown the next time it feels like doing so.
         /// </summary>
-        public static void shutdown()
+        public static async Task<bool> shutdown()
         {
             lock (shutting_down_mutex)
             {
                 shutdown_requested = true;
             }
+
+            var completionSource = new TaskCompletionSource<bool>();
+            var shutdownTask = Task.Run(() =>
+            {
+                while (!ROS.Off)
+                {
+                    Thread.Sleep(1);
+                }
+                completionSource.SetResult(true);
+            });
+
+            return await completionSource.Task;
         }
+
 
         /// <summary>
         ///     Kills all the things. Called by checkForShutdown
@@ -490,29 +504,57 @@ namespace Uml.Robotics.Ros
             lock (shutting_down_mutex)
             {
                 if (_shutting_down)
+                {
                     return;
+                }
                 _shutting_down = true;
             }
 
             if (started)
             {
-                Logger.LogInformation("ROS is shutting down.");
-                started = false;
-                _ok = false;
-                SimTime.Terminate();
-                RosOutAppender.Terminate();
-                GlobalNodeHandle.shutdown();
-                GlobalCallbackQueue.Disable();
-                GlobalCallbackQueue.Clear();
-                TopicManager.Terminate();
-                ServiceManager.Terminate();
-                PollManager.Terminate();
-                XmlRpcManager.Terminate();
-                ConnectionManager.Terminate();
-                ROS.Off = true;
+                var shutdownTask = Task.Run(() =>
+                {
+                    Logger.LogInformation("ROS is shutting down.");
+                    started = false;
+                    _ok = false;
+
+                    SimTime.Terminate();
+                    RosOutAppender.Terminate();
+                    GlobalNodeHandle.shutdown();
+                    GlobalCallbackQueue.Disable();
+                    GlobalCallbackQueue.Clear();
+
+                    TopicManager.Terminate();
+                    ServiceManager.Terminate();
+                    PollManager.Terminate();
+                    XmlRpcManager.Terminate();
+                    ConnectionManager.Terminate();
+
+                    Param.Reset();
+                    MessageTypeRegistry.Default.Reset();
+                    ServiceTypeRegistry.Default.Reset();
+
+                    ResetStaticMembers();
+                });
             }
         }
+
+
+        private static void ResetStaticMembers()
+        {
+            globalCallbackQueue = null;
+            initialized = false;
+            _ok = false;
+            timer_manager = new TimerManager();
+            started = false;
+            _ok = false;
+            _shutting_down = false;
+            shutdown_requested = false;
+            Off = true;
+        }
+
     }
+
 
     /// <summary>
     /// Options that can be passed to the ROS.init() function.

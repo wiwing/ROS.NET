@@ -12,13 +12,13 @@ namespace Uml.Robotics.Ros
     public class MessageTypeRegistry
         : TypeRegistryBase
     {
-        private static Lazy<MessageTypeRegistry> instance = new Lazy<MessageTypeRegistry>(LazyThreadSafetyMode.ExecutionAndPublication);
+        private static Lazy<MessageTypeRegistry> defaultInstance = new Lazy<MessageTypeRegistry>(LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static MessageTypeRegistry Default
         {
-            get { return instance.Value; }
+            get { return defaultInstance.Value; }
         }
-        
+
         public MessageTypeRegistry()
             : base(ApplicationLogging.CreateLogger<MessageTypeRegistry>())
         {
@@ -106,6 +106,12 @@ namespace Uml.Robotics.Ros
                     }
                 }
             }
+        }
+
+
+        public void Reset()
+        {
+            defaultInstance = new Lazy<MessageTypeRegistry>(LazyThreadSafetyMode.ExecutionAndPublication);
         }
     }
 }

@@ -465,5 +465,16 @@ namespace Uml.Robotics.Ros
 
             return ret;
         }
+
+        public static void Reset()
+        {
+            parms.Clear();
+            subscribed_params.Clear();
+            StringCallbacks.Clear();
+            IntCallbacks.Clear();
+            DoubleCallbacks.Clear();
+            BoolCallbacks.Clear();
+            Callbacks.Clear();
+        }
     }
 }

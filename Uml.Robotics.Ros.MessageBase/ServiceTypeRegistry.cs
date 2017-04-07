@@ -56,5 +56,10 @@ namespace Uml.Robotics.Ros
                 }
             }
         }
+
+        public void Reset()
+        {
+            defaultInstance = new Lazy<ServiceTypeRegistry>(LazyThreadSafetyMode.ExecutionAndPublication);
+        }
     }
 }
