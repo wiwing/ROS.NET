@@ -35,13 +35,13 @@ namespace Uml.Robotics.Ros
         private Publisher<Log> publisher;
 
 
-        public static void Terminate()
+        internal static void Terminate()
         {
             Instance.Shutdown();
         }
 
 
-        public static void Reset()
+        internal static void Reset()
         {
             instance = new Lazy<RosOutAppender>(LazyThreadSafetyMode.ExecutionAndPublication);
         }

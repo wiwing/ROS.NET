@@ -28,13 +28,13 @@ namespace Uml.Robotics.Ros
         private XmlRpcManager xmlrpcManager;
 
 
-        public static void Terminate()
+        internal static void Terminate()
         {
             Instance.Shutdown();
         }
 
 
-        public static void Reset()
+        internal static void Reset()
         {
             instance = new Lazy<ServiceManager>(LazyThreadSafetyMode.ExecutionAndPublication);
         }

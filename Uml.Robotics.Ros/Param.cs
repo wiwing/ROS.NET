@@ -466,7 +466,7 @@ namespace Uml.Robotics.Ros
             return ret;
         }
 
-        public static void Reset()
+        internal static void Reset()
         {
             parms.Clear();
             subscribed_params.Clear();
@@ -477,7 +477,7 @@ namespace Uml.Robotics.Ros
             Callbacks.Clear();
         }
 
-        public static void Terminate()
+        internal static void Terminate()
         {
             XmlRpcManager.Instance.Unbind("paramUpdate");
         }

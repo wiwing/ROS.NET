@@ -133,13 +133,13 @@ namespace Uml.Robotics.Ros
         private Thread thread;
 
 
-        public static void Terminate()
+        internal static void Terminate()
         {
             Instance.Shutdown();
         }
 
 
-        public static void Reset()
+        internal static void Reset()
         {
             instance = new Lazy<PollManager>(LazyThreadSafetyMode.ExecutionAndPublication);
         }

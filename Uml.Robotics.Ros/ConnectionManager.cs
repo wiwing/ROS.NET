@@ -15,13 +15,13 @@ namespace Uml.Robotics.Ros
             get { return instance.Value; }
         }
 
-        public static void Terminate()
+        internal static void Terminate()
         {
             Instance.Shutdown();
         }
 
 
-        public static void Reset()
+        internal static void Reset()
         {
             instance = new Lazy<ConnectionManager>(LazyThreadSafetyMode.ExecutionAndPublication);
         }
