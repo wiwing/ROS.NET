@@ -89,7 +89,7 @@ namespace Testbed
         }
 
 
-        private void SubscribeFirstThenPublish(int numberOfMessages)
+       /* private void SubscribeFirstThenPublish(int numberOfMessages)
         {
             Console.WriteLine("Init ROS");
             ROS.ROS_MASTER_URI = "http://192.168.0.134:11311";
@@ -99,10 +99,10 @@ namespace Testbed
 
             var nodeHandle = new NodeHandle();
             Console.WriteLine("Subscribe");
-            /*var subscriber = ROS.GlobalNodeHandle.subscribe<Messages.xamla_msgs.StressTest>("/StressTest", 10, (msg) =>
-            {
-                Console.WriteLine($"Message #{msg.messageNumber} Took: {(DateTime.UtcNow - ROS.GetTime(msg.sentTime)).Ticks} ticks");
-            });*/
+            //var subscriber = ROS.GlobalNodeHandle.subscribe<Messages.xamla_msgs.StressTest>("/StressTest", 10, (msg) =>
+            //{
+            //    Console.WriteLine($"Message #{msg.messageNumber} Took: {(DateTime.UtcNow - ROS.GetTime(msg.sentTime)).Ticks} ticks");
+            //});
 
             Thread.Sleep(1000);
 
@@ -135,6 +135,6 @@ namespace Testbed
             });
 
             ROS.waitForShutdown();
-        }
+        }*/
     }
 }
