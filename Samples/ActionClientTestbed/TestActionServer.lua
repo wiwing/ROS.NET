@@ -3,7 +3,7 @@ require 'ros.actionlib.ActionServer'
 local actionlib = ros.actionlib
 
 
-local serverState = 0
+local serverState = 6
 local clock = 0
 local timeOut = 0
 local readyForNewGoal = true
@@ -74,7 +74,7 @@ local function WorkOnGoal(as)
       currentHandle:setAborted(r, 'no')
       workOnIt = false
     elseif serverState > 5 then
-      serverState = 0
+      serverState = 6
       print("succeeded goal")
       local r = currentHandle:createResult()
       r.result = 123
