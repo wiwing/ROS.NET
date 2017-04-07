@@ -74,6 +74,7 @@ local function WorkOnGoal(as)
       currentHandle:setAborted(r, 'no')
       workOnIt = false
     elseif serverState > 5 then
+      serverState = 0
       print("succeeded goal")
       local r = currentHandle:createResult()
       r.result = 123
@@ -83,7 +84,7 @@ local function WorkOnGoal(as)
     end
     readyForNewGoal = true
   end
-  if (clock % 5 == 0) then
+  if (true) then
     local fb = as:createFeeback()
     fb.feedback = clock;
     as:publishFeedback(currentHandle.goal_status, fb)
@@ -106,7 +107,7 @@ local function testActionServer()
 
   while ros.ok() do
     ros.spinOnce()
-    sys.sleep(0.01)
+    --sys.sleep(0.01)
     WorkOnGoal(as)
   end
 
