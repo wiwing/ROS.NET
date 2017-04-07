@@ -68,8 +68,8 @@ namespace Uml.Robotics.Ros
 
         public void Shutdown()
         {
-            simTimeSubscriber.shutdown();
-            nodeHandle.shutdown();
+            simTimeSubscriber?.shutdown();
+            nodeHandle?.shutdown();
         }
 
 

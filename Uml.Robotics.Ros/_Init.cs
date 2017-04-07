@@ -324,16 +324,16 @@ namespace Uml.Robotics.Ros
                 // register process unload and cancel (CTRL+C) event handlers
                 if (!atExitRegistered)
                 {
+                    atExitRegistered = true;
                     AssemblyLoadContext.Default.Unloading += (AssemblyLoadContext obj) =>
                     {
-                        _shutdown();
+                        shutdown();
                         waitForShutdown();
                     };
-                    atExitRegistered = true;
 
                     Console.CancelKeyPress += (o, args) =>
                     {
-                        _shutdown();
+                        shutdown();
                         waitForShutdown();
                         args.Cancel = true;
                     };
@@ -370,7 +370,9 @@ namespace Uml.Robotics.Ros
                     network.init(remappingArgs);
                     master.init(remappingArgs);
                     this_node.Init(name, remappingArgs, options);
+                    Param.Reset();
                     Param.Init(remappingArgs);
+                    SimTime.Reset();
                     SimTime.Instance.SimTimeEvent += SimTimeCallback;
 
                     lock (shutting_down_mutex)
@@ -388,6 +390,7 @@ namespace Uml.Robotics.Ros
                     initialized = true;
 
                     GlobalNodeHandle = new NodeHandle(this_node.Namespace, remappingArgs);
+                    RosOutAppender.Reset();
                     RosOutAppender.Instance.Start();
                 }
             }
@@ -449,7 +452,6 @@ namespace Uml.Robotics.Ros
                 if (started)
                     return;
 
-                Param.Reset();
                 PollManager.Reset();
                 PollManager.Instance.AddPollThreadListener(checkForShutdown);
                 XmlRpcManager.Reset();
@@ -495,7 +497,10 @@ namespace Uml.Robotics.Ros
         {
             lock (shutting_down_mutex)
             {
-                shutdown_requested = true;
+                if ((shutdownTask == null) || shutdownTask.Status == TaskStatus.Created)
+                {
+                    shutdown_requested = true;
+                }
             }
 
             return shutdownTask;
@@ -533,9 +538,9 @@ namespace Uml.Robotics.Ros
 
                 TopicManager.Terminate();
                 ServiceManager.Terminate();
-                PollManager.Terminate();
                 XmlRpcManager.Terminate();
                 ConnectionManager.Terminate();
+                PollManager.Terminate();
 
                 ResetStaticMembers();
             }
@@ -551,7 +556,6 @@ namespace Uml.Robotics.Ros
             started = false;
             _ok = false;
             _shutting_down = false;
-            shutdown_requested = false;
             shutdown_requested = false;
         }
 
