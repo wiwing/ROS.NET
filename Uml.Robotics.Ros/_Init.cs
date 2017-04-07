@@ -20,7 +20,7 @@ namespace Uml.Robotics.Ros
     /// </summary>
     public static class ROS
     {
-        public static bool Off { get; set; } = true;
+        private static Task shutdownTask = null;
         private static ILogger Logger { get; set;} = ApplicationLogging.CreateLogger(nameof(ROS));
 
         private static ICallbackQueue globalCallbackQueue;
@@ -348,7 +348,8 @@ namespace Uml.Robotics.Ros
                 // run the actual ROS initialization
                 if (!initialized)
                 {
-                    ROS.Off = false;
+                    MessageTypeRegistry.Default.Reset();
+                    ServiceTypeRegistry.Default.Reset();
                     var msgRegistry = MessageTypeRegistry.Default;
                     var srvRegistry = ServiceTypeRegistry.Default;
 
@@ -371,7 +372,21 @@ namespace Uml.Robotics.Ros
                     this_node.Init(name, remappingArgs, options);
                     Param.Init(remappingArgs);
                     SimTime.Instance.SimTimeEvent += SimTimeCallback;
+
+                    lock (shutting_down_mutex)
+                    {
+                        switch(shutdownTask?.Status)
+                        {
+                            case null:
+                            case TaskStatus.RanToCompletion:
+                                break;
+                            default:
+                                throw new InvalidOperationException("ROS was not shut down correctly");
+                        }
+                        shutdownTask = new Task(_shutdown);
+                    }
                     initialized = true;
+
                     GlobalNodeHandle = new NodeHandle(this_node.Namespace, remappingArgs);
                     RosOutAppender.Instance.Start();
                 }
@@ -385,15 +400,9 @@ namespace Uml.Robotics.Ros
         {
             lock (shutting_down_mutex)
             {
-                if (!shutdown_requested || _shutting_down)
+                if (!shutdown_requested || (shutdownTask == null) || (shutdownTask.Status != TaskStatus.Created))
                     return;
-            }
-
-            _shutdown();
-
-            lock (shutting_down_mutex)
-            {
-                shutdown_requested = false;
+                shutdownTask.Start();
             }
         }
 
@@ -422,10 +431,11 @@ namespace Uml.Robotics.Ros
         /// </summary>
         public static void waitForShutdown()
         {
-            while (!ROS.Off)
+            if (shutdownTask == null)
             {
-                Thread.Sleep(WallDuration);
+                throw new NullReferenceException($"{nameof(shutdownTask)} was not initialized. You need to call ROS.init first.");
             }
+            shutdownTask.GetAwaiter().GetResult();
         }
 
 
@@ -439,18 +449,24 @@ namespace Uml.Robotics.Ros
                 if (started)
                     return;
 
+                Param.Reset();
+                PollManager.Reset();
                 PollManager.Instance.AddPollThreadListener(checkForShutdown);
+                XmlRpcManager.Reset();
                 XmlRpcManager.Instance.Bind("shutdown", shutdownCallback);
                 //initInternalTimerManager();
+                TopicManager.Reset();
                 TopicManager.Instance.Start();
                 try
                 {
+                    ServiceManager.Reset();
                     ServiceManager.Instance.Start();
                 }
                 catch (Exception e)
                 {
                     Logger.LogError(e.ToString());
                 }
+                ConnectionManager.Reset();
                 ConnectionManager.Instance.Start();
                 PollManager.Instance.Start();
                 XmlRpcManager.Instance.Start();
@@ -475,24 +491,14 @@ namespace Uml.Robotics.Ros
         /// <summary>
         ///     Tells ROS that it should shutdown the next time it feels like doing so.
         /// </summary>
-        public static async Task<bool> shutdown()
+        public static Task shutdown()
         {
             lock (shutting_down_mutex)
             {
                 shutdown_requested = true;
             }
 
-            var completionSource = new TaskCompletionSource<bool>();
-            var shutdownTask = Task.Run(() =>
-            {
-                while (!ROS.Off)
-                {
-                    Thread.Sleep(1);
-                }
-                completionSource.SetResult(true);
-            });
-
-            return await completionSource.Task;
+            return shutdownTask;
         }
 
 
@@ -512,30 +518,26 @@ namespace Uml.Robotics.Ros
 
             if (started)
             {
-                var shutdownTask = Task.Run(() =>
-                {
-                    Logger.LogInformation("ROS is shutting down.");
-                    started = false;
-                    _ok = false;
+                Logger.LogInformation("ROS is shutting down.");
+                started = false;
+                _ok = false;
 
-                    SimTime.Terminate();
-                    RosOutAppender.Terminate();
-                    GlobalNodeHandle.shutdown();
-                    GlobalCallbackQueue.Disable();
-                    GlobalCallbackQueue.Clear();
+                SimTime.Terminate();
+                RosOutAppender.Terminate();
+                GlobalNodeHandle.shutdown();
+                GlobalCallbackQueue.Disable();
+                GlobalCallbackQueue.Clear();
 
-                    TopicManager.Terminate();
-                    ServiceManager.Terminate();
-                    PollManager.Terminate();
-                    XmlRpcManager.Terminate();
-                    ConnectionManager.Terminate();
+                XmlRpcManager.Instance.Unbind("shutdown");
+                Param.Terminate();
 
-                    Param.Reset();
-                    MessageTypeRegistry.Default.Reset();
-                    ServiceTypeRegistry.Default.Reset();
+                TopicManager.Terminate();
+                ServiceManager.Terminate();
+                PollManager.Terminate();
+                XmlRpcManager.Terminate();
+                ConnectionManager.Terminate();
 
-                    ResetStaticMembers();
-                });
+                ResetStaticMembers();
             }
         }
 
@@ -550,7 +552,7 @@ namespace Uml.Robotics.Ros
             _ok = false;
             _shutting_down = false;
             shutdown_requested = false;
-            Off = true;
+            shutdown_requested = false;
         }
 
     }

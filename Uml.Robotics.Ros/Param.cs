@@ -476,5 +476,10 @@ namespace Uml.Robotics.Ros
             BoolCallbacks.Clear();
             Callbacks.Clear();
         }
+
+        public static void Terminate()
+        {
+            XmlRpcManager.Instance.Unbind("paramUpdate");
+        }
     }
 }

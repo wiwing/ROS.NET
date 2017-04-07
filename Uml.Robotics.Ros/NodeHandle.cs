@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
-    public class NodeHandle : IDisposable
+    public class NodeHandle
     {
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<NodeHandle>();
         private string Namespace = "", UnresolvedNamespace = "";
@@ -115,22 +115,6 @@ namespace Uml.Robotics.Ros
             set { _ok = value; }
         }
 
-        #region IDisposable Members
-
-        /// <summary>
-        ///     Like a piece of trash
-        /// </summary>
-        public void Dispose()
-        {
-            destruct();
-        }
-
-        #endregion
-
-        ~NodeHandle()
-        {
-            Dispose();
-        }
 
         /// <summary>
         ///     Unregister every subscriber and publisher in this node
@@ -148,7 +132,9 @@ namespace Uml.Robotics.Ros
                     client.shutdown();
                 foreach (ServiceServer srv in collection.serviceservers)
                     srv.shutdown();
+                collection.ClearAll();
             }
+            destruct();
         }
 
         /// <summary>
@@ -436,8 +422,6 @@ namespace Uml.Robotics.Ros
 
         private void destruct()
         {
-            collection.Dispose();
-            collection = null;
             lock (nh_refcount_mutex)
             {
                 --nh_refcount;
@@ -511,7 +495,7 @@ namespace Uml.Robotics.Ros
 
         #region Nested type: NodeHandleBackingCollection
 
-        private class NodeHandleBackingCollection : IDisposable
+        private class NodeHandleBackingCollection
         {
             public readonly object mutex = new object();
             public List<IPublisher> publishers = new List<IPublisher>();
@@ -520,7 +504,7 @@ namespace Uml.Robotics.Ros
             public List<ServiceServer> serviceservers = new List<ServiceServer>();
             public List<ISubscriber> subscribers = new List<ISubscriber>();
 
-            public void Dispose()
+            public void ClearAll()
             {
                 publishers.Clear();
                 subscribers.Clear();

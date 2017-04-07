@@ -63,7 +63,8 @@ namespace Testbed
         {
             Logger.LogInformation($"Stop ROS #{runNumber}");
             spinner.Stop();
-            var stopped = ROS.shutdown().GetAwaiter().GetResult();
+            var shutdownTask = ROS.shutdown();
+            shutdownTask.Wait();
             Logger.LogInformation("Stopped");
         }
 

@@ -31,6 +31,11 @@ namespace Uml.Robotics.Ros
         public static void Terminate()
         {
             Instance.Shutdown();
+        }
+
+
+        public static void Reset()
+        {
             instance = new Lazy<ServiceManager>(LazyThreadSafetyMode.ExecutionAndPublication);
         }
 
