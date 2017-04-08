@@ -421,7 +421,7 @@ namespace Uml.Robotics.Ros
                         if (was_full)
                             ++drops;
                         else
-                            info.callback.AddCallback(info.subscription_queue, info.Get());
+                            info.callback.AddCallback(info.subscription_queue);
                     }
                 }
             }
@@ -495,7 +495,7 @@ namespace Uml.Robotics.Ros
                                     bool nonconst_need_copy = callbacks.Count > 1;
                                     info.subscription_queue.AddToCallbackQueue(info.helper, latched_messages[link].message, nonconst_need_copy, ref was_full, ROS.GetTime().data);
                                     if (!was_full)
-                                        info.callback.AddCallback(info.subscription_queue, info.Get());
+                                        info.callback.AddCallback(info.subscription_queue);
                                 }
                             }
                         }
@@ -514,7 +514,7 @@ namespace Uml.Robotics.Ros
                     if (info.helper == helper)
                     {
                         info.subscription_queue.Clear();
-                        info.callback.RemoveById(info.Get());
+                        info.callback.RemoveById(info.subscription_queue.Uid);
                         callbacks.Remove(info);
                         //if (!helper.isConst())
                         --nonconst_callbacks;
@@ -564,11 +564,6 @@ namespace Uml.Robotics.Ros
             public ICallbackQueue callback;
             public ISubscriptionCallbackHelper helper;
             public CallbackInterface subscription_queue;
-
-            public UInt64 Get()
-            {
-                return subscription_queue.Uid;
-            }
         }
 
         private class CallbackInfo<M>

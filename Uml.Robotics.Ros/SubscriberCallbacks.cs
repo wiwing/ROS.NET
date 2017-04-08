@@ -1,25 +1,27 @@
 ﻿namespace Uml.Robotics.Ros
 {
+    public delegate void SubscriberStatusCallback(SingleSubscriberPublisher pub);
+
     public class SubscriberCallbacks
     {
-        public ICallbackQueue Callback;
-        public SubscriberStatusCallback connect, disconnect;
+        public ICallbackQueue CallbackQueue;
+        public SubscriberStatusCallback connect;
+        public SubscriberStatusCallback disconnect;
+        public long CallbackId { get; set; } = -1;
 
-        public SubscriberCallbacks() : this(null, null, null)
+        public SubscriberCallbacks()
         {
         }
 
-        public SubscriberCallbacks(SubscriberStatusCallback connectCB, SubscriberStatusCallback disconnectCB,
-            ICallbackQueue Callback)
+        public SubscriberCallbacks(
+            SubscriberStatusCallback connectCB,
+            SubscriberStatusCallback disconnectCB,
+            ICallbackQueue callbackQueue
+        )
         {
-            connect = connectCB;
-            disconnect = disconnectCB;
-            this.Callback = Callback;
-        }
-
-        internal ulong Get()
-        {
-            return ROS.getPID();
+            this.connect = connectCB;
+            this.disconnect = disconnectCB;
+            this.CallbackQueue = callbackQueue;
         }
     }
 }

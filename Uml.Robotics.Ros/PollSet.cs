@@ -125,7 +125,6 @@ namespace Uml.Robotics.Ros
         public int events;
         public PollSet.SocketUpdateFunc func;
         public int revents;
-        //public uint sock;
         public TcpTransport transport;
     }
 }

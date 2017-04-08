@@ -33,7 +33,7 @@ namespace Uml.Robotics.Ros.ActionLib
         private Subscriber<GoalID> cancelSubscriber;
         private TimeSpan statusInterval;
         private DateTime nextStatusPublishTime;
-        private ulong spinCallbackId = 0;
+        private long spinCallbackId = 0;
 
 
         public ActionServer(NodeHandle nodeHandle, string actionName)
@@ -120,8 +120,9 @@ namespace Uml.Robotics.Ros.ActionLib
                 var split = SplitSeconds(StatusFrequencySeconds);
                 statusInterval = new TimeSpan(0, 0, split.seconds, split.milliseconds);
                 nextStatusPublishTime = DateTime.UtcNow + statusInterval;
-                spinCallbackId = (ulong)(DateTime.UtcNow.Ticks + (new Random()).Next());
-                ROS.GlobalCallbackQueue.AddCallback(new SpinCallbackImplementation(SpinCallback), spinCallbackId);
+                var cb = new SpinCallbackImplementation(SpinCallback);
+                spinCallbackId = cb.Uid;
+                ROS.GlobalCallbackQueue.AddCallback(cb);
             }
 
             // Message consumers

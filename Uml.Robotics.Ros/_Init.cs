@@ -97,16 +97,6 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        ///     Gets the current thread's TID, emulating the behavior ROS has in a more interprocess situation on xnix
-        /// </summary>
-        /// <returns> </returns>
-        public static UInt64 getPID()
-        {
-            return (UInt64)
-                Thread.CurrentThread.ManagedThreadId;
-        }
-
-        /// <summary>
         ///     Turns a DateTime into a Time struct
         /// </summary>
         /// <param name="time"> DateTime to convert </param>

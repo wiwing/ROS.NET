@@ -8,7 +8,7 @@ namespace Uml.Robotics.Ros
     {
         public CallbackInterface Callback { get; set; }
         public bool MarkedForRemoval { get; set; }
-        public UInt64 RemovalId { get; set; }
+        public long RemovalId { get; set; }
     }
 
 
@@ -96,7 +96,7 @@ namespace Uml.Robotics.Ros
     public class IDInfo
     {
         public object calling_rw_mutex;
-        public ulong id;
+        public long id;
     }
 
 

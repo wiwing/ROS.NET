@@ -30,8 +30,9 @@ namespace Uml.Robotics.Ros
 
         public override void processRequest(ref byte[] buf, int num_bytes, IServiceClientLink link)
         {
-            CallbackInterface cb = new ServiceCallback(this, helper, buf, num_bytes, link, has_tracked_object, tracked_object);
-            callback.AddCallback(cb, ROS.getPID());
+            var cb = new ServiceCallback(this, helper, buf, num_bytes, link, has_tracked_object, tracked_object);
+            this.callbackId = cb.Uid;
+            callback.AddCallback(cb);
         }
 
         internal override void addServiceClientLink(IServiceClientLink iServiceClientLink)
@@ -121,6 +122,7 @@ namespace Uml.Robotics.Ros
         internal ICallbackQueue callback;
         internal List<IServiceClientLink> client_links = new List<IServiceClientLink>();
         protected object client_links_mutex = new object();
+        protected long callbackId = -1;
         internal string datatype;
         internal bool has_tracked_object;
         internal bool isDropped;
@@ -137,7 +139,10 @@ namespace Uml.Robotics.Ros
                 isDropped = true;
             }
             dropAllConnections();
-            callback.RemoveById(ROS.getPID());
+            if (callbackId >= 0)
+            {
+                callback.RemoveById(callbackId);
+            }
         }
 
         private void dropAllConnections()

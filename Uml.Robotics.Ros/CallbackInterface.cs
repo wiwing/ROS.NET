@@ -23,12 +23,7 @@ namespace Uml.Robotics.Ros
 
         public Callback(CallbackDelegate<T> f)
         {
-            base.Event += b =>
-                {
-                    T t = b as T;
-                    b = null;
-                    f.DynamicInvoke(t);
-                };
+            base.Event += msg => f(msg as T);
         }
 
         public override void AddToCallbackQueue(ISubscriptionCallbackHelper helper, RosMessage message, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time)
@@ -110,21 +105,23 @@ namespace Uml.Robotics.Ros
 
     public abstract class CallbackInterface
     {
-        public UInt64 Uid { get; }
+        private static long nextId = 0;
+
+        public static long NewUniqueId()
+        {
+            return System.Threading.Interlocked.Increment(ref nextId);
+        }
+
+        public long Uid { get; }
         public delegate void CallbackDelegate(RosMessage msg);
         public event CallbackDelegate Event;
 
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<CallbackInterface>();
-        private static object uidlock = new object();
-        private static UInt64 nextuid;
+
 
         public CallbackInterface()
         {
-            lock (uidlock)
-            {
-                Uid = nextuid;
-                nextuid++;
-            }
+            this.Uid = NewUniqueId();
         }
 
         public CallbackInterface(CallbackDelegate f) 

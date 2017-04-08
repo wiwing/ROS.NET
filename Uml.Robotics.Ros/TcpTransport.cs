@@ -35,20 +35,18 @@ namespace Uml.Robotics.Ros
 
         public IPEndPoint LocalEndPoint;
         public string _topic;
-        public string cached_remote_host = "";
-        public object close_mutex = new object();
-        public bool closed;
         public string connected_host;
         public int connected_port;
-        public int events;
-        public bool expecting_read;
-        public bool expecting_write;
-        public int flags;
-        public bool is_server;
-        public bool no_delay;
-        public PollSet poll_set;
-        public IPEndPoint server_address;
-        public int server_port = -1;
+        public string cached_remote_host = "";
+
+        private object close_mutex = new object();
+        private bool closed;
+        private bool expecting_read;
+        private bool expecting_write;
+        private int flags;
+        private bool is_server;
+        private PollSet poll_set;
+        private int server_port = -1;
 
         private Socket sock;
 
@@ -57,11 +55,13 @@ namespace Uml.Robotics.Ros
         }
 
 
-        public TcpTransport(System.Net.Sockets.Socket s, PollSet pollset) : this(s, pollset, 0)
+        public TcpTransport(System.Net.Sockets.Socket s, PollSet pollset)
+            : this(s, pollset, 0)
         {
         }
 
-        public TcpTransport(System.Net.Sockets.Socket s, PollSet pollset, int flags) : this(pollset, flags)
+        public TcpTransport(System.Net.Sockets.Socket s, PollSet pollset, int flags)
+            : this(pollset, flags)
         {
             setSocket(new Socket(s));
         }
@@ -71,7 +71,7 @@ namespace Uml.Robotics.Ros
         {
         }
 
-        public TcpTransport(PollSet pollset, int flags) : this()
+        public TcpTransport(PollSet pollset, int flags)
         {
             if (pollset != null)
             {
@@ -85,7 +85,7 @@ namespace Uml.Robotics.Ros
             this.flags = flags;
         }
 
-        public string ClientURI
+        public string ClientUri
         {
             get
             {
@@ -412,9 +412,8 @@ namespace Uml.Robotics.Ros
                 if (is_server)
                     cached_remote_host = "TCPServer Socket";
                 else
-                    cached_remote_host = ClientURI + " on socket " + sock;
+                    cached_remote_host = this.ClientUri + " on socket " + sock.realsocket.RemoteEndPoint.ToString();
             }
-            //Console.WriteLine("cached_remote_host = "+cached_remote_host);
 
             if (poll_set != null)
             {

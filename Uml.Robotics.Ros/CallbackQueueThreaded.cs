@@ -18,7 +18,7 @@ namespace Uml.Robotics.Ros
         private int calling;
         private Thread callbackThread;
         private bool enabled;
-        private Dictionary<UInt64, IDInfo> idInfo = new Dictionary<UInt64, IDInfo>();
+        private Dictionary<long, IDInfo> idInfo = new Dictionary<long, IDInfo>();
         private object idInfoMutex = new object();
         private AutoResetEvent sem = new AutoResetEvent(false);
         private object mutex = new object();
@@ -62,12 +62,11 @@ namespace Uml.Robotics.Ros
         }
 
 
-        public IDInfo GetIdInfo(UInt64 id)
+        public IDInfo GetIdInfo(long id)
         {
             lock (idInfoMutex)
             {
-                IDInfo value;
-                if (idInfo.TryGetValue(id, out value))
+                if (idInfo.TryGetValue(id, out IDInfo value))
                     return value;
             }
             return null;
@@ -80,7 +79,7 @@ namespace Uml.Robotics.Ros
         }
 
 
-        public void AddCallback(CallbackInterface cb, UInt64 owner_id)
+        public void AddCallback(CallbackInterface cb, long owner_id)
         {
             CallbackInfo info = new CallbackInfo {Callback = cb, RemovalId = owner_id};
             //Logger.LogDebug($"CallbackQueue@{cbthread.ManagedThreadId}: Add callback owner: {owner_id} {cb.ToString()}");
@@ -104,31 +103,31 @@ namespace Uml.Robotics.Ros
         }
 
 
-        public void RemoveById(UInt64 owner_id)
+        public void RemoveById(long ownerId)
         {
             SetupTls();
             IDInfo idinfo;
             lock (idInfoMutex)
             {
-                if (!idInfo.ContainsKey(owner_id))
+                if (!idInfo.ContainsKey(ownerId))
                     return;
-                idinfo = idInfo[owner_id];
+                idinfo = idInfo[ownerId];
             }
-            if (idinfo.id == (ulong)tls.calling_in_this_thread)
-                RemoveAll(owner_id);
+            if (idinfo.id == tls.calling_in_this_thread)
+                RemoveAll(ownerId);
             else
             {
                 Logger.LogDebug("removeByID w/ WRONG THREAD ID");
-                RemoveAll(owner_id);
+                RemoveAll(ownerId);
             }
         }
 
 
-        private void RemoveAll(ulong owner_id)
+        private void RemoveAll(long ownerId)
         {
             lock (mutex)
             {
-                callbacks.RemoveAll(ici => ici.RemovalId == owner_id);
+                callbacks.RemoveAll(ici => ici.RemovalId == ownerId);
                 count = callbacks.Count;
             }
         }

@@ -11,25 +11,27 @@ namespace Uml.Robotics.Ros
 {
     public class Publication
     {
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Publication>();
-        public string DataType = "";
         public bool Dropped;
-        public bool HasHeader;
-        public bool Latch;
-        public int MaxQueue;
-        public string Md5sum = "", MessageDefinition = "";
-        public string Name = "";
-        public uint _seq;
-
-        public List<SubscriberCallbacks> callbacks = new List<SubscriberCallbacks>();
-        public object callbacks_mutex = new object();
         public Header connection_header;
+
+        public readonly string DataType;
+        public readonly bool HasHeader;
+        public readonly bool Latch;
+        public readonly int MaxQueue;
+        public readonly string Md5sum;
+        public readonly string MessageDefinition;
+        public readonly string Name;
+
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Publication>();
+        private uint _seq;
+        private List<SubscriberCallbacks> callbacks = new List<SubscriberCallbacks>();
+        private object callbacks_mutex = new object();
         internal MessageAndSerializerFunc last_message;
         internal Queue<MessageAndSerializerFunc> publish_queue = new Queue<MessageAndSerializerFunc>();
-        public object publish_queue_mutex = new object();
-        public object seq_mutex = new object();
-        public List<SubscriberLink> subscriber_links = new List<SubscriberLink>();
-        public object subscriber_links_mutex = new object();
+        private object publish_queue_mutex = new object();
+        private object seq_mutex = new object();
+        private List<SubscriberLink> subscriber_links = new List<SubscriberLink>();
+        private object subscriber_links_mutex = new object();
 
         public Publication(string name, string datatype, string md5sum, string message_definition, int max_queue,
             bool latch, bool has_header)
@@ -201,15 +203,15 @@ namespace Uml.Robotics.Ros
             lock (callbacks_mutex)
             {
                 this.callbacks.Add(callbacks);
-                if (callbacks.connect != null && callbacks.Callback != null)
+                if (callbacks.connect != null && callbacks.CallbackQueue != null)
                 {
                     lock (subscriber_links_mutex)
                     {
                         foreach (SubscriberLink i in subscriber_links)
                         {
                             CallbackInterface cb = new PeerConnDisconnCallback(callbacks.connect, i);
-
-                            callbacks.Callback.AddCallback(cb, callbacks.Get());
+                            callbacks.CallbackId = cb.Uid;
+                            callbacks.CallbackQueue.AddCallback(cb);
                         }
                     }
                 }
@@ -220,7 +222,8 @@ namespace Uml.Robotics.Ros
         {
             lock (callbacks_mutex)
             {
-                callbacks.Callback.RemoveById(callbacks.Get());
+                if (callbacks.CallbackId >= 0)
+                    callbacks.CallbackQueue.RemoveById(callbacks.CallbackId);
                 if (this.callbacks.Contains(callbacks))
                     this.callbacks.Remove(callbacks);
             }
@@ -292,10 +295,11 @@ namespace Uml.Robotics.Ros
             //Logger.LogDebug($"PEER CONNECT: Id: {sub_link.connection_id} Dest: {sub_link.destination_caller_id} Topic: {sub_link.topic}");
             foreach (SubscriberCallbacks cbs in callbacks)
             {
-                if (cbs.connect != null && cbs.Callback != null)
+                if (cbs.connect != null && cbs.CallbackQueue != null)
                 {
                     var cb = new PeerConnDisconnCallback(cbs.connect, sub_link);
-                    cbs.Callback.AddCallback(cb, cbs.Get());
+                    cbs.CallbackId = cb.Uid;
+                    cbs.CallbackQueue.AddCallback(cb);
                 }
             }
         }
@@ -305,10 +309,11 @@ namespace Uml.Robotics.Ros
             //Logger.LogDebug("PEER DISCONNECT: [" + sub_link.topic + "]");
             foreach (SubscriberCallbacks cbs in callbacks)
             {
-                if (cbs.disconnect != null && cbs.Callback != null)
+                if (cbs.disconnect != null && cbs.CallbackQueue != null)
                 {
                     var cb = new PeerConnDisconnCallback(cbs.disconnect, sub_link);
-                    cbs.Callback.AddCallback(cb, cbs.Get());
+                    cbs.CallbackId = cb.Uid;
+                    cbs.CallbackQueue.AddCallback(cb);
                 }
             }
         }
@@ -383,6 +388,4 @@ namespace Uml.Robotics.Ros
             throw new NotImplementedException();
         }
     }
-
-    public delegate void SubscriberStatusCallback(SingleSubscriberPublisher pub);
 }
