@@ -87,7 +87,7 @@ namespace Uml.Robotics.Ros
 
         internal void Append(string message, ROSOUT_LEVEL level, CallerInfo callerInfo)
         {
-            Log logMessage = new Log
+            var logMessage = new Log
             {
                 msg = message,
                 name = ThisNode.Name,

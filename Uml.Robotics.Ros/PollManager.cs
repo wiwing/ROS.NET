@@ -14,7 +14,6 @@ namespace Uml.Robotics.Ros
 
         internal static event PollSignalFunc SignalEvent;
 
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<PollSignal>();
         private Thread thread;
         private Action _op;
         private AutoResetEvent resetEvent = new AutoResetEvent(false);
@@ -212,15 +211,7 @@ namespace Uml.Robotics.Ros
                 signals.Clear();
                 if (!thread.Join(2000))
                 {
-                    Logger.LogWarning("thread.Join timed out.");
-                    // AKo: ## fixme .NET Core has no Abort() on Thread obj
-                    //try
-                    //{
-                    //    thread.Abort();
-                    //}
-                    //catch (Exception ex)
-                    //{
-                    //}
+                    Logger.LogError("thread.Join() timed out.");
                 }
                 thread = null;
             }

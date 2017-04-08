@@ -10,16 +10,36 @@ using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
+    public static class SocketExtensions
+    {
+        public static void SetTcpKeepAlive(this Socket socket, uint keepaliveTime, uint keepaliveInterval)
+        {
+            // Argument structure for SIO_KEEPALIVE_VALS 
+            // struct tcp_keepalive
+            // {
+            //     u_long onoff;
+            //     u_long keepalivetime;
+            //     u_long keepaliveinterval;
+            // };
+
+            // marshal the equivalent of the native structure into a byte array
+            byte[] inOptionValues = new byte[sizeof(UInt32) * 3];
+            BitConverter.GetBytes((uint)(keepaliveTime)).CopyTo(inOptionValues, 0);
+            BitConverter.GetBytes((uint)keepaliveTime).CopyTo(inOptionValues, sizeof(UInt32));
+            BitConverter.GetBytes((uint)keepaliveInterval).CopyTo(inOptionValues, sizeof(UInt32) * 2);
+
+            // write SIO_VALS to Socket IOControl
+            socket.IOControl(ns.IOControlCode.KeepAliveValues, inOptionValues, null);
+        }
+    }
+
     public class Socket : IDisposable
     {
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Socket>();
         internal ns.Socket realsocket { get; private set; }
-        private static List<uint> _freelist = new List<uint>();
-        private uint _fakefd;
-        private volatile static uint nextfakefd;
 
         private string attemptedConnectionEndpoint;
-        private bool disposed = true;
+        private bool disposed;
 
         public Socket(ns.Socket sock)
         {
@@ -38,27 +58,6 @@ namespace Uml.Robotics.Ros
             get { return disposed; }
         }
 
-        public uint FD
-        {
-            get
-            {
-                if (!disposed && _fakefd == 0)
-                {
-                    lock (_freelist)
-                    {
-                        if (_freelist.Count > 0)
-                        {
-                            _fakefd = _freelist[0];
-                            _freelist.RemoveAt(0);
-                        }
-                        else
-                            _fakefd = (nextfakefd++);
-                    }
-                }
-                return _fakefd;
-            }
-        }
-
         public IAsyncResult BeginConnect(n.EndPoint endpoint, AsyncCallback callback, object state)
         {
             n.IPEndPoint ipep = endpoint as n.IPEndPoint;
@@ -66,48 +65,6 @@ namespace Uml.Robotics.Ros
                 throw new ArgumentNullException(nameof(endpoint));
             attemptedConnectionEndpoint = ipep.Address.ToString();
             return realsocket.BeginConnect(endpoint, callback, state);
-        }
-
-        public IAsyncResult BeginConnect(n.IPAddress address, int port, AsyncCallback callback, object state)
-        {
-            attemptedConnectionEndpoint = address.ToString();
-            return realsocket.BeginConnect(address, port, callback, state);
-        }
-
-        public IAsyncResult BeginConnect(n.IPAddress[] addresses, int port, AsyncCallback callback, object state)
-        {
-            attemptedConnectionEndpoint = addresses[0].ToString();
-            return realsocket.BeginConnect(addresses, port, callback, state);
-        }
-
-        public IAsyncResult BeginConnect(string host, int port, AsyncCallback callback, object state)
-        {
-            attemptedConnectionEndpoint = host;
-            return realsocket.BeginConnect(host, port, callback, state);
-        }
-
-        public void Connect(n.IPAddress[] address, int port)
-        {
-            attemptedConnectionEndpoint = address[0].ToString();
-            realsocket.Connect(address, port);
-        }
-
-        public void Connect(n.IPAddress address, int port)
-        {
-            attemptedConnectionEndpoint = address.ToString();
-            realsocket.Connect(address, port);
-        }
-
-        public void Connect(n.EndPoint ep)
-        {
-            attemptedConnectionEndpoint = ep.ToString();
-            realsocket.Connect(ep);
-        }
-
-        public bool ConnectAsync(ns.SocketAsyncEventArgs e)
-        {
-            attemptedConnectionEndpoint = e.RemoteEndPoint.ToString();
-            return realsocket.ConnectAsync(e);
         }
 
         public bool AcceptAsync(ns.SocketAsyncEventArgs a)
@@ -136,8 +93,6 @@ namespace Uml.Robotics.Ros
         {
             if (realsocket != null)
             {
-                //realsocket.Close(timeout);        // AKo: will be added in .net CoreFx 1.2, see
-
                 realsocket.Shutdown(ns.SocketShutdown.Send);
                 realsocket.SetSocketOption(ns.SocketOptionLevel.Socket, ns.SocketOptionName.ReceiveTimeout, timeout);
                 ns.SocketError unused;
@@ -197,34 +152,9 @@ namespace Uml.Robotics.Ros
             set { realsocket.NoDelay = value; }
         }
 
-        public int Receive(byte[] arr, int offset, int size, ns.SocketFlags f)
-        {
-            return realsocket.Receive(arr,offset,size,f);
-        }
-
-        public int Receive(byte[] arr, int offset, int size, ns.SocketFlags f, out ns.SocketError er)
-        {
-            return realsocket.Receive(arr, offset, size, f, out er);
-        }
-
         public int Send(byte[] arr, int offset, int size, ns.SocketFlags f, out ns.SocketError er)
         {
             return realsocket.Send(arr, offset, size, f, out er);
-        }
-
-        public void SetSocketOption(ns.SocketOptionLevel lvl, ns.SocketOptionName n, bool optionvalue)
-        {
-            realsocket.SetSocketOption(lvl, n, optionvalue);
-        }
-
-        public void SetSocketOption(ns.SocketOptionLevel lvl, ns.SocketOptionName n, byte[] optionvalue)
-        {
-            realsocket.SetSocketOption(lvl, n, optionvalue);
-        }
-
-        public void SetSocketOption(ns.SocketOptionLevel lvl, ns.SocketOptionName n, int optionvalue)
-        {
-            realsocket.SetSocketOption(lvl, n, optionvalue);
         }
 
         public void SetSocketOption(ns.SocketOptionLevel lvl, ns.SocketOptionName n, object optionvalue)
@@ -266,7 +196,7 @@ namespace Uml.Robotics.Ros
                         attemptedConnectionEndpoint = "" + ipep.Address + ":" + ipep.Port;
                 }
             }
-            return "" + _fakefd + " -- " + attemptedConnectionEndpoint + (Info != null ? " for " + Info.transport._topic : "");
+            return " -- " + attemptedConnectionEndpoint + (Info != null ? " for " + Info.transport._topic : "");
         }
 
 
@@ -333,17 +263,11 @@ namespace Uml.Robotics.Ros
 
         public void Dispose()
         {
-            lock (this)
+            disposed = true;
+            if (realsocket != null)
             {
-                if (!disposed && _fakefd != 0)
-                {
-                    Logger.LogDebug("Killing socket w/ FD=" + _fakefd + (attemptedConnectionEndpoint == null ? "" : "\tTo remote host\t" + attemptedConnectionEndpoint));
-                    disposed = true;
-                    _freelist.Add(_fakefd);
-                    _fakefd = 0;
-                    realsocket.Dispose();
-                    realsocket = null;
-                }
+                realsocket.Dispose();
+                realsocket = null;
             }
         }
     }

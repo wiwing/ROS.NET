@@ -10,13 +10,9 @@ namespace Uml.Robotics.Ros
 {
     public class PollSet : PollSignal
     {
-        private static Dictionary<uint, Socket> socks = new Dictionary<uint, Socket>();
-
-        #region Delegates
-
         public delegate void SocketUpdateFunc(int stufftodo);
 
-        #endregion
+        private static HashSet<Socket> sockets = new HashSet<Socket>();
 
         public PollSet()
             : base(null)
@@ -42,19 +38,19 @@ namespace Uml.Robotics.Ros
 
         public bool addSocket(Socket s, SocketUpdateFunc update_func, TcpTransport trans)
         {
-            s.Info = new SocketInfo { sock = s.FD, func = update_func, transport = trans };
-            lock (socks)
+            s.Info = new SocketInfo { func = update_func, transport = trans };
+            lock (sockets)
             {
-                socks.Add(s.FD, s);
+                sockets.Add(s);
             }
             return true;
         }
 
         public bool delSocket(Socket s)
         {
-            lock (socks)
+            lock (sockets)
             {
-                socks.Remove(s.FD);
+                sockets.Remove(s);
             }
             s.Dispose();
             return true;
@@ -80,9 +76,9 @@ namespace Uml.Robotics.Ros
             List<System.Net.Sockets.Socket> checkRead = new List<System.Net.Sockets.Socket>();
             List<System.Net.Sockets.Socket> checkError = new List<System.Net.Sockets.Socket>();
             List<Uml.Robotics.Ros.Socket> lsocks = new List<Uml.Robotics.Ros.Socket>();
-            lock (socks)
+            lock (sockets)
             {
-                foreach (Socket s in socks.Values)
+                foreach (Socket s in sockets)
                 {
                     lsocks.Add(s);
                     if ((s.Info.events & Socket.POLLIN) != 0)
@@ -129,7 +125,7 @@ namespace Uml.Robotics.Ros
         public int events;
         public PollSet.SocketUpdateFunc func;
         public int revents;
-        public uint sock;
+        //public uint sock;
         public TcpTransport transport;
     }
 }

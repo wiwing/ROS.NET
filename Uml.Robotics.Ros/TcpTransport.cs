@@ -10,40 +10,29 @@ namespace Uml.Robotics.Ros
 {
     public class TcpTransport
     {
-        #region Delegates
-
         public delegate void AcceptCallback(TcpTransport trans);
-
         public delegate void DisconnectFunc(TcpTransport trans);
-
         public delegate void HeaderReceivedFunc(TcpTransport trans, Header header);
-
         public delegate void ReadFinishedFunc(TcpTransport trans);
-
         public delegate void WriteFinishedFunc(TcpTransport trans);
 
-        #endregion
-
-        #region Flags enum
-
+        [Flags]
         public enum Flags
         {
             SYNCHRONOUS = 1 << 0
         }
 
-        #endregion
+        public static bool use_keepalive = true;
 
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<TcpTransport>();
 
-        private const int bytesperlong = 4; // 32 / 8
-        private const int bitsperbyte = 8;
-        public const int POLLERR = 0x008;
-        public const int POLLHUP = 0x010;
-        public const int POLLNVAL = 0x020;
-        public const int POLLIN = 0x001;
-        public const int POLLOUT = 0x004;
+        const int BITS_PER_BYTE = 8;
+        const int POLLERR = 0x008;
+        const int POLLHUP = 0x010;
+        const int POLLNVAL = 0x020;
+        const int POLLIN = 0x001;
+        const int POLLOUT = 0x004;
 
-        public static bool use_keepalive;
         public IPEndPoint LocalEndPoint;
         public string _topic;
         public string cached_remote_host = "";
@@ -234,16 +223,12 @@ namespace Uml.Robotics.Ros
             if (!setNonBlocking())
                 throw new Exception("Failed to make socket nonblocking");
             setNoDelay(true);
-            IPAddress IPA = null;
 
-            if (!IPAddress.TryParse(host, out IPA))
+            IPAddress ip;
+            if (!IPAddress.TryParse(host, out ip))
             {
-                foreach (IPAddress ipa in Dns.GetHostAddressesAsync(host).Result.Where(ipa => !ipa.ToString().Contains(":")))
-                {
-                    IPA = ipa;
-                    break;
-                }
-                if (IPA == null)
+                ip = Dns.GetHostAddressesAsync(host).Result.Where(x => !x.ToString().Contains(":")).FirstOrDefault();
+                if (ip == null)
                 {
                     close();
                     Logger.LogError("Couldn't resolve host name [{0}]", host);
@@ -251,10 +236,10 @@ namespace Uml.Robotics.Ros
                 }
             }
 
-            if (IPA == null)
+            if (ip == null)
                 return false;
 
-            IPEndPoint ipep = new IPEndPoint(IPA, port);
+            IPEndPoint ipep = new IPEndPoint(ip, port);
             LocalEndPoint = ipep;
             DateTime connectionAttempted = DateTime.UtcNow;
             IAsyncResult asyncres;
@@ -317,51 +302,6 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-        private bool setKeepAlive(Socket sock, ulong time, ulong interval)
-        {
-            try
-            {
-                // resulting structure
-                byte[] SIO_KEEPALIVE_VALS = new byte[3*bytesperlong];
-
-                // array to hold input values
-                ulong[] input = new ulong[3];
-
-                // put input arguments in input array
-                if (time == 0 || interval == 0) // enable disable keep-alive
-                    input[0] = (0UL); // off
-                else
-                    input[0] = (1UL); // on
-
-                input[1] = (time); // time millis
-                input[2] = (interval); // interval millis
-
-                // pack input into byte struct
-                for (int i = 0; i < input.Length; i++)
-                {
-                    SIO_KEEPALIVE_VALS[i*bytesperlong + 3] =
-                        (byte) (input[i] >> ((bytesperlong - 1)*bitsperbyte) & 0xff);
-                    SIO_KEEPALIVE_VALS[i*bytesperlong + 2] =
-                        (byte) (input[i] >> ((bytesperlong - 2)*bitsperbyte) & 0xff);
-                    SIO_KEEPALIVE_VALS[i*bytesperlong + 1] =
-                        (byte) (input[i] >> ((bytesperlong - 3)*bitsperbyte) & 0xff);
-                    SIO_KEEPALIVE_VALS[i*bytesperlong + 0] =
-                        (byte) (input[i] >> ((bytesperlong - 4)*bitsperbyte) & 0xff);
-                }
-                // create bytestruct for result (bytes pending on server socket)
-                byte[] result = BitConverter.GetBytes(0);
-                // write SIO_VALS to Socket IOControl
-                sock.IOControl(IOControlCode.KeepAliveValues, SIO_KEEPALIVE_VALS, result);
-
-                ByteDump(result);
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-            return true;
-        }
-
         public void parseHeader(Header header)
         {
             if (_topic == null)
@@ -369,52 +309,22 @@ namespace Uml.Robotics.Ros
                 if (header.Values.ContainsKey("topic"))
                     _topic = header.Values["topic"].ToString();
             }
-            string nodelay = "";
+
             if (header.Values.ContainsKey("tcp_nodelay"))
-                nodelay = (string) header.Values["tcp_nodelay"];
-            if (nodelay == "1")
             {
-                setNoDelay(true);
+                var nodelay = (string)header.Values["tcp_nodelay"];
+                if (nodelay == "1")
+                {
+                    setNoDelay(true);
+                }
             }
         }
 
-        private bool setKeepAlive(Socket sock, ulong time, ulong interval, ulong count)
+        private bool TrySetKeepAlive(Socket sock, uint time, uint interval)
         {
             try
             {
-                // resulting structure
-                byte[] SIO_KEEPALIVE_VALS = new byte[3*bytesperlong];
-
-                // array to hold input values
-                ulong[] input = new ulong[4];
-
-                // put input arguments in input array
-                if (time == 0 || interval == 0) // enable disable keep-alive
-                    input[0] = (0UL); // off
-                else
-                    input[0] = (1UL); // on
-
-                input[1] = (time); // time millis
-                input[2] = (interval); // interval millis
-                input[3] = count;
-                // pack input into byte struct
-                for (int i = 0; i < input.Length; i++)
-                {
-                    SIO_KEEPALIVE_VALS[i*bytesperlong + 3] =
-                        (byte) (input[i] >> ((bytesperlong - 1)*bitsperbyte) & 0xff);
-                    SIO_KEEPALIVE_VALS[i*bytesperlong + 2] =
-                        (byte) (input[i] >> ((bytesperlong - 2)*bitsperbyte) & 0xff);
-                    SIO_KEEPALIVE_VALS[i*bytesperlong + 1] =
-                        (byte) (input[i] >> ((bytesperlong - 3)*bitsperbyte) & 0xff);
-                    SIO_KEEPALIVE_VALS[i*bytesperlong + 0] =
-                        (byte) (input[i] >> ((bytesperlong - 4)*bitsperbyte) & 0xff);
-                }
-                // create bytestruct for result (bytes pending on server socket)
-                byte[] result = BitConverter.GetBytes(0);
-                // write SIO_VALS to Socket IOControl
-                sock.IOControl(IOControlCode.KeepAliveValues, SIO_KEEPALIVE_VALS, result);
-
-                ByteDump(result);
+                sock.SetTcpKeepAlive(time, interval);
             }
             catch (Exception)
             {
@@ -423,34 +333,12 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-
-        public static string ByteDumpCondensed(byte[] b)
-        {
-            return b.Aggregate("", (current, t) => current + ("" + t.ToString("x") + ""));
-        }
-
-        public static string ByteDump(byte[] b)
-        {
-            string s = "";
-            string bs = "";
-            for (int i = 0; i < b.Length; i++)
-            {
-                bs = b[i].ToString("x");
-                if (b[i] < 16) bs = "" + 0 + bs;
-                s += "" + bs + " ";
-                if (i%4 == 0) s += "     ";
-                if (i%16 == 0 && i != b.Length - 1) s += "\n";
-            }
-            return s;
-        }
-
         public void setKeepAlive(bool use, int idle, int interval, int count)
         {
             if (use)
             {
-                if (!setKeepAlive(sock, (ulong) idle, (ulong) interval, (ulong) count) &&
-                    !setKeepAlive(sock, (ulong) idle, (ulong) interval))
-
+                if (!TrySetKeepAlive(sock, (uint)idle, (uint)interval))
+                {
                     try
                     {
                         sock.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, use);
@@ -460,6 +348,7 @@ namespace Uml.Robotics.Ros
                         Logger.LogError(e.ToString());
                         return;
                     }
+                }
             }
         }
 
