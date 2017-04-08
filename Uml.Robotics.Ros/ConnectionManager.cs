@@ -49,7 +49,7 @@ namespace Uml.Robotics.Ros
         }
 
 
-        public uint GetNewConnectionID()
+        public uint GetNewConnectionId()
         {
             lock (connection_id_counter_mutex)
             {
@@ -149,7 +149,7 @@ namespace Uml.Robotics.Ros
         {
             PollManager.Instance.AddPollThreadListener(RemoveDroppedConnections);
 
-            tcpserver_transport = new TcpListener(IPAddress.Any, network.tcpros_server_port);
+            tcpserver_transport = new TcpListener(IPAddress.Any, Network.TcpRosServerPort);
             tcpserver_transport.Start(10);
             acceptor = ROS.timer_manager.StartTimer(CheckAndAccept, 100, 100);
 
@@ -165,15 +165,15 @@ namespace Uml.Robotics.Ros
 
         private void RemoveDroppedConnections()
         {
-            List<Connection> local_dropped = null;
+            List<Connection> localDropped = null;
             lock (dropped_connections_mutex)
             {
-                local_dropped = new List<Connection>(dropped_connections);
+                localDropped = new List<Connection>(dropped_connections);
                 dropped_connections.Clear();
             }
             lock (connections_mutex)
             {
-                foreach (Connection c in local_dropped)
+                foreach (Connection c in localDropped)
                 {
                     Logger.LogDebug("Removing dropped connection: " + c.CallerID);
                     connections.Remove(c);

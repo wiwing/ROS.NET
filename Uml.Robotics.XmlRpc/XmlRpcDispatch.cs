@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Net.Sockets;
 
@@ -15,139 +16,104 @@ namespace Uml.Robotics.XmlRpc
             Exception = 4
         }
 
-        private bool _doClear;
-        private double _endTime;
+        private class DispatchRecord
+        {
+            public XmlRpcSource Client { get; set; }
+            public EventType Mask { get; set; }
+        }
+
+
         private List<DispatchRecord> sources = new List<DispatchRecord>();
 
 
         public void AddSource(XmlRpcSource source, EventType eventMask)
         {
-            sources.Add(new DispatchRecord { client = source, mask = eventMask });
+            sources.Add(new DispatchRecord { Client = source, Mask = eventMask });
         }
 
 
         public void RemoveSource(XmlRpcSource source)
         {
-            foreach (var record in sources)
-            {
-                if (record.client == source)
-                {
-                    sources.Remove(record);
-                    break;
-                }
-            }
+            sources.RemoveAll(x => x.Client == source);
         }
 
 
         public void SetSourceEvents(XmlRpcSource source, EventType eventMask)
         {
-            foreach (var record in sources)
+            foreach (var record in sources.Where(x => x.Client == source))
             {
-                if (record.client == source)
-                {
-                    record.mask |= eventMask;
-                }
+                record.Mask |= eventMask;   
             }
         }
 
 
-        private void CheckSources(IEnumerable<DispatchRecord> sources, double timeout, List<XmlRpcSource> toRemove)
+        private void CheckSources(IEnumerable<DispatchRecord> sources, TimeSpan timeout, List<XmlRpcSource> toRemove)
         {
-            EventType defaultMask = EventType.ReadableEvent | EventType.WritableEvent | EventType.Exception;
+            const EventType ALL_EVENTS = EventType.ReadableEvent | EventType.WritableEvent | EventType.Exception;
 
             var checkRead = new List<Socket>();
             var checkWrite = new List<Socket>();
-            var checkExc = new List<Socket>();
+            var checkError = new List<Socket>();
 
             foreach (var src in sources)
             {
-                Socket sock = src.client.getSocket();
+                var sock = src.Client.getSocket();
                 if (sock == null)
                     continue;
-                var mask = src.mask;
-                if ((mask & EventType.ReadableEvent) != 0)
-                    checkRead.Add(sock); // FD_SET(fd, &inFd);
-                if ((mask & EventType.WritableEvent) != 0)
+
+                var mask = src.Mask;
+                if (mask.HasFlag(EventType.ReadableEvent))
+                    checkRead.Add(sock);
+                if (mask.HasFlag(EventType.WritableEvent))
                     checkWrite.Add(sock);
-                //FD_SET(fd, &outFd);
-                if ((mask & EventType.Exception) != 0)
-                    checkExc.Add(sock);
+                if (mask.HasFlag(EventType.Exception))
+                    checkError.Add(sock);
             }
 
             // Check for events
-            if (timeout < 0)
-            {
-                Socket.Select(checkRead, checkWrite, checkExc, -1);
-            }
-            else
-            {
-                Socket.Select(checkRead, checkWrite, checkExc, (int)(timeout * 1000000.0));
-            }
+            Socket.Select(checkRead, checkWrite, checkError, (int)(timeout.Milliseconds * 1000.0));
 
-            int nEvents = checkRead.Count + checkWrite.Count + checkExc.Count;
-
-            if (nEvents == 0)
+            if (checkRead.Count + checkWrite.Count + checkError.Count == 0)
                 return;
 
             // Process events
             foreach (var record in sources)
             {
-                XmlRpcSource src = record.client;
-                EventType newMask = defaultMask; // (unsigned) -1;
+                XmlRpcSource src = record.Client;
+                EventType newMask = ALL_EVENTS;
                 Socket sock = src.getSocket();
                 if (sock == null)
-                    continue; // Seems like this is serious error
+                    continue;
 
-                // If you select on multiple event types this could be ambiguous
+                // if you select on multiple event types this could be ambiguous
                 if (checkRead.Contains(sock))
                     newMask &= src.HandleEvent(EventType.ReadableEvent);
                 if (checkWrite.Contains(sock))
                     newMask &= src.HandleEvent(EventType.WritableEvent);
-                if (checkExc.Contains(sock))
+                if (checkError.Contains(sock))
                     newMask &= src.HandleEvent(EventType.Exception);
-
-                // Find the source again.  It may have moved as a result of the way
-                // that sources are removed and added in the call stack starting
-                // from the handleEvent() calls above.
-                /*
-                for (thisIt=_sources.begin(); thisIt != _sources.end(); thisIt++)
-                {
-                    if(thisIt->getSource() == src)
-                    break;
-                }
-                if(thisIt == _sources.end())
-                {
-                    XmlRpcUtil::error("Error in XmlRpcDispatch::work: couldn't find source iterator");
-                    continue;
-                }*/
 
                 if (newMask == EventType.NoEvent)
                 {
-                    //_sources.erase(thisIt);  // Stop monitoring this one
                     toRemove.Add(src);
-                    // TODO: should we close it right here?
-                    //this.RemoveSource(src);
-                    //if (!src.getKeepOpen())
-                    //    src.Close();
                 }
-                else if (newMask != defaultMask)
+                else
                 {
-                    record.mask = newMask;
+                    record.Mask = newMask;
                 }
             }
         }
 
 
-        public void Work(double timeout)
+        public void Work(TimeSpan timeSlice)
         {
-            _endTime = (timeout < 0.0) ? -1.0 : (getTime() + timeout);
-            _doClear = false;
+            var endTime = DateTime.UtcNow.Add(timeSlice);
 
             while (sources.Count > 0)
             {
                 var sourcesCopy = sources.GetRange(0, sources.Count);
-                List<XmlRpcSource> toRemove = new List<XmlRpcSource>();
-                CheckSources(sourcesCopy, timeout, toRemove);
+                var toRemove = new List<XmlRpcSource>();
+                CheckSources(sourcesCopy, timeSlice, toRemove);
 
                 foreach (var src in toRemove)
                 {
@@ -156,50 +122,16 @@ namespace Uml.Robotics.XmlRpc
                         src.Close();
                 }
 
-                if (_doClear)
-                {
-                    var closeList = sources;
-                    sources = new List<DispatchRecord>();
-                    foreach (var it in closeList)
-                    {
-                        it.client.Close();
-                    }
-
-                    _doClear = false;
-                }
-
-                // Check whether end time has passed
-                if (0 <= _endTime && getTime() > _endTime)
+                // check whether end time has been passed
+                if (DateTime.UtcNow > endTime)
                     break;
             }
-
-            //work(instance, msTime);
         }
 
 
         public void Clear()
         {
-            try
-            {
-                sources.Clear();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-        }
-
-
-        public double getTime()
-        {
-            return 0.001 * Environment.TickCount;
-        }
-
-
-        private class DispatchRecord
-        {
-            public XmlRpcSource client;
-            public EventType mask;
+            sources.Clear();
         }
     }
 }

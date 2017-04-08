@@ -5,9 +5,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
-    public static class this_node
+    public static class ThisNode
     {
-        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger(nameof(this_node));
+        private static ILogger Logger { get; } = ApplicationLogging.CreateLogger(nameof(ThisNode));
         public static string Name = "empty";
         public static string Namespace = "";
 
@@ -36,14 +36,14 @@ namespace Uml.Robotics.Ros
             }
 
             long walltime = DateTime.UtcNow.Subtract(Process.GetCurrentProcess().StartTime).Ticks;
-            names.Init(remappings);
+            Names.Init(remappings);
             if (Name.Contains("/"))
                 throw new ArgumentException("Slashes '/' are not allowed in names", nameof(name));
             if (Name.Contains("~"))
                 throw new ArgumentException("Tildes '~' are not allowed in names", nameof(name));
             try
             {
-                Name = names.resolve(Namespace, Name);
+                Name = Names.Resolve(Namespace, Name);
             }
             catch (Exception e)
             {

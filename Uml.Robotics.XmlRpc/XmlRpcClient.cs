@@ -57,7 +57,7 @@ namespace Uml.Robotics.XmlRpc
             {
                 // serialize request into memory stream
                 var buffer = new MemoryStream();
-                var sw = new StreamWriter(buffer);       // by default uses UTF-8 encoding
+                var sw = new StreamWriter(buffer);       // by default uses UTF-8 encoding without BOM
                 WriteRequest(sw, methodName, parameters);
                 sw.Flush();
                 buffer.Position = 0;
@@ -112,10 +112,14 @@ namespace Uml.Robotics.XmlRpc
             writer.Write(REQUEST_END);
         }
 
-        // Convert the response xml into a result value
+
+        /// <summary>
+        // Parse the server response XML into an XmlRpcCallResult.
+        /// </summary>
+        /// <param name="responseText">A string that contains the response receiveld from the server.</param>
+        /// <returns>An XmlRpcCallResult holding the response status and the returned XmlRpcValue.</returns>
         private XmlRpcCallResult ParseResponse(string responseText)
         {
-            // Parse response xml into result
             var responseDocument = XDocument.Parse(responseText);
             var methodResponseElement = responseDocument.Element("methodResponse");
             if (methodResponseElement == null)
@@ -159,6 +163,5 @@ namespace Uml.Robotics.XmlRpc
 
             return new XmlRpcCallResult { Value = result, Success = true };
         }
-
     }
 }

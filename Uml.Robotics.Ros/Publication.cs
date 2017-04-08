@@ -9,7 +9,7 @@ using std_msgs = Messages.std_msgs;
 
 namespace Uml.Robotics.Ros
 {
-    public class Publication : IDisposable
+    public class Publication
     {
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Publication>();
         public string DataType = "";
@@ -58,15 +58,6 @@ namespace Uml.Robotics.Ros
             get { lock (subscriber_links_mutex) return subscriber_links.Count; }
         }
 
-        #region IDisposable Members
-
-        public void Dispose()
-        {
-            drop();
-        }
-
-        #endregion
-
         public XmlRpcValue GetStats()
         {
             var stats = new XmlRpcValue();
@@ -81,9 +72,9 @@ namespace Uml.Robotics.Ros
                     var s = sub_link.stats;
                     var inside = new XmlRpcValue();
                     inside.Set(0, sub_link.connection_id);
-                    inside.Set(1, s.bytes_sent);
-                    inside.Set(2, s.message_data_sent);
-                    inside.Set(3, s.messages_sent);
+                    inside.Set(1, s.bytesSent);
+                    inside.Set(2, s.messageDataSent);
+                    inside.Set(3, s.messagesSent);
                     inside.Set(4, 0);
                     conn_data.Set(cidx++, inside);
                 }
@@ -119,7 +110,7 @@ namespace Uml.Robotics.Ros
 
             if (Latch && last_message != null)
             {
-                link.enqueueMessage(last_message);
+                link.EnqueueMessage(last_message);
             }
 
             peerConnect(link);
@@ -270,7 +261,7 @@ namespace Uml.Robotics.Ros
             {
                 foreach (SubscriberLink sub_link in subscriber_links)
                 {
-                    sub_link.enqueueMessage(holder);
+                    sub_link.EnqueueMessage(holder);
                 }
             }
 
@@ -291,7 +282,7 @@ namespace Uml.Robotics.Ros
             }
             foreach (SubscriberLink link in local_publishers)
             {
-                link.drop();
+                link.Drop();
             }
             local_publishers.Clear();
         }
@@ -326,9 +317,7 @@ namespace Uml.Robotics.Ros
         {
             lock (seq_mutex)
             {
-                uint old_seq = _seq;
-                ++_seq;
-                return old_seq;
+                return _seq++;
             }
         }
 
@@ -379,7 +368,7 @@ namespace Uml.Robotics.Ros
         {
             ROS.Debug()("Called PeerConnDisconnCallback");
             SingleSubscriberPublisher pub = new SingleSubscriberPublisher(sub_link);
-            Logger.LogDebug($"Callback: Name: {pub.subscriber_name} Topic: {pub.topic}");
+            Logger.LogDebug($"Callback: Name: {pub.SubscriberName} Topic: {pub.Topic}");
             callback(pub);
             return CallResult.Success;
         }

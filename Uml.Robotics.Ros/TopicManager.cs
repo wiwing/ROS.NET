@@ -232,7 +232,7 @@ namespace Uml.Robotics.Ros
             if (found)
                 sub.addLocalConnection(pub);
 
-            var args = new XmlRpcValue(this_node.Name, ops.topic, ops.dataType, XmlRpcManager.Instance.Uri);
+            var args = new XmlRpcValue(ThisNode.Name, ops.topic, ops.dataType, XmlRpcManager.Instance.Uri);
             var result = new XmlRpcValue();
             var payload = new XmlRpcValue();
 
@@ -363,7 +363,7 @@ namespace Uml.Robotics.Ros
                 p.connection_header.Values["type"] = p.DataType;
                 p.connection_header.Values["md5sum"] = p.Md5sum;
                 p.connection_header.Values["message_definition"] = p.MessageDefinition;
-                p.connection_header.Values["callerid"] = this_node.Name;
+                p.connection_header.Values["callerid"] = ThisNode.Name;
                 p.connection_header.Values["latching"] = Convert.ToString(p.Latch);
             }
 
@@ -478,7 +478,7 @@ namespace Uml.Robotics.Ros
 
                 if (proto_name == "TCPROS")
                 {
-                    var tcpRosParams = new XmlRpcValue("TCPROS", network.host, ConnectionManager.Instance.TCPPort);
+                    var tcpRosParams = new XmlRpcValue("TCPROS", Network.host, ConnectionManager.Instance.TCPPort);
                     ret.Set(0, 1);
                     ret.Set(1, "");
                     ret.Set(2, tcpRosParams);
@@ -509,7 +509,7 @@ namespace Uml.Robotics.Ros
         {
             string uri = XmlRpcManager.Instance.Uri;
 
-            var args = new XmlRpcValue(this_node.Name, s.name, datatype, uri);
+            var args = new XmlRpcValue(ThisNode.Name, s.name, datatype, uri);
             var result = new XmlRpcValue();
             var payload = new XmlRpcValue();
             if (!master.execute("registerSubscriber", args, result, payload, true))
@@ -553,7 +553,7 @@ namespace Uml.Robotics.Ros
 
         public bool unregisterSubscriber(string topic)
         {
-            var args = new XmlRpcValue(this_node.Name, topic, XmlRpcManager.Instance.Uri);
+            var args = new XmlRpcValue(ThisNode.Name, topic, XmlRpcManager.Instance.Uri);
             var result = new XmlRpcValue();
             var payload = new XmlRpcValue();
 
@@ -573,7 +573,7 @@ namespace Uml.Robotics.Ros
 
         public bool unregisterPublisher(string topic)
         {
-            var args = new XmlRpcValue(this_node.Name, topic, XmlRpcManager.Instance.Uri);
+            var args = new XmlRpcValue(ThisNode.Name, topic, XmlRpcManager.Instance.Uri);
             var result = new XmlRpcValue();
             var payload = new XmlRpcValue();
 

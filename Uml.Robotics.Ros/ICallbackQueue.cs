@@ -6,8 +6,8 @@ namespace Uml.Robotics.Ros
     {
         void AddCallback(CallbackInterface callback);
         void AddCallback(CallbackInterface callback, UInt64 owner_id);
-        bool CallAvailable();
-        bool CallAvailable(int timeOut);
+        
+        void CallAvailable(int timeout = ROS.WallDuration);
 
         void RemoveById(UInt64 owner_id);
 

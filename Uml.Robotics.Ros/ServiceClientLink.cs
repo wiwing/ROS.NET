@@ -71,7 +71,7 @@ namespace Uml.Robotics.Ros
             m["response_type"] = isp.res_datatype;
             m["type"] = isp.datatype;
             m["md5sum"] = isp.md5sum;
-            m["callerid"] = this_node.Name;
+            m["callerid"] = ThisNode.Name;
 
             connection.writeHeader(m, onHeaderWritten);
 

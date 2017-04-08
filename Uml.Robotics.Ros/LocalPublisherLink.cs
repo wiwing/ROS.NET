@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace Uml.Robotics.Ros
 {
-    public class LocalPublisherLink : PublisherLink, IDisposable
+    public class LocalPublisherLink : PublisherLink
     {
-        private object drop_mutex = new object();
+        private object gate = new object();
         private bool dropped;
         private LocalSubscriberLink publisher = null;
 
@@ -14,7 +14,7 @@ namespace Uml.Robotics.Ros
         {
         }
 
-        public new string TransportType
+        public override string TransportType
         {
             get { return "INTRAPROCESS"; }
         }
@@ -26,7 +26,7 @@ namespace Uml.Robotics.Ros
                 var header = new Dictionary<string, string>();
                 header["topic"] = parent.name;
                 header["md5sum"] = parent.md5sum;
-                header["callerid"] = this_node.Name;
+                header["callerid"] = ThisNode.Name;
                 header["type"] = parent.datatype;
                 header["tcp_nodelay"] = "1";
                 setHeader(new Header { Values = header });
@@ -35,7 +35,7 @@ namespace Uml.Robotics.Ros
 
         public override void drop()
         {
-            lock (drop_mutex)
+            lock (gate)
             {
                 if (dropped)
                     return;
@@ -44,7 +44,7 @@ namespace Uml.Robotics.Ros
 
             if (publisher != null)
             {
-                publisher.drop();
+                publisher.Drop();
             }
 
             lock (parent)
@@ -55,14 +55,14 @@ namespace Uml.Robotics.Ros
 
         public void handleMessage<T>(T m, bool ser, bool nocopy) where T : RosMessage, new()
         {
-            stats.messages_received++;
+            stats.messagesReceived++;
             if (m.Serialized == null)
             {
                 // ignore stats to avoid an unnecessary allocation
             }
             else
             {
-                stats.bytes_received += (ulong) m.Serialized.Length;
+                stats.bytesReceived += m.Serialized.Length;
             }
             if (parent != null)
             {
@@ -75,7 +75,7 @@ namespace Uml.Robotics.Ros
 
         public void getPublishTypes(ref bool ser, ref bool nocopy, string messageType)
         {
-            lock (drop_mutex)
+            lock (gate)
             {
                 if (dropped)
                 {
@@ -97,13 +97,5 @@ namespace Uml.Robotics.Ros
                 nocopy = false;
             }
         }
-
-        #region IDisposable Members
-
-        public void Dispose()
-        {
-        }
-
-        #endregion
     }
 }

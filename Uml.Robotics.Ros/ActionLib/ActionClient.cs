@@ -98,7 +98,7 @@ namespace Uml.Robotics.Ros.ActionLib
             lock (lockId)
             {
                 var now = ROS.GetTime();
-                goalId.id = $"{this_node.Name}-{nextGoalId}-{now.data.sec}.{now.data.nsec}";
+                goalId.id = $"{ThisNode.Name}-{nextGoalId}-{now.data.sec}.{now.data.nsec}";
                 goalId.stamp = now;
                 nextGoalId = nextGoalId + 1;
             }
@@ -291,34 +291,34 @@ namespace Uml.Robotics.Ros.ActionLib
         private void OnCancelConnectCallback(SingleSubscriberPublisher publisher)
         {
             int subscriberCount = 0;
-            bool subscriberExists = cancelSubscriberCount.TryGetValue(publisher.subscriber_name, out subscriberCount);
-            cancelSubscriberCount[publisher.subscriber_name] = (subscriberExists ? subscriberCount : 0) + 1;
+            bool subscriberExists = cancelSubscriberCount.TryGetValue(publisher.SubscriberName, out subscriberCount);
+            cancelSubscriberCount[publisher.SubscriberName] = (subscriberExists ? subscriberCount : 0) + 1;
         }
 
 
         private void OnCancelDisconnectCallback(SingleSubscriberPublisher publisher)
         {
             int subscriberCount = 0;
-            bool subscriberExists = cancelSubscriberCount.TryGetValue(publisher.subscriber_name, out subscriberCount);
+            bool subscriberExists = cancelSubscriberCount.TryGetValue(publisher.SubscriberName, out subscriberCount);
             if (!subscriberExists)
             {
                 // This should never happen. Warning has been copied from official actionlib implementation
-                ROS.Warn()($"goalDisconnectCallback: Trying to remove {publisher.subscriber_name} from " +
+                ROS.Warn()($"goalDisconnectCallback: Trying to remove {publisher.SubscriberName} from " +
                     $"goalSubscribers, but it is not in the goalSubscribers list."
                 );
             }
             else
             {
-                ROS.Debug()($"goalDisconnectCallback: Removing {publisher.subscriber_name} from goalSubscribers, " +
+                ROS.Debug()($"goalDisconnectCallback: Removing {publisher.SubscriberName} from goalSubscribers, " +
                     $"(remaining with same name: {subscriberCount - 1})"
                 );
                 if (subscriberCount <= 1)
                 {
-                    cancelSubscriberCount.Remove(publisher.subscriber_name);
+                    cancelSubscriberCount.Remove(publisher.SubscriberName);
                 }
                 else
                 {
-                    cancelSubscriberCount[publisher.subscriber_name] = subscriberCount - 1;
+                    cancelSubscriberCount[publisher.SubscriberName] = subscriberCount - 1;
                 }
             }
         }
@@ -342,35 +342,35 @@ namespace Uml.Robotics.Ros.ActionLib
         private void OnGoalConnectCallback(SingleSubscriberPublisher publisher)
         {
             int subscriberCount = 0;
-            bool keyExists = goalSubscriberCount.TryGetValue(publisher.subscriber_name, out subscriberCount);
-            goalSubscriberCount[publisher.subscriber_name] = (keyExists ? subscriberCount : 0) + 1;
-            ROS.Debug()($"goalConnectCallback: Adding {publisher.subscriber_name} to goalSubscribers");
+            bool keyExists = goalSubscriberCount.TryGetValue(publisher.SubscriberName, out subscriberCount);
+            goalSubscriberCount[publisher.SubscriberName] = (keyExists ? subscriberCount : 0) + 1;
+            ROS.Debug()($"goalConnectCallback: Adding {publisher.SubscriberName} to goalSubscribers");
         }
 
 
         private void OnGoalDisconnectCallback(SingleSubscriberPublisher publisher)
         {
             int subscriberCount = 0;
-            bool keyExists = goalSubscriberCount.TryGetValue(publisher.subscriber_name, out subscriberCount);
+            bool keyExists = goalSubscriberCount.TryGetValue(publisher.SubscriberName, out subscriberCount);
             if (!keyExists)
             {
                 // This should never happen. Warning has been copied from official actionlib implementation
-                ROS.Warn()($"goalDisconnectCallback: Trying to remove {publisher.subscriber_name} from " +
+                ROS.Warn()($"goalDisconnectCallback: Trying to remove {publisher.SubscriberName} from " +
                     $"goalSubscribers, but it is not in the goalSubscribers list."
                 );
             }
             else
             {
-                ROS.Debug()($"goalDisconnectCallback: Removing {publisher.subscriber_name} from goalSubscribers, " +
+                ROS.Debug()($"goalDisconnectCallback: Removing {publisher.SubscriberName} from goalSubscribers, " +
                     $"(remaining with same name: {subscriberCount - 1})"
                 );
                 if (subscriberCount <= 1)
                 {
-                    goalSubscriberCount.Remove(publisher.subscriber_name);
+                    goalSubscriberCount.Remove(publisher.SubscriberName);
                 }
                 else
                 {
-                    goalSubscriberCount[publisher.subscriber_name] = subscriberCount - 1;
+                    goalSubscriberCount[publisher.SubscriberName] = subscriberCount - 1;
                 }
             }
         }

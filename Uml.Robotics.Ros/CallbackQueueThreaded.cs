@@ -11,7 +11,7 @@ namespace Uml.Robotics.Ros
     /// A callback queue which runs a background thread for calling callbacks. It does not need a spinner. The queue is disabled
     /// by default. The background thread is created when the queue gets enabled.
     /// </summary>
-    public class CallbackQueueThreaded : ICallbackQueue, IDisposable
+    public class CallbackQueueThreaded : ICallbackQueue
     {
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<CallbackQueueThreaded>();
         private int count;
@@ -35,15 +35,6 @@ namespace Uml.Robotics.Ros
         public bool IsEnabled
         {
             get { return enabled; }
-        }
-
-
-        public void Dispose()
-        {
-            lock (mutex)
-            {
-                Disable();
-            }
         }
 
 
@@ -149,11 +140,12 @@ namespace Uml.Robotics.Ros
             while (ROS.ok)
             {
                 DateTime begin = DateTime.UtcNow;
-                if (!CallAvailable(ROS.WallDuration))
-                    break;
+                CallAvailable(ROS.WallDuration);
                 DateTime end = DateTime.UtcNow;
-                if (wallDuration.Subtract(end.Subtract(begin)).Ticks > 0)
-                    Thread.Sleep(wallDuration.Subtract(end.Subtract(begin)));
+
+                var remainingTime = wallDuration - (end - begin);
+                if (remainingTime > TimeSpan.Zero)
+                    Thread.Sleep(remainingTime);
             }
             Logger.LogDebug("CallbackQueue thread broke out!");
         }
@@ -235,34 +227,27 @@ namespace Uml.Robotics.Ros
             return CallOneResult.Called;
         }
 
-
-        public bool CallAvailable()
-        {
-            return CallAvailable(ROS.WallDuration);
-        }
-
-
-        public bool CallAvailable(int timeout)
+        public void CallAvailable(int timeout)
         {
             SetupTls();
             int called = 0;
             lock (mutex)
             {
                 if (!enabled)
-                    return false;
+                    return;
             }
             if (count == 0 && timeout != 0)
             {
                 if (!sem.WaitOne(timeout))
-                    return true;
+                    return;
             }
             //Logger.LogDebug($"CallbackQueue@{cbthread.ManagedThreadId}: Enqueue TLS");
             lock (mutex)
             {
                 if (count == 0)
-                    return true;
+                    return;
                 if (!enabled)
-                    return false;
+                    return;
                 callbacks.ForEach(cbi => tls.Enqueue(cbi));
                 callbacks.Clear();
                 count = 0;
@@ -280,7 +265,6 @@ namespace Uml.Robotics.Ros
                 calling -= called;
             }
             sem.Set();
-            return true;
         }
     }
 }

@@ -14,24 +14,25 @@ namespace Uml.Robotics.Ros
             get { return instance.Value; }
         }
 
-
-        private static Lazy<XmlRpcManager> instance = new Lazy<XmlRpcManager>(LazyThreadSafetyMode.ExecutionAndPublication);
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<XmlRpcManager>();
-
-        private class FunctionInfo
+        internal static void Terminate()
         {
-            public XmlRpcFunc function;
-            public string name;
-            public XmlRpcServerMethod wrapper;
+            XmlRpcManager.Instance.Shutdown();
         }
 
-        private Dictionary<string, FunctionInfo> functions = new Dictionary<string, FunctionInfo>();
+        internal static void Reset()
+        {
+            instance = new Lazy<XmlRpcManager>(LazyThreadSafetyMode.ExecutionAndPublication);
+        }
+
+        private static Lazy<XmlRpcManager> instance = new Lazy<XmlRpcManager>(LazyThreadSafetyMode.ExecutionAndPublication);
+
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<XmlRpcManager>();
+        private Dictionary<string, XmlRpcServerMethod> functions = new Dictionary<string, XmlRpcServerMethod>();
         private object functionsGate = new object();
         private XmlRpcFunc getPid;
         private XmlRpcServer server;
         private Thread serverThread;
         private bool shuttingDown;
-        private bool unbindRequested;
         private string uri = "";
         private int port;
 
@@ -69,18 +70,6 @@ namespace Uml.Robotics.Ros
         }
 
 
-        internal static void Terminate()
-        {
-            XmlRpcManager.Instance.Shutdown();
-        }
-
-
-        internal static void Reset()
-        {
-            instance = new Lazy<XmlRpcManager>(LazyThreadSafetyMode.ExecutionAndPublication);
-        }
-
-
         public XmlRpcManager()
         {
             this.server = new XmlRpcServer();
@@ -106,7 +95,7 @@ namespace Uml.Robotics.Ros
         }
 
 
-        public void ServerThreadFunc()
+        private void ServerThreadFunc()
         {
             while (!shuttingDown)
             {
@@ -117,12 +106,7 @@ namespace Uml.Robotics.Ros
 
                 lock (functionsGate)
                 {
-                    server.Work(0.1);
-                }
-
-                while (unbindRequested)
-                {
-                    Thread.Sleep(ROS.WallDuration);
+                    server.Work(TimeSpan.FromMilliseconds(1));
                 }
             }
         }
@@ -179,70 +163,57 @@ namespace Uml.Robotics.Ros
         }
 
 
-        public bool Bind(string function_name, XmlRpcFunc cb)
+        public bool Bind(string functionName, XmlRpcFunc callback)
         {
             lock (functionsGate)
             {
-                if (functions.ContainsKey(function_name))
+                if (functions.ContainsKey(functionName))
                     return false;
-                functions.Add(function_name,
-                    new FunctionInfo
-                    {
-                        name = function_name,
-                        function = cb,
-                        wrapper = new XmlRpcServerMethod(function_name, cb, server)
-                    }
-                );
+
+                var method = new XmlRpcServerMethod(server, functionName, callback);
+                functions.Add(functionName, method);
+                server.AddMethod(method);
             }
+
             return true;
         }
 
 
-        public void Unbind(string function_name)
+        public void Unbind(string functionName)
         {
-            unbindRequested = true;
             lock (functionsGate)
             {
-                functions.Remove(function_name);
+                functions.Remove(functionName);
             }
-            unbindRequested = false;
         }
-
 
 
         /// <summary>
         /// This function starts the XmlRpcServer used to handle inbound calls on this node
         /// </summary>
-        /// <param name="p">The optional argument is used to force ROS to try to bind to a specific port.
+        /// <param name="port">The optional argument is used to force ROS to try to bind to a specific port.
         /// Doing so should only be done when acting as the RosMaster.</param>
-        public void Start(int p = 0)
+        public void Start(int port = 0)
         {
             shuttingDown = false;
 
             Bind("getPid", getPid);
 
-            if (p != 0)
-            {
-                //if port isn't 0, then we better be the master,
-                //      so let's grab this bull by the horns
-                uri = ROS.ROS_MASTER_URI;
-                port = p;
-            }
-            //if port is 0, then we need to get our hostname from ROS' network init,
-            //   and we don't know our port until we're bound and listening
-
+            // if port is 0, then we need to get our hostname from ROS' network init,
+            // and we don't know our port until we're bound and listening
             bool bound = server.BindAndListen(port);
             if (!bound)
                 throw new Exception("RPCServer bind failed");
 
-            if (p == 0)
+            if (port == 0)
             {
-                //if we weren't called with a port #, then we have to figure out what
-                //    our port number is now that we're bound
-                port = server.Port;
-                if (port == 0)
-                    throw new Exception("RPCServer's port is invalid");
-                uri = "http://" + network.host + ":" + port + "/";
+                this.port = server.Port;     // get bind result
+                this.uri = "http://" + Network.host + ":" + this.port + "/";
+            }
+            else
+            {
+                this.port = port;
+                this.uri = ROS.ROS_MASTER_URI;       // if port is not 0 we are be the master
             }
 
             Logger.LogInformation("XmlRpc Server listening at " + uri);
@@ -255,6 +226,7 @@ namespace Uml.Robotics.Ros
         {
             if (shuttingDown)
                 return;
+
             shuttingDown = true;
             serverThread.Join();
             server.Shutdown();

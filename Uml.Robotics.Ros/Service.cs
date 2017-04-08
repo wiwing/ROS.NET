@@ -8,7 +8,7 @@ namespace Uml.Robotics.Ros
     {
         public static bool exists(string serviceName, bool logFailureReason = false)
         {
-            string mappedName = names.resolve(serviceName);
+            string mappedName = Names.Resolve(serviceName);
 
             string host = "";
             int port = 0;
@@ -22,7 +22,7 @@ namespace Uml.Robotics.Ros
                     {
                         { "probe", "1" },
                         { "md5sum", "*" },
-                        { "callerid", this_node.Name },
+                        { "callerid", ThisNode.Name },
                         { "service", mappedName }
                     };
 
@@ -50,7 +50,7 @@ namespace Uml.Robotics.Ros
 
         public static bool waitForService(string serviceName, TimeSpan timeout)
         {
-            string mapped_name = names.resolve(serviceName);
+            string mapped_name = Names.Resolve(serviceName);
             DateTime start_time = DateTime.UtcNow;
             bool printed = false;
             while (ROS.ok)

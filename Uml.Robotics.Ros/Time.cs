@@ -52,9 +52,9 @@ namespace Uml.Robotics.Ros
                         simTimeSubscriber = nodeHandle.subscribe<Clock>("/clock", 1, SimTimeCallback);
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
-                    Logger.LogError("Caught exception: " + e.Message);
+                    Logger.LogError("Caught exception in sim time thread: " + e.Message);
                 }
             }).Start();
         }
@@ -83,7 +83,9 @@ namespace Uml.Robotics.Ros
                 }
             }
             if (simTime && SimTimeEvent != null)
-                SimTimeEvent.Invoke(TimeSpan.FromMilliseconds(time.clock.data.sec*1000.0 + (time.clock.data.nsec/100000000.0)));
+            {
+                SimTimeEvent(TimeSpan.FromMilliseconds(time.clock.data.sec * 1000.0 + (time.clock.data.nsec / 100000000.0)));
+            }
         }
     }
 }

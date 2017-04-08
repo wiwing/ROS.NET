@@ -90,7 +90,7 @@ namespace Uml.Robotics.Ros
             Log logMessage = new Log
             {
                 msg = message,
-                name = this_node.Name,
+                name = ThisNode.Name,
                 file = callerInfo.FilePath,
                 function = callerInfo.MemberName,
                 line = (uint)callerInfo.LineNumber,

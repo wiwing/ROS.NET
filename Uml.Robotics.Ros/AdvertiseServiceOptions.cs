@@ -17,17 +17,11 @@ namespace Uml.Robotics.Ros
         public string srvtype;
         public object tracked_object;
 
-        public AdvertiseServiceOptions(string service, ServiceFunction<MReq, MRes> srv_func)
-        {
-            // TODO: Complete member initialization
-            init(service, srv_func);
-        }
-
-        public void init(string service, ServiceFunction<MReq, MRes> callback)
+        public AdvertiseServiceOptions(string service, ServiceFunction<MReq, MRes> serviceCallback)
         {
             this.service = service;
-            srv_func = callback;
-            helper = new ServiceCallbackHelper<MReq, MRes>(callback);
+            srv_func = serviceCallback;
+            helper = new ServiceCallbackHelper<MReq, MRes>(serviceCallback);
             req_datatype = new MReq().MessageType.Replace("/Request", "__Request");
             res_datatype = new MRes().MessageType.Replace("/Response", "__Response");
             srvtype = req_datatype.Replace("__Request", "");

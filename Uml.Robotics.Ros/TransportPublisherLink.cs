@@ -46,7 +46,7 @@ namespace Uml.Robotics.Ros
 
                 header["topic"] = parent.name;
                 header["md5sum"] = parent.md5sum;
-                header["callerid"] = this_node.Name;
+                header["callerid"] = ThisNode.Name;
                 header["type"] = parent.datatype;
                 header["tcp_nodelay"] = "1";
                 connection.writeHeader(header, onHeaderWritten);
@@ -117,8 +117,8 @@ namespace Uml.Robotics.Ros
 
         public void handleMessage<T>(T m, bool ser, bool nocopy) where T : RosMessage, new()
         {
-            stats.bytes_received += (ulong) m.Serialized.Length;
-            stats.messages_received++;
+            stats.bytesReceived += m.Serialized.Length;
+            stats.messagesReceived++;
             m.connection_header = getHeader().Values;
             if (parent != null)
                 stats.drops += parent.handleMessage(m, ser, nocopy, connection.header.Values, this);

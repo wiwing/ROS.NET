@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "Listener": {
+    "Talker": {
       "commandName": "Project",
       "environmentVariables": {
         "ROS_MASTER_URI": "http://Moby2:11311"

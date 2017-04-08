@@ -4,38 +4,20 @@
 
     public class XmlRpcServerMethod
     {
-        private string name;
-        private XmlRpcServer server;
-        private XmlRpcFunc func;
-
-        public XmlRpcServerMethod(string functionName, XmlRpcFunc func, XmlRpcServer server, bool autoAddToServer = true)
+        public XmlRpcServerMethod(XmlRpcServer server, string functionName, XmlRpcFunc func = null)
         {
-            name = functionName;
-            this.server = server;
-            this.func = func;
-            if (server != null && autoAddToServer)
-                server.AddMethod(this);
+            this.Name = functionName;
+            this.Server = server;
+            this.Func = func ?? Execute;
         }
 
-        public string Name
-        {
-            get { return name; }
-        }
+        public XmlRpcServer Server { get; private set; }
+        public string Name { get; private set; }
+        public XmlRpcFunc Func { get; private set; }
 
-        public XmlRpcServer Server
+        public virtual void Execute(XmlRpcValue parms, XmlRpcValue result)
         {
-            get { return server; }
-        }
-
-        public XmlRpcFunc Func
-        {
-            get { return func; }
-            set { func = value; }
-        }
-
-        public void Execute(XmlRpcValue parms, XmlRpcValue result)
-        {
-            func(parms, result);
+            Func(parms, result);
         }
 
         public virtual string Help()

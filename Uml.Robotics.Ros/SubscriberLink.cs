@@ -4,6 +4,13 @@ namespace Uml.Robotics.Ros
 {
     public class SubscriberLink
     {
+        public class Stats
+        {
+            public long bytesSent;
+            public long messageDataSent;
+            public long messagesSent;
+        }
+
         public uint connection_id;
         public string destination_caller_id = "";
         protected Publication parent;
@@ -43,12 +50,12 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        internal virtual void enqueueMessage(MessageAndSerializerFunc holder)
+        internal virtual void EnqueueMessage(MessageAndSerializerFunc holder)
         {
             throw new NotImplementedException();
         }
 
-        public virtual void drop()
+        public virtual void Drop()
         {
             throw new NotImplementedException();
         }
@@ -58,26 +65,5 @@ namespace Uml.Robotics.Ros
             ser = true;
             nocopy = false;
         }
-
-        protected bool verifyDatatype(string datatype)
-        {
-            if (parent == null)
-                return false;
-            lock (parent)
-            {
-                if (datatype != parent.DataType)
-                    return false;
-                return true;
-            }
-        }
-
-        #region Nested type: Stats
-
-        public class Stats
-        {
-            public int bytes_sent, message_data_sent, messages_sent;
-        }
-
-        #endregion
     }
 }

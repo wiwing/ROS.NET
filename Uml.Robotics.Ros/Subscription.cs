@@ -91,8 +91,8 @@ namespace Uml.Robotics.Ros
                     XmlRpcValue v = new XmlRpcValue();
                     var s = link.stats;
                     v.Set(0, link.ConnectionID);
-                    v.Set(1, s.bytes_received);
-                    v.Set(2, s.messages_received);
+                    v.Set(1, s.bytesReceived);
+                    v.Set(2, s.messagesReceived);
                     v.Set(3, s.drops);
                     v.Set(4, 0);
                     conn_data.Set(cidx++, v);
@@ -112,7 +112,7 @@ namespace Uml.Robotics.Ros
                     //Logger.LogDebug("PUB: adding a curr_info to info!");
                     var curr_info = new XmlRpcValue();
                     curr_info.Set(0, (int) c.ConnectionID);
-                    curr_info.Set(1, c.XmlRpc_Uri);
+                    curr_info.Set(1, c.XmlRpcUri);
                     curr_info.Set(2, "i");
                     curr_info.Set(3, c.TransportType);
                     curr_info.Set(4, name);
@@ -160,7 +160,7 @@ namespace Uml.Robotics.Ros
 
             string h1, h2;
             int p1, p2;
-            return network.splitURI(uri1, out h1, out p1) && network.splitURI(uri2, out h2, out p2) && h1 == h2 && p1 == p2;
+            return Network.SplitUri(uri1, out h1, out p1) && Network.SplitUri(uri2, out h2, out p2) && h1 == h2 && p1 == p2;
         }
 
         public void removePublisherLink(PublisherLink pub)
@@ -199,10 +199,10 @@ namespace Uml.Robotics.Ros
                 List<PublisherLink> subtractions;
                 lock (publisher_links_mutex)
                 {
-                    subtractions = publisher_links.Where(x => !publisherUris.Any(u => urisEqual(x.XmlRpc_Uri, u))).ToList();
+                    subtractions = publisher_links.Where(x => !publisherUris.Any(u => urisEqual(x.XmlRpcUri, u))).ToList();
                     foreach (string uri in publisherUris)
                     {
-                        bool found = publisher_links.Any(spc => urisEqual(uri, spc.XmlRpc_Uri));
+                        bool found = publisher_links.Any(spc => urisEqual(uri, spc.XmlRpcUri));
                         if (found)
                             continue;
 
@@ -220,10 +220,10 @@ namespace Uml.Robotics.Ros
                 }
                 foreach (PublisherLink link in subtractions)
                 {
-                    if (link.XmlRpc_Uri != XmlRpcManager.Instance.Uri)
+                    if (link.XmlRpcUri != XmlRpcManager.Instance.Uri)
                     {
                         Logger.LogDebug("Disconnecting from publisher [" + link.CallerID + "] of topic [" + name +
-                                    "] at [" + link.XmlRpc_Uri + "]");
+                                    "] at [" + link.XmlRpcUri + "]");
                         link.drop();
                     }
                     else
@@ -252,10 +252,10 @@ namespace Uml.Robotics.Ros
             XmlRpcValue tcpros_array = new XmlRpcValue(), protos_array = new XmlRpcValue(), Params = new XmlRpcValue();
             tcpros_array.Set(0, "TCPROS");
             protos_array.Set(protos++, tcpros_array);
-            Params.Set(0, this_node.Name);
+            Params.Set(0, ThisNode.Name);
             Params.Set(1, name);
             Params.Set(2, protos_array);
-            if (!network.splitURI(xmlRpcUri, out string peerHost, out int peerPort))
+            if (!Network.SplitUri(xmlRpcUri, out string peerHost, out int peerPort))
             {
                 Logger.LogError("Bad xml-rpc URI: [" + xmlRpcUri + "]");
                 return false;
@@ -391,7 +391,7 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        internal ulong handleMessage(
+        internal long handleMessage(
             RosMessage msg,
             bool ser,
             bool nocopy,
@@ -400,7 +400,7 @@ namespace Uml.Robotics.Ros
         )
         {
             RosMessage t = null;
-            ulong drops = 0;
+            long drops = 0;
             TimeData receipt_time = ROS.GetTime().data;
             if (msg.Serialized != null) // will be null if self-subscribed
                 msg.Deserialize(msg.Serialized);
@@ -536,7 +536,7 @@ namespace Uml.Robotics.Ros
                 var pub_link = new LocalPublisherLink(this, XmlRpcManager.Instance.Uri);
                 var sub_link = new LocalSubscriberLink(pub);
                 pub_link.setPublisher(sub_link);
-                sub_link.setSubscriber(pub_link);
+                sub_link.SetSubscriber(pub_link);
 
                 addPublisherLink(pub_link);
                 pub.addSubscriberLink(sub_link);

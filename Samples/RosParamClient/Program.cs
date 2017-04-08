@@ -50,7 +50,7 @@ namespace Uml.Robotics.Ros.Samples
             switch (OP)
             {
                 case op.del:
-                    if (!Param.Del(names.resolve(args[1])))
+                    if (!Param.Del(Names.Resolve(args[1])))
                             Console.WriteLine("Failed to delete "+args[1]);
                     break;
                 case op.get:
@@ -92,9 +92,9 @@ namespace Uml.Robotics.Ros.Samples
         {
             IDictionary<string, string> remappings;
             RemappingHelper.GetRemappings(ref args, out remappings);
-            network.init(remappings);
+            Network.Init(remappings);
             master.init(remappings);
-            this_node.Init("", remappings, (int) (InitOption.AnonymousName | InitOption.NoRousout));
+            ThisNode.Init("", remappings, (int) (InitOption.AnonymousName | InitOption.NoRousout));
             Param.Init(remappings);
             //ROS.Init(args, "");
             new Program(args).result();

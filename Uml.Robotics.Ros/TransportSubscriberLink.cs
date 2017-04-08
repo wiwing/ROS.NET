@@ -25,7 +25,7 @@ namespace Uml.Robotics.Ros
 
         public void Dispose()
         {
-            drop();
+            Drop();
         }
 
         public bool Initialize(Connection connection)
@@ -65,7 +65,7 @@ namespace Uml.Robotics.Ros
                 return false;
             }
             destination_caller_id = client_callerid;
-            connection_id = ConnectionManager.Instance.GetNewConnectionID();
+            connection_id = ConnectionManager.Instance.GetNewConnectionId();
             name = pt.Name;
             parent = pt;
             lock (parent)
@@ -77,7 +77,7 @@ namespace Uml.Robotics.Ros
             m["type"] = pt.DataType;
             m["md5sum"] = pt.Md5sum;
             m["message_definition"] = pt.MessageDefinition;
-            m["callerid"] = this_node.Name;
+            m["callerid"] = ThisNode.Name;
             m["latching"] = Convert.ToString(pt.Latch);
             connection.writeHeader(m, OnHeaderWritten);
             pt.addSubscriberLink(this);
@@ -85,7 +85,7 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-        internal override void enqueueMessage(MessageAndSerializerFunc holder)
+        internal override void EnqueueMessage(MessageAndSerializerFunc holder)
         {
             lock (outbox)
             {
@@ -103,7 +103,7 @@ namespace Uml.Robotics.Ros
             StartMessageWrite(false);
         }
 
-        public override void drop()
+        public override void Drop()
         {
             if (connection.sendingHeaderError)
                 connection.DroppedEvent -= OnConnectionDropped;
@@ -160,10 +160,10 @@ namespace Uml.Robotics.Ros
                 byte[] outbuf = new byte[holder.msg.Serialized.Length + 4];
                 Array.Copy(holder.msg.Serialized, 0, outbuf, 4, holder.msg.Serialized.Length);
                 Array.Copy(BitConverter.GetBytes(holder.msg.Serialized.Length), outbuf, 4);
-                stats.messages_sent++;
+                stats.messagesSent++;
                 //Logger.LogDebug("Message backlog = " + (triedtosend - stats.messages_sent));
-                stats.bytes_sent += outbuf.Length;
-                stats.message_data_sent += outbuf.Length;
+                stats.bytesSent += outbuf.Length;
+                stats.messageDataSent += outbuf.Length;
                 connection.write(outbuf, outbuf.Length, OnMessageWritten, immediateWrite);
             }
         }

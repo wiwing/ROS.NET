@@ -26,7 +26,7 @@ namespace Uml.Robotics.Ros
             }
             if (string.IsNullOrEmpty(uri))
                 uri = ROS.ROS_MASTER_URI;
-            if (!network.splitURI(uri, out host, out port))
+            if (!Network.SplitUri(uri, out host, out port))
             {
                 port = 11311;
             }
@@ -39,7 +39,7 @@ namespace Uml.Robotics.Ros
         public static bool check()
         {
             XmlRpcValue args = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
-            args.Set(0, this_node.Name);
+            args.Set(0, ThisNode.Name);
             return execute("getPid", args, result, payload, false);
         }
 
@@ -52,7 +52,7 @@ namespace Uml.Robotics.Ros
         {
             List<TopicInfo> topicss = new List<TopicInfo>();
             XmlRpcValue args = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
-            args.Set(0, this_node.Name);
+            args.Set(0, ThisNode.Name);
             args.Set(1, "");
             if (!execute("getPublishedTopics", args, result, payload, true))
                 return false;
@@ -73,7 +73,7 @@ namespace Uml.Robotics.Ros
         {
             List<string> names = new List<string>();
             XmlRpcValue args = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
-            args.Set(0, this_node.Name);
+            args.Set(0, ThisNode.Name);
 
             if (!execute("getSystemState", args, result, payload, true))
             {
@@ -97,7 +97,7 @@ namespace Uml.Robotics.Ros
 
         internal static XmlRpcClient clientForNode(string nodename)
         {
-            var args = new XmlRpcValue(this_node.Name, nodename);
+            var args = new XmlRpcValue(ThisNode.Name, nodename);
             var resp = new XmlRpcValue();
             var payl = new XmlRpcValue();
             if (!execute("lookupNode", args, resp, payl, true))
@@ -107,7 +107,7 @@ namespace Uml.Robotics.Ros
                 return null;
 
             string nodeUri = payl.GetString();
-            if (!network.splitURI(nodeUri, out string nodeHost, out int nodePort) || nodeHost == null || nodePort <= 0)
+            if (!Network.SplitUri(nodeUri, out string nodeHost, out int nodePort) || nodeHost == null || nodePort <= 0)
                 return null;
 
             return new XmlRpcClient(nodeHost, nodePort);
@@ -120,8 +120,8 @@ namespace Uml.Robotics.Ros
                 return false;
 
             XmlRpcValue req = new XmlRpcValue(), resp = new XmlRpcValue(), payl = new XmlRpcValue();
-            req.Set(0, this_node.Name);
-            req.Set(1, $"Node '{this_node.Name}' requests shutdown.");
+            req.Set(0, ThisNode.Name);
+            req.Set(1, $"Node '{ThisNode.Name}' requests shutdown.");
             var respose = cl.Execute("shutdown", req);
             if (!respose.Success || !XmlRpcManager.Instance.ValidateXmlRpcResponse("shutdown", respose.Value, payl))
                 return false;

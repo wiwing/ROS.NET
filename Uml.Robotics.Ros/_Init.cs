@@ -367,9 +367,9 @@ namespace Uml.Robotics.Ros
 
                     init_options = options;
                     _ok = true;
-                    network.init(remappingArgs);
+                    Network.Init(remappingArgs);
                     master.init(remappingArgs);
-                    this_node.Init(name, remappingArgs, options);
+                    ThisNode.Init(name, remappingArgs, options);
                     Param.Reset();
                     Param.Init(remappingArgs);
                     SimTime.Reset();
@@ -389,7 +389,7 @@ namespace Uml.Robotics.Ros
                     }
                     initialized = true;
 
-                    GlobalNodeHandle = new NodeHandle(this_node.Namespace, remappingArgs);
+                    GlobalNodeHandle = new NodeHandle(ThisNode.Namespace, remappingArgs);
                     RosOutAppender.Reset();
                     RosOutAppender.Instance.Start();
                 }

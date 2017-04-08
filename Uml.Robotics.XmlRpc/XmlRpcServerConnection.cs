@@ -29,15 +29,14 @@ namespace Uml.Robotics.XmlRpc
         private NetworkStream stream;
 
         // The server delegates handling client requests to a serverConnection object.
-        public XmlRpcServerConnection(Socket fd, XmlRpcServer server, bool deleteOnClose /*= false*/)
-            //: base(fd, deleteOnClose)
+        public XmlRpcServerConnection(Socket fd, XmlRpcServer server)
         {
             Logger.LogInformation("XmlRpcServerConnection: new socket {0}.", fd.RemoteEndPoint.ToString());
             this.server = server;
             socket = fd;
             stream = new NetworkStream(socket,true);
             _connectionState = ServerConnectionState.READ_HEADER;
-            KeepOpen = true;
+            this.KeepOpen = true;
             _keepAlive = true;
         }
 
@@ -95,6 +94,7 @@ namespace Uml.Robotics.XmlRpc
             if (socket != null)
             {
                 //socket.Close(100);    // ## AKo: Will be part of .net core 1.2, see https://github.com/dotnet/corefx/issues/12060
+                socket.Shutdown(SocketShutdown.Both);
                 socket.Dispose();
                 socket = null;
             }
@@ -168,12 +168,6 @@ namespace Uml.Robotics.XmlRpc
                 Logger.LogError("XmlRpcServerConnection::writeResponse: write error ({0}).", ex.Message);
                 return false;
             }
-
-            /*catch (Exception ex)
-            {
-                XmlRpcUtil.error("XmlRpcServerConnection::writeResponse: write error ({0}).", ex.Message);
-                return false;
-            }*/
 
             Logger.LogDebug("XmlRpcServerConnection::writeResponse: wrote {0} of {0} bytes.", _bytesWritten, response.Length);
 

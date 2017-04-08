@@ -27,7 +27,6 @@ namespace Uml.Robotics.Ros
 
         public ServiceCallbackHelper(ServiceFunction<MReq, MRes> srv_func)
         {
-            // TODO: Complete member initialization
             _callback = srv_func;
         }
 

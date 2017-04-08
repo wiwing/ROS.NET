@@ -7,22 +7,22 @@ namespace Uml.Robotics.Ros
     public class InvalidNameException : Exception
     {
         public InvalidNameException(string error)
-            : base("INVALID NAME -- " + error)
+            : base(error)
         {
         }
     }
 
-    public static class names
+    public static class Names
     {
         public static IDictionary<string, string> resolved_remappings = new Dictionary<string, string>();
         public static IDictionary<string, string> unresolved_remappings = new Dictionary<string, string>();
 
-        public static bool isValidCharInName(char c)
+        public static bool IsValidCharInName(char c)
         {
             return (char.IsLetterOrDigit(c) || c == '/' || c == '_');
         }
 
-        public static bool validate(string name, out string error)
+        public static bool Validate(string name, out string error)
         {
             error = null;
             if (name == "" || name.StartsWith("__"))
@@ -36,7 +36,7 @@ namespace Uml.Robotics.Ros
 
             for (int i = 1; i < name.Length; i++)
             {
-                if (!isValidCharInName(name[i]))
+                if (!IsValidCharInName(name[i]))
                 {
                     error = "Character [" + name[i] + "] at element [" + i + "] is not valid in Graph Resource Name [" +
                             name + "]. valid characters are a-z, A-Z, 0-9, /, and _";
@@ -46,58 +46,58 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-        public static string clean(string name)
+        public static string Clean(string name)
         {
             while (name.Contains("//"))
                 name = name.Replace("//", "/");
             return name.TrimEnd('/');
         }
 
-        public static string append(string left, string right)
+        public static string Append(string left, string right)
         {
-            return clean(left + "/" + right);
+            return Clean(left + "/" + right);
         }
 
-        public static string remap(string name)
+        public static string Remap(string name)
         {
-            return resolve(name, false);
+            return Resolve(name, false);
         }
 
-        public static string resolve(string name)
+        public static string Resolve(string name)
         {
-            return resolve(name, true);
+            return Resolve(name, true);
         }
 
-        public static string resolve(string ns, string name)
+        public static string Resolve(string ns, string name)
         {
-            return resolve(ns, name, true);
+            return Resolve(ns, name, true);
         }
 
-        public static string resolve(string name, bool doremap)
+        public static string Resolve(string name, bool doremap)
         {
-            return resolve(this_node.Namespace, name, doremap);
+            return Resolve(ThisNode.Namespace, name, doremap);
         }
 
-        public static string resolve(string ns, string name, bool doremap)
+        public static string Resolve(string ns, string name, bool doremap)
         {
-            if (!validate(name, out string error))
+            if (!Validate(name, out string error))
                 throw new InvalidNameException(error);
 
-            if (name == "")
+            if (string.IsNullOrEmpty(name))
             {
                 if (ns == "")
                     return "/";
                 if (ns[0] == '/')
                     return ns;
-                return append("/", ns);
+                return Append("/", ns);
             }
             string copy = name;
             if (copy[0] == '~')
-                copy = append(this_node.Name, copy.Substring(1));
+                copy = Append(ThisNode.Name, copy.Substring(1));
             if (copy[0] != '/')
-                copy = append("/", append(ns, copy));
+                copy = Append("/", Append(ns, copy));
             if (doremap)
-                copy = remap(copy);
+                copy = Remap(copy);
             return copy;
         }
 
@@ -109,20 +109,20 @@ namespace Uml.Robotics.Ros
                 string right = remappings[k];
                 if (left != "" && left[0] != '_')
                 {
-                    string resolved_left = resolve(left, false);
-                    string resolved_right = resolve(right, false);
+                    string resolved_left = Resolve(left, false);
+                    string resolved_right = Resolve(right, false);
                     resolved_remappings[resolved_left] = resolved_right;
                     unresolved_remappings[left] = right;
                 }
             }
         }
 
-        public static string parentNamespace(string name)
+        public static string ParentNamespace(string name)
         {
-            if (!validate(name, out string error))
+            if (!Validate(name, out string error))
                 throw new InvalidNameException(error);
 
-            if (name != "")
+            if (string.IsNullOrEmpty(name))
                 return "";
             if (name != "/")
                 return "/";

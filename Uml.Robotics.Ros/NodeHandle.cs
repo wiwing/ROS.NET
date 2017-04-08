@@ -27,7 +27,7 @@ namespace Uml.Robotics.Ros
         public NodeHandle(string ns, IDictionary<string, string> remappings = null)
         {
             if (ns != "" && ns[0] == '~')
-                ns = names.resolve(ns);
+                ns = Names.Resolve(ns);
             construct(ns, true);
             initRemappings(remappings);
         }
@@ -76,14 +76,14 @@ namespace Uml.Robotics.Ros
         /// <summary>
         ///     Creates a new nodehandle using the default ROS callback queue
         /// </summary>
-        public NodeHandle() : this(this_node.Namespace, null)
+        public NodeHandle() : this(ThisNode.Namespace, null)
         {
         }
 
         /// <summary>
         ///     Creates a new nodehandle using the given callback queue
         /// </summary>
-        public NodeHandle(ICallbackQueue callbackQueue) : this(this_node.Namespace, null)
+        public NodeHandle(ICallbackQueue callbackQueue) : this(ThisNode.Namespace, null)
         {
             Callback = callbackQueue;
         }
@@ -457,7 +457,7 @@ namespace Uml.Robotics.Ros
                 resolved = "";
             else if (remappings.ContainsKey(resolved))
                 return (string) remappings[resolved];
-            return names.remap(resolved);
+            return Names.Remap(resolved);
         }
 
         private string resolveName(string name)
@@ -467,7 +467,7 @@ namespace Uml.Robotics.Ros
 
         private string resolveName(string name, bool remap)
         {
-            if (!names.validate(name, out string error))
+            if (!Names.Validate(name, out string error))
                 throw new InvalidNameException(error);
             return resolveName(name, remap, no_validate);
         }
@@ -483,14 +483,14 @@ namespace Uml.Robotics.Ros
                 throw new InvalidNameException("Node name must not start with a '~' (tilde) character.");
             else if (final[0] != '/' && Namespace != "")
             {
-                final = names.append(Namespace, final);
+                final = Names.Append(Namespace, final);
             }
-            final = names.clean(final);
+            final = Names.Clean(final);
             if (remap)
             {
                 final = remapName(final);
             }
-            return names.resolve(final, false);
+            return Names.Resolve(final, false);
         }
 
         #region Nested type: NodeHandleBackingCollection

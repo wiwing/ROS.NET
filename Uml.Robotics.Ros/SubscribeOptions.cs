@@ -16,13 +16,10 @@
         public SubscribeOptions()
             : this("", 1)
         {
-            //allow_concurrent_callbacks = false;
-            //allow_concurrent_callbacks = true;
         }
 
         public SubscribeOptions(string topic, uint queue_size, CallbackDelegate<T> CALL = null)
         {
-            // TODO: Complete member initialization
             this.topic = topic;
             this.queue_size = queue_size;
             var generic = new T();

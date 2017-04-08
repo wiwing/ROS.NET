@@ -2,9 +2,9 @@
 
 namespace Uml.Robotics.Ros
 {
-    public class LocalSubscriberLink : SubscriberLink, IDisposable
+    public class LocalSubscriberLink : SubscriberLink
     {
-        private object drop_mutex = new object();
+        private object gate = new object();
         private bool dropped;
         private LocalPublisherLink subscriber;
 
@@ -14,29 +14,16 @@ namespace Uml.Robotics.Ros
             topic = parent.Name;
         }
 
-        public string TransportType
+        public void SetSubscriber(LocalPublisherLink publisherLink)
         {
-            get { return "INTRAPROCESS"; /*lol... pwned*/ }
+            subscriber = publisherLink;
+            connection_id = ConnectionManager.Instance.GetNewConnectionId();
+            destination_caller_id = ThisNode.Name;
         }
 
-        #region IDisposable Members
-
-        public void Dispose()
+        internal override void EnqueueMessage(MessageAndSerializerFunc holder)
         {
-        }
-
-        #endregion
-
-        public void setSubscriber(LocalPublisherLink pub_link)
-        {
-            subscriber = pub_link;
-            connection_id = ConnectionManager.Instance.GetNewConnectionID();
-            destination_caller_id = this_node.Name;
-        }
-
-        internal override void enqueueMessage(MessageAndSerializerFunc holder)
-        {
-            lock (drop_mutex)
+            lock (gate)
             {
                 if (dropped)
                     return;
@@ -46,26 +33,29 @@ namespace Uml.Robotics.Ros
                 subscriber.handleMessage(holder.msg, holder.serialize, holder.nocopy);
         }
 
-        public override void drop()
+        public override void Drop()
         {
-            lock (drop_mutex)
+            lock (gate)
             {
                 if (dropped)
                     return;
                 dropped = true;
             }
+
             if (subscriber != null)
             {
                 subscriber.drop();
             }
 
             lock (parent)
+            {
                 parent.removeSubscriberLink(this);
+            }
         }
 
         public override void getPublishTypes(ref bool ser, ref bool nocopy, string messageType)
         {
-            lock (drop_mutex)
+            lock (gate)
             {
                 if (dropped)
                 {
@@ -74,6 +64,7 @@ namespace Uml.Robotics.Ros
                     return;
                 }
             }
+
             subscriber.getPublishTypes(ref ser, ref nocopy, messageType);
         }
     }

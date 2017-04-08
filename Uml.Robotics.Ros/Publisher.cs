@@ -18,7 +18,6 @@ namespace Uml.Robotics.Ros
         public Publisher(string topic, string md5sum, string datatype, NodeHandle nodeHandle,
             SubscriberCallbacks callbacks)
         {
-            // TODO: Complete member initialization
             this.topic = topic;
             this.md5sum = md5sum;
             this.datatype = datatype;

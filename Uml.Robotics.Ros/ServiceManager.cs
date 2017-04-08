@@ -172,9 +172,9 @@ namespace Uml.Robotics.Ros
             }
 
             XmlRpcValue args = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
-            args.Set(0, this_node.Name);
+            args.Set(0, ThisNode.Name);
             args.Set(1, ops.service);
-            args.Set(2, string.Format("rosrpc://{0}:{1}", network.host, connectionManager.TCPPort));
+            args.Set(2, string.Format("rosrpc://{0}:{1}", Network.host, connectionManager.TCPPort));
             args.Set(3, xmlrpcManager.Uri);
             if (!master.execute("registerService", args, result, payload, true))
             {
@@ -248,7 +248,7 @@ namespace Uml.Robotics.Ros
         internal bool LookupService(string name, ref string serv_host, ref int serv_port)
         {
             XmlRpcValue args = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
-            args.Set(0, this_node.Name);
+            args.Set(0, ThisNode.Name);
             args.Set(1, name);
             if (!master.execute("lookupService", args, result, payload, false))
             {
@@ -261,7 +261,7 @@ namespace Uml.Robotics.Ros
                 Logger.LogError("Service [{0}]: Empty server URI returned from master", name);
                 return false;
             }
-            if (!network.splitURI(serv_uri, out serv_host, out serv_port))
+            if (!Network.SplitUri(serv_uri, out serv_host, out serv_port))
             {
                 Logger.LogError("Service [{0}]: Bad service uri [{0}]", name, serv_uri);
                 return false;
@@ -292,9 +292,9 @@ namespace Uml.Robotics.Ros
         private bool UnregisterService(string service)
         {
             XmlRpcValue args = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
-            args.Set(0, this_node.Name);
+            args.Set(0, ThisNode.Name);
             args.Set(1, service);
-            args.Set(2, string.Format("rosrpc://{0}:{1}", network.host, connectionManager.TCPPort));
+            args.Set(2, string.Format("rosrpc://{0}:{1}", Network.host, connectionManager.TCPPort));
 
             bool unregisterSuccess = false;
             try

@@ -2,26 +2,26 @@
 {
     public class SingleSubscriberPublisher
     {
-        public SubscriberLink link;
+        private SubscriberLink link;
 
         public SingleSubscriberPublisher(SubscriberLink link)
         {
             this.link = link;
         }
 
-        public string topic
+        public string Topic
         {
             get { return link.topic; }
         }
 
-        public string subscriber_name
+        public string SubscriberName
         {
             get { return link.destination_caller_id; }
         }
 
-        public void publish<M>(M message) where M : RosMessage, new()
+        public void Publish<M>(M message) where M : RosMessage, new()
         {
-            link.enqueueMessage(new MessageAndSerializerFunc(message, message.Serialize, true, true));
+            link.EnqueueMessage(new MessageAndSerializerFunc(message, message.Serialize, true, true));
         }
     }
 }

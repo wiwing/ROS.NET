@@ -28,7 +28,6 @@ namespace Uml.Robotics.Ros
         public IServiceServerLink(string name, bool persistent, string requestMd5Sum, string responseMd5Sum,
             IDictionary<string, string> header_values)
         {
-            // TODO: Complete member initialization
             this.name = name;
             this.persistent = persistent;
             RequestMd5Sum = requestMd5Sum;
@@ -77,7 +76,7 @@ namespace Uml.Robotics.Ros
             IDictionary<string, string> dict = new Dictionary<string, string>();
             dict["service"] = name;
             dict["md5sum"] = RosService.Generate(RequestType.Replace("__Request", "").Replace("__Response", "")).MD5Sum();
-            dict["callerid"] = this_node.Name;
+            dict["callerid"] = ThisNode.Name;
             dict["persistent"] = persistent ? "1" : "0";
             if (header_values != null)
             {

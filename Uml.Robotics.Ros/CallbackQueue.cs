@@ -62,32 +62,28 @@ namespace Uml.Robotics.Ros
             NotifyOne();
         }
 
-        public bool CallAvailable()
-        {
-            return CallAvailable(ROS.WallDuration);
-        }
-
-        public bool CallAvailable(int timeout)
+        public void CallAvailable(int timeout = ROS.WallDuration)
         {
             SetupTls();
             int called = 0;
             lock (mutex)
             {
                 if (!enabled)
-                    return false;
+                    return;
             }
+
             if (count == 0 && timeout != 0)
             {
                 if (!sem.WaitOne(timeout))
-                    return true;
+                    return;
             }
             //Logger.LogDebug($"CallbackQueue@{cbthread.ManagedThreadId}: Enqueue TLS");
             lock (mutex)
             {
                 if (count == 0)
-                    return true;
+                    return;
                 if (!enabled)
-                    return false;
+                    return;
                 callbacks.ForEach(cbi => tls.Enqueue(cbi));
                 callbacks.Clear();
                 count = 0;
@@ -105,7 +101,6 @@ namespace Uml.Robotics.Ros
                 calling -= called;
             }
             sem.Set();
-            return true;
         }
 
         public void Clear()

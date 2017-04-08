@@ -32,25 +32,27 @@ namespace Uml.Robotics.Ros
 
         public void Spin()
         {
-            SpinCancelable(null);
+            Spin(CancellationToken.None);
             Logger.LogCritical("CallbackQueue thread broke out! This only can happen if ROS.ok is false.");
         }
 
 
-        public void SpinCancelable(CancellationToken? token)
+        public void Spin(CancellationToken token)
         {
             TimeSpan wallDuration = new TimeSpan(0, 0, 0, 0, ROS.WallDuration);
             Logger.LogInformation("Start spinning");
             while (ROS.ok)
             {
                 DateTime begin = DateTime.UtcNow;
-                var notCallbackAvail = !callbackQueue.CallAvailable(ROS.WallDuration);
-                var cancelReq = (token?.IsCancellationRequested ?? false);
-                if ( notCallbackAvail || cancelReq )
+                callbackQueue.CallAvailable(ROS.WallDuration);
+    
+                if (token.IsCancellationRequested)
                     break;
+
                 DateTime end = DateTime.UtcNow;
-                if (wallDuration.Subtract(end.Subtract(begin)).Ticks > 0)
-                    Thread.Sleep(wallDuration.Subtract(end.Subtract(begin)));
+                var remainingTime = wallDuration - (end - begin);
+                if (remainingTime > TimeSpan.Zero)
+                    Thread.Sleep(remainingTime);
             }
         }
 
@@ -60,25 +62,6 @@ namespace Uml.Robotics.Ros
             callbackQueue.CallAvailable(ROS.WallDuration);
         }
     }
-
-
-    /*public class MultiThreadSpinner
-    {
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Spin()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void SpinOnce()
-        {
-            throw new NotImplementedException();
-        }
-    }*/
 
 
     public class AsyncSpinner : IDisposable
@@ -118,7 +101,7 @@ namespace Uml.Robotics.Ros
             {
                 token = tokenSource.Token;
                 var spinner = new SingleThreadSpinner(callbackQueue);
-                spinner.SpinCancelable(token);
+                spinner.Spin(token);
             });
         }
 
