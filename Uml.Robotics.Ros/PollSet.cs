@@ -10,6 +10,8 @@ namespace Uml.Robotics.Ros
 {
     public class PollSet : PollSignal
     {
+        const int SELECT_TIMEOUT = 5 * 1000;    // poll thread select timeout in microseconds (interval checking for new sockets)
+
         public delegate void SocketUpdateFunc(int stufftodo);
 
         private static HashSet<Socket> sockets = new HashSet<Socket>();
@@ -17,7 +19,7 @@ namespace Uml.Robotics.Ros
         public PollSet()
             : base(null)
         {
-            base.Op = update;
+            base.Op = Update;
         }
 
         public new void Dispose()
@@ -31,100 +33,94 @@ namespace Uml.Robotics.Ros
 
         public event DisposingDelegate DisposingEvent;
 
-        public bool addSocket(Socket s, SocketUpdateFunc update_func)
+        public bool AddSocket(Socket socket, SocketUpdateFunc updateFunc)
         {
-            return addSocket(s, update_func, null);
+            return AddSocket(socket, updateFunc, null);
         }
 
-        public bool addSocket(Socket s, SocketUpdateFunc update_func, TcpTransport trans)
+        public bool AddSocket(Socket socket, SocketUpdateFunc updateFunc, TcpTransport transport)
         {
-            s.Info = new SocketInfo { func = update_func, transport = trans };
+            socket.Info = new Socket.SocketInfo { Func = updateFunc, Transport = transport };
             lock (sockets)
             {
-                sockets.Add(s);
+                sockets.Add(socket);
             }
             return true;
         }
 
-        public bool delSocket(Socket s)
+        public bool RemoveSocket(Socket socket)
         {
             lock (sockets)
             {
-                sockets.Remove(s);
+                sockets.Remove(socket);
             }
-            s.Dispose();
+            socket.Dispose();
             return true;
         }
 
-        public bool addEvents(Socket s, int events)
+        public bool AddEvents(Socket socket, int events)
         {
-            if (s != null && s.Info != null)
-                s.Info.events |= events;
+            if (socket != null && socket.Info != null)
+                socket.Info.Events |= events;
             return true;
         }
 
-        public bool delEvents(Socket s, int events)
+        public bool RemoveEvents(Socket socket, int events)
         {
-            if (s != null && s.Info != null)
-                s.Info.events &= ~events;
+            if (socket != null && socket.Info != null)
+                socket.Info.Events &= ~events;
             return true;
         }
 
-        public void update()
+        public void Update()
         {
-            List<System.Net.Sockets.Socket> checkWrite = new List<System.Net.Sockets.Socket>();
-            List<System.Net.Sockets.Socket> checkRead = new List<System.Net.Sockets.Socket>();
-            List<System.Net.Sockets.Socket> checkError = new List<System.Net.Sockets.Socket>();
-            List<Uml.Robotics.Ros.Socket> lsocks = new List<Uml.Robotics.Ros.Socket>();
+            var checkWrite = new List<System.Net.Sockets.Socket>();
+            var checkRead = new List<System.Net.Sockets.Socket>();
+            var checkError = new List<System.Net.Sockets.Socket>();
+            var lsocks = new List<Uml.Robotics.Ros.Socket>();
+
             lock (sockets)
             {
                 foreach (Socket s in sockets)
                 {
                     lsocks.Add(s);
-                    if ((s.Info.events & Socket.POLLIN) != 0)
-                        checkRead.Add(s.realsocket);
-                    if ((s.Info.events & Socket.POLLOUT) != 0)
-                        checkWrite.Add(s.realsocket);
-                    if ((s.Info.events & (Socket.POLLERR | Socket.POLLHUP | Socket.POLLNVAL)) != 0)
-                        checkError.Add(s.realsocket);
+                    if ((s.Info.Events & Socket.POLLIN) != 0)
+                        checkRead.Add(s.realSocket);
+                    if ((s.Info.Events & Socket.POLLOUT) != 0)
+                        checkWrite.Add(s.realSocket);
+                    if ((s.Info.Events & (Socket.POLLERR | Socket.POLLHUP | Socket.POLLNVAL)) != 0)
+                        checkError.Add(s.realSocket);
                 }
             }
+
             if (lsocks.Count == 0 || (checkRead.Count == 0 && checkWrite.Count == 0 && checkError.Count == 0))
                 return;
 
             try
             {
-                System.Net.Sockets.Socket.Select(checkRead, checkWrite, checkError, -1);
+                System.Net.Sockets.Socket.Select(checkRead, checkWrite, checkError, SELECT_TIMEOUT);
             }
             catch
             {
                 return;
             }
-            int nEvents = checkRead.Count + checkWrite.Count + checkError.Count;
 
+            int nEvents = checkRead.Count + checkWrite.Count + checkError.Count;
             if (nEvents == 0)
                 return;
 
             // Process events
             foreach (var record in lsocks)
             {
-                int newmask = 0;
-                if (checkRead.Contains(record.realsocket))
-                    newmask |= Socket.POLLIN;
-                if (checkWrite.Contains(record.realsocket))
-                    newmask |= Socket.POLLOUT;
-                if (checkError.Contains(record.realsocket))
-                    newmask |= Socket.POLLERR;
-                record._poll(newmask);
+                int newMask = 0;
+                if (checkRead.Contains(record.realSocket))
+                    newMask |= Socket.POLLIN;
+                if (checkWrite.Contains(record.realSocket))
+                    newMask |= Socket.POLLOUT;
+                if (checkError.Contains(record.realSocket))
+                    newMask |= Socket.POLLERR;
+                record._poll(newMask);
             }
         }
-    }
-
-    public class SocketInfo
-    {
-        public int events;
-        public PollSet.SocketUpdateFunc func;
-        public int revents;
-        public TcpTransport transport;
     }
 }

@@ -214,7 +214,7 @@ namespace Uml.Robotics.Ros
                 {
                     error_val = (string) header.Values["error"];
                     Logger.LogInformation("Received error message in header for connection to [{0}]: [{1}]",
-                        "TCPROS connection to [" + transport.cached_remote_host + "]", error_val);
+                        "TCPROS connection to [" + transport.cachedRemoteHost + "]", error_val);
                     drop(DropReason.HeaderError);
                     return false;
                 }

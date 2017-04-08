@@ -35,20 +35,20 @@ namespace Uml.Robotics.Ros
 
         public IPEndPoint LocalEndPoint;
         public string _topic;
-        public string connected_host;
-        public int connected_port;
-        public string cached_remote_host = "";
+        public string connectedHost;
+        public int connectedPort;
+        public string cachedRemoteHost = "";
 
-        private object close_mutex = new object();
+        private object closeMutex = new object();
         private bool closed;
-        private bool expecting_read;
-        private bool expecting_write;
+        private bool expectingRead;
+        private bool expectingWrite;
         private int flags;
-        private bool is_server;
-        private PollSet poll_set;
-        private int server_port = -1;
+        private bool isServer;
+        private PollSet pollSet;
+        private int serverPort = -1;
 
-        private Socket sock;
+        private Socket socket;
 
         public TcpTransport()
         {
@@ -75,8 +75,8 @@ namespace Uml.Robotics.Ros
         {
             if (pollset != null)
             {
-                poll_set = pollset;
-                poll_set.DisposingEvent += close;
+                pollSet = pollset;
+                pollSet.DisposingEvent += close;
             }
             else
             {
@@ -89,9 +89,9 @@ namespace Uml.Robotics.Ros
         {
             get
             {
-                if (connected_host == null || connected_port == 0)
+                if (connectedHost == null || connectedPort == 0)
                     return "[NOT CONNECTED]";
-                return "http://" + connected_host + ":" + connected_port + "/";
+                return "http://" + connectedHost + ":" + connectedPort + "/";
             }
         }
 
@@ -116,7 +116,7 @@ namespace Uml.Robotics.Ros
             {
                 try
                 {
-                    sock.Blocking = false;
+                    socket.Blocking = false;
                 }
                 catch (Exception e)
                 {
@@ -133,7 +133,7 @@ namespace Uml.Robotics.Ros
         {
             try
             {
-                sock.NoDelay = nd;
+                socket.NoDelay = nd;
             }
             catch (Exception e)
             {
@@ -143,83 +143,83 @@ namespace Uml.Robotics.Ros
 
         public void enableRead()
         {
-            if (sock == null)
+            if (socket == null)
                 return;
-            if (!sock.Connected)
+            if (!socket.Connected)
                 close();
-            lock (close_mutex)
+            lock (closeMutex)
             {
                 if (closed)
                     return;
             }
-            if (!expecting_read && poll_set != null)
+            if (!expectingRead && pollSet != null)
             {
                 //Console.WriteLine("ENABLE READ:   " + Topic + "(" + sock.FD + ")");
-                expecting_read = true;
-                poll_set.addEvents(sock, POLLIN);
+                expectingRead = true;
+                pollSet.AddEvents(socket, POLLIN);
             }
         }
 
         public void disableRead()
         {
-            if (sock == null)
+            if (socket == null)
                 return;
-            if (!sock.Connected)
+            if (!socket.Connected)
                 close();
-            lock (close_mutex)
+            lock (closeMutex)
             {
                 if (closed)
                     return;
             }
-            if (expecting_read && poll_set != null)
+            if (expectingRead && pollSet != null)
             {
                 //Console.WriteLine("DISABLE READ:  " + Topic + "(" + sock.FD + ")");
-                poll_set.delEvents(sock, POLLIN);
-                expecting_read = false;
+                pollSet.RemoveEvents(socket, POLLIN);
+                expectingRead = false;
             }
         }
 
         public void enableWrite()
         {
-            if (sock == null)
+            if (socket == null)
                 return;
-            if (!sock.Connected) close();
-            lock (close_mutex)
+            if (!socket.Connected) close();
+            lock (closeMutex)
             {
                 if (closed)
                     return;
             }
-            if (!expecting_write && poll_set != null)
+            if (!expectingWrite && pollSet != null)
             {
                 //Console.WriteLine("ENABLE WRITE:  " + Topic + "(" + sock.FD + ")");
-                expecting_write = true;
-                poll_set.addEvents(sock, POLLOUT);
+                expectingWrite = true;
+                pollSet.AddEvents(socket, POLLOUT);
             }
         }
 
         public void disableWrite()
         {
-            if (sock == null)
+            if (socket == null)
                 return;
-            if (!sock.Connected) close();
-            lock (close_mutex)
+            if (!socket.Connected) close();
+            lock (closeMutex)
             {
                 if (closed)
                     return;
             }
-            if (expecting_write && poll_set != null)
+            if (expectingWrite && pollSet != null)
             {
                 //Console.WriteLine("DISABLE WRITE: " + Topic + "(" + sock.FD + ")");
-                poll_set.delEvents(sock, POLLOUT);
-                expecting_write = false;
+                pollSet.RemoveEvents(socket, POLLOUT);
+                expectingWrite = false;
             }
         }
 
         public bool connect(string host, int port)
         {
-            sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            connected_host = host;
-            connected_port = port;
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            connectedHost = host;
+            connectedPort = port;
             if (!setNonBlocking())
                 throw new Exception("Failed to make socket nonblocking");
             setNoDelay(true);
@@ -242,20 +242,23 @@ namespace Uml.Robotics.Ros
             IPEndPoint ipep = new IPEndPoint(ip, port);
             LocalEndPoint = ipep;
             DateTime connectionAttempted = DateTime.UtcNow;
-            IAsyncResult asyncres;
 
-            asyncres = sock.BeginConnect(ipep, iar =>
+            IAsyncResult asyncres = socket.BeginConnect(ipep, iar =>
             {
-                lock(this)
-                    if (sock != null)
+                lock (this)
+                {
+                    if (socket != null)
+                    {
                         try
                         {
-                            sock.EndConnect(iar);
+                            socket.EndConnect(iar);
                         }
                         catch (Exception e)
                         {
                             Logger.LogError(e.ToString());
                         }
+                    }
+                }
             }, null);
 
             bool completed = false;
@@ -269,32 +272,34 @@ namespace Uml.Robotics.Ros
                     Logger.LogInformation("Trying to connect for " + DateTime.UtcNow.Subtract(connectionAttempted).TotalSeconds + "s\t: " + this);
                     if (!asyncres.AsyncWaitHandle.WaitOne(100))
                     {
-                        sock.Close();
-                        sock = null;
+                        socket.Close();
+                        socket = null;
                     }
                 }
             }
 
-            if (!completed || sock == null || !sock.Connected)
+            if (!completed || socket == null || !socket.Connected)
             {
                 return false;
-            } else
+            }
+            else
             {
                 Logger.LogDebug("TcpTransport connection established.");
             }
+
             return ROS.ok && initializeSocket();
         }
 
         public bool listen(int port, int backlog, AcceptCallback accept_cb)
         {
-            is_server = true;
+            isServer = true;
             this.accept_cb = accept_cb;
 
-            sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             setNonBlocking();
-            sock.Bind(new IPEndPoint(IPAddress.Any, port));
-            server_port = ((IPEndPoint) sock.LocalEndPoint).Port;
-            sock.Listen(backlog);
+            socket.Bind(new IPEndPoint(IPAddress.Any, port));
+            serverPort = ((IPEndPoint) socket.LocalEndPoint).Port;
+            socket.Listen(backlog);
             if (!initializeSocket())
                 return false;
             if ((flags & (int)Flags.SYNCHRONOUS) == 0)
@@ -337,11 +342,11 @@ namespace Uml.Robotics.Ros
         {
             if (use)
             {
-                if (!TrySetKeepAlive(sock, (uint)idle, (uint)interval))
+                if (!TrySetKeepAlive(socket, (uint)idle, (uint)interval))
                 {
                     try
                     {
-                        sock.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, use);
+                        socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, use);
                     }
                     catch (Exception e)
                     {
@@ -354,14 +359,14 @@ namespace Uml.Robotics.Ros
 
         public int read(byte[] buffer, int pos, int length)
         {
-            lock (close_mutex)
+            lock (closeMutex)
             {
                 if (closed)
                     return -1;
             }
             int num_bytes = 0;
             SocketError err;
-            num_bytes = sock.realsocket.Receive(buffer, pos, length, SocketFlags.None, out err);
+            num_bytes = socket.realSocket.Receive(buffer, pos, length, SocketFlags.None, out err);
             if (num_bytes < 0)
             {
                 if (err == SocketError.TryAgain || err == SocketError.WouldBlock)
@@ -377,14 +382,14 @@ namespace Uml.Robotics.Ros
 
         public int write(byte[] buffer, int pos, int size)
         {
-            lock (close_mutex)
+            lock (closeMutex)
             {
                 if (closed)
                     return -1;
             }
+
             SocketError err;
-            //Logger.LogDebug(ByteDumpCondensed(buffer));
-            int num_bytes = sock.Send(buffer, pos, size, SocketFlags.None, out err);
+            int num_bytes = socket.Send(buffer, pos, size, SocketFlags.None, out err);
             if (num_bytes <= 0)
             {
                 if (err == SocketError.TryAgain || err == SocketError.WouldBlock)
@@ -407,19 +412,19 @@ namespace Uml.Robotics.Ros
             setNoDelay(true);
             setKeepAlive(use_keepalive, 60, 10, 9);
 
-            if (string.IsNullOrEmpty(cached_remote_host))
+            if (string.IsNullOrEmpty(cachedRemoteHost))
             {
-                if (is_server)
-                    cached_remote_host = "TCPServer Socket";
+                if (isServer)
+                    cachedRemoteHost = "TCPServer Socket";
                 else
-                    cached_remote_host = this.ClientUri + " on socket " + sock.realsocket.RemoteEndPoint.ToString();
+                    cachedRemoteHost = this.ClientUri + " on socket " + socket.realSocket.RemoteEndPoint.ToString();
             }
 
-            if (poll_set != null)
+            if (pollSet != null)
             {
-                poll_set.addSocket(sock, socketUpdate, this);
+                pollSet.AddSocket(socket, socketUpdate, this);
             }
-            if (!is_server && !sock.Connected)
+            if (!isServer && !socket.Connected)
             {
                 close();
                 return false;
@@ -427,24 +432,26 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-        private bool setSocket(Socket s)
+        private bool setSocket(Socket socket)
         {
-            sock = s;
+            this.socket = socket;
             return initializeSocket();
         }
 
         public TcpTransport accept()
         {
-            SocketAsyncEventArgs args = new SocketAsyncEventArgs();
-            if (sock == null || !sock.AcceptAsync(args))
+            var args = new SocketAsyncEventArgs();
+            if (socket == null || !socket.AcceptAsync(args))
                 return null;
+
             if (args.AcceptSocket == null)
             {
                 Logger.LogError("Nothing to accept, return null");
                 return null;
             }
-            Socket acc = new Socket(args.AcceptSocket);
-            TcpTransport transport = new TcpTransport(poll_set, flags);
+
+            var acc = new Socket(args.AcceptSocket);
+            var transport = new TcpTransport(pollSet, flags);
             if (!transport.setSocket(acc))
             {
                 throw new InvalidOperationException("Could not add socket to transport");
@@ -454,29 +461,31 @@ namespace Uml.Robotics.Ros
 
         public override string ToString()
         {
-            return "TCPROS connection to [" + sock + "]";
+            return "TCPROS connection to [" + socket + "]";
         }
 
         private void socketUpdate(int events)
         {
-            lock (close_mutex)
+            lock (closeMutex)
             {
                 if (closed)
                     return;
             }
 
-            if (is_server)
+            if (isServer)
             {
                 TcpTransport transport = accept();
                 if (transport != null)
                 {
-                    if (accept_cb == null) throw new NullReferenceException("Accept callback is null");
+                    if (accept_cb == null)
+                        throw new NullReferenceException("Accept callback is null");
+
                     accept_cb(transport);
                 }
             }
             else
             {
-                if ((events & POLLIN) != 0 && expecting_read) //POLL IN FLAG
+                if ((events & POLLIN) != 0 && expectingRead) //POLL IN FLAG
                 {
                     if (read_cb != null)
                     {
@@ -484,7 +493,7 @@ namespace Uml.Robotics.Ros
                     }
                 }
 
-                if ((events & POLLOUT) != 0 && expecting_write)
+                if ((events & POLLOUT) != 0 && expectingWrite)
                 {
                     if (write_cb != null)
                         write_cb(this);
@@ -495,7 +504,7 @@ namespace Uml.Robotics.Ros
                     int error = 0;
                     try
                     {
-                        error = (int) sock.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Error);
+                        error = (int) socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Error);
                     }
                     catch (Exception e)
                     {
@@ -511,17 +520,17 @@ namespace Uml.Robotics.Ros
         public void close()
         {
             DisconnectFunc disconnect_cb = null;
-            lock (close_mutex)
+            lock (closeMutex)
             {
                 if (!closed)
                 {
                     closed = true;
-                    if (poll_set != null)
-                        poll_set.delSocket(sock);
-                    if (sock.Connected)
-                        sock.Shutdown(SocketShutdown.Both);
-                    sock.Close();
-                    sock = null;
+                    if (pollSet != null)
+                        pollSet.RemoveSocket(socket);
+                    if (socket.Connected)
+                        socket.Shutdown(SocketShutdown.Both);
+                    socket.Close();
+                    socket = null;
                     disconnect_cb = this.disconnect_cb;
                     this.disconnect_cb = null;
                     read_cb = null;
@@ -529,6 +538,7 @@ namespace Uml.Robotics.Ros
                     accept_cb = null;
                 }
             }
+
             if (disconnect_cb != null)
             {
                 disconnect_cb(this);

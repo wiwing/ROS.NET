@@ -35,15 +35,24 @@ namespace Uml.Robotics.Ros
 
     public class Socket : IDisposable
     {
+        public class SocketInfo
+        {
+            public int Events;
+            public PollSet.SocketUpdateFunc Func;
+            public int REvents;
+            public TcpTransport Transport;
+        }
+
+
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Socket>();
-        internal ns.Socket realsocket { get; private set; }
+        internal ns.Socket realSocket { get; private set; }
 
         private string attemptedConnectionEndpoint;
         private bool disposed;
 
         public Socket(ns.Socket sock)
         {
-            realsocket = sock;
+            realSocket = sock;
             disposed = false;
         }
 
@@ -64,107 +73,107 @@ namespace Uml.Robotics.Ros
             if (endpoint == null)
                 throw new ArgumentNullException(nameof(endpoint));
             attemptedConnectionEndpoint = ipep.Address.ToString();
-            return realsocket.BeginConnect(endpoint, callback, state);
+            return realSocket.BeginConnect(endpoint, callback, state);
         }
 
         public bool AcceptAsync(ns.SocketAsyncEventArgs a)
         {
-            return realsocket.AcceptAsync(a);
+            return realSocket.AcceptAsync(a);
         }
 
         public void Bind(n.EndPoint ep)
         {
-            realsocket.Bind(ep);
+            realSocket.Bind(ep);
         }
 
         public bool Blocking
         {
-            get { return realsocket.Blocking; }
-            set { realsocket.Blocking = value; }
+            get { return realSocket.Blocking; }
+            set { realSocket.Blocking = value; }
         }
 
         public void Close()
         {
-            if (realsocket != null)
-                realsocket.Dispose();
+            if (realSocket != null)
+                realSocket.Dispose();
         }
 
         public void Close(int timeout)
         {
-            if (realsocket != null)
+            if (realSocket != null)
             {
-                realsocket.Shutdown(ns.SocketShutdown.Send);
-                realsocket.SetSocketOption(ns.SocketOptionLevel.Socket, ns.SocketOptionName.ReceiveTimeout, timeout);
+                realSocket.Shutdown(ns.SocketShutdown.Send);
+                realSocket.SetSocketOption(ns.SocketOptionLevel.Socket, ns.SocketOptionName.ReceiveTimeout, timeout);
                 ns.SocketError unused;
-                realsocket.Receive(null, 0, 0, ns.SocketFlags.None, out unused);
-                realsocket.Dispose();
+                realSocket.Receive(null, 0, 0, ns.SocketFlags.None, out unused);
+                realSocket.Dispose();
             }
         }
 
         public bool Connected
         {
-            get { return realsocket != null && realsocket.Connected; }
+            get { return realSocket != null && realSocket.Connected; }
         }
 
         public void EndConnect(IAsyncResult iar)
         {
-            realsocket.EndConnect(iar);
+            realSocket.EndConnect(iar);
         }
 
         public object GetSocketOption(ns.SocketOptionLevel lvl, ns.SocketOptionName n)
         {
-            return realsocket.GetSocketOption(lvl, n);
+            return realSocket.GetSocketOption(lvl, n);
         }
 
         public void GetSocketOption(ns.SocketOptionLevel lvl, ns.SocketOptionName n, byte[] optionvalue)
         {
-            realsocket.GetSocketOption(lvl, n, optionvalue);
+            realSocket.GetSocketOption(lvl, n, optionvalue);
         }
 
         public byte[] GetSocketOption(ns.SocketOptionLevel lvl, ns.SocketOptionName n, int optionlength)
         {
-            return realsocket.GetSocketOption(lvl, n, optionlength);
+            return realSocket.GetSocketOption(lvl, n, optionlength);
         }
 
         public int IOControl(int code, byte[] inval, byte[] outval)
         {
-            return realsocket.IOControl(code, inval, outval);
+            return realSocket.IOControl(code, inval, outval);
         }
 
         public int IOControl(ns.IOControlCode code, byte[] inval, byte[] outval)
         {
-            return realsocket.IOControl(code, inval, outval);
+            return realSocket.IOControl(code, inval, outval);
         }
 
         public n.EndPoint LocalEndPoint
         {
-            get { return realsocket.LocalEndPoint; }
+            get { return realSocket.LocalEndPoint; }
         }
 
         public void Listen(int backlog)
         {
-            realsocket.Listen(backlog);
+            realSocket.Listen(backlog);
         }
 
         public bool NoDelay
         {
-            get { return realsocket.NoDelay; }
-            set { realsocket.NoDelay = value; }
+            get { return realSocket.NoDelay; }
+            set { realSocket.NoDelay = value; }
         }
 
         public int Send(byte[] arr, int offset, int size, ns.SocketFlags f, out ns.SocketError er)
         {
-            return realsocket.Send(arr, offset, size, f, out er);
+            return realSocket.Send(arr, offset, size, f, out er);
         }
 
         public void SetSocketOption(ns.SocketOptionLevel lvl, ns.SocketOptionName n, object optionvalue)
         {
-            realsocket.SetSocketOption(lvl, n, optionvalue);
+            realSocket.SetSocketOption(lvl, n, optionvalue);
         }
 
         public void Shutdown(ns.SocketShutdown sd)
         {
-            realsocket.Shutdown(sd);
+            realSocket.Shutdown(sd);
         }
 
         public bool SafePoll(int timeout, ns.SelectMode sm)
@@ -173,7 +182,7 @@ namespace Uml.Robotics.Ros
             try
             {
                 if (!disposed)
-                    res = realsocket.Poll(timeout, sm);
+                    res = realSocket.Poll(timeout, sm);
             }
             catch (ns.SocketException e)
             {
@@ -187,16 +196,16 @@ namespace Uml.Robotics.Ros
         {
             if (String.IsNullOrEmpty(attemptedConnectionEndpoint))
             {
-                if (!realsocket.Connected)
+                if (!realSocket.Connected)
                     attemptedConnectionEndpoint = "";
-                else if (realsocket.RemoteEndPoint != null)
+                else if (realSocket.RemoteEndPoint != null)
                 {
-                    n.IPEndPoint ipep = realsocket.RemoteEndPoint as n.IPEndPoint;
+                    n.IPEndPoint ipep = realSocket.RemoteEndPoint as n.IPEndPoint;
                     if (ipep != null)
                         attemptedConnectionEndpoint = "" + ipep.Address + ":" + ipep.Port;
                 }
             }
-            return " -- " + attemptedConnectionEndpoint + (Info != null ? " for " + Info.transport._topic : "");
+            return " -- " + attemptedConnectionEndpoint + (Info != null ? " for " + Info.Transport._topic : "");
         }
 
 
@@ -209,41 +218,41 @@ namespace Uml.Robotics.Ros
 
         internal void _poll(int POLLFLAGS)
         {
-            if (realsocket == null || !realsocket.Connected || disposed)
+            if (realSocket == null || !realSocket.Connected || disposed)
             {
-                Info.revents |= POLLHUP;
+                Info.REvents |= POLLHUP;
             }
             else
             {
-                Info.revents |= POLLFLAGS;
+                Info.REvents |= POLLFLAGS;
             }
-            if (Info.revents == 0)
+            if (Info.REvents == 0)
             {
                 return;
             }
-            if (Info.func != null &&
-                ((Info.events & Info.revents) != 0 || (Info.revents & POLLERR) != 0 || (Info.revents & POLLHUP) != 0 ||
-                    (Info.revents & POLLNVAL) != 0))
+            if (Info.Func != null &&
+                ((Info.Events & Info.REvents) != 0 || (Info.REvents & POLLERR) != 0 || (Info.REvents & POLLHUP) != 0 ||
+                    (Info.REvents & POLLNVAL) != 0))
             {
                 bool skip = false;
-                if ((Info.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
+                if ((Info.REvents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
                 {
-                    if (realsocket == null || disposed || !realsocket.Connected)
+                    if (realSocket == null || disposed || !realSocket.Connected)
                         skip = true;
                 }
 
                 if (!skip)
                 {
-                    Info.func(Info.revents & (Info.events | POLLERR | POLLHUP | POLLNVAL));
+                    Info.Func(Info.REvents & (Info.Events | POLLERR | POLLHUP | POLLNVAL));
                 }
             }
-            Info.revents = 0;
+            Info.REvents = 0;
         }
 
         internal void _poll()
         {
             int revents = 0;
-            if (!realsocket.Connected || disposed)
+            if (!realSocket.Connected || disposed)
             {
                 revents |= POLLHUP;
             }
@@ -259,15 +268,15 @@ namespace Uml.Robotics.Ros
             _poll(revents);
         }
 
-        public SocketInfo Info = null;
+        public SocketInfo Info { get; set; }
 
         public void Dispose()
         {
             disposed = true;
-            if (realsocket != null)
+            if (realSocket != null)
             {
-                realsocket.Dispose();
-                realsocket = null;
+                realSocket.Dispose();
+                realSocket = null;
             }
         }
     }

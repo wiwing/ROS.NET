@@ -184,8 +184,8 @@ namespace Uml.Robotics.Ros
                     TimeSpan.FromSeconds((retry_period.TotalSeconds > 20) ? 20 : (2 * retry_period.TotalSeconds));
                 needs_retry = false;
                 TcpTransport old_transport = connection.transport;
-                string host = old_transport.connected_host;
-                int port = old_transport.connected_port;
+                string host = old_transport.connectedHost;
+                int port = old_transport.connectedPort;
 
                 TcpTransport transport = new TcpTransport();
                 if (transport.connect(host, port))

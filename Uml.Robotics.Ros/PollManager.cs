@@ -98,7 +98,8 @@ namespace Uml.Robotics.Ros
 
         internal static void Signal()
         {
-            if (SignalEvent != null) SignalEvent.Invoke();
+            if (SignalEvent != null)
+                SignalEvent();
         }
 
 

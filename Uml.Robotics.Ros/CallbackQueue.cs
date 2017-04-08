@@ -34,13 +34,9 @@ namespace Uml.Robotics.Ros
             get { return enabled; }
         }
 
-        public void AddCallback(CallbackInterface callback)
+        public void AddCallback(CallbackInterface cb)
         {
-            AddCallback(callback, callback.Uid);
-        }
-
-        public void AddCallback(CallbackInterface cb, long owner_id)
-        {
+            long owner_id = cb.Uid;
             CallbackInfo info = new CallbackInfo { Callback = cb, RemovalId = owner_id };
             //Logger.LogDebug($"CallbackQueue@{cbthread.ManagedThreadId}: Add callback owner: {owner_id} {cb.ToString()}");
 
