@@ -27,9 +27,13 @@ namespace Uml.Robotics.Ros
 
         public static TimerManager timerManager = new TimerManager();
 
-        private static Task shutdownTask = null;
-        private static bool initialized, started, atExitRegistered, _ok;
-        private static bool shuttingDown, shutdownRequested;
+        private static Task shutdownTask;
+        internal static bool initialized;
+        private static bool started;
+        private static bool atExitRegistered;
+        private static volatile bool _ok;
+        internal static bool shuttingDown;
+        private static volatile bool shutdownRequested;
         private static int initOptions;
 
         public static ICallbackQueue GlobalCallbackQueue

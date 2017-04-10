@@ -66,7 +66,6 @@ namespace Uml.Robotics.Ros.Samples
             ROS.Init(args, "RosoutDebug");
             var asyncSpinner = new AsyncSpinner();
             asyncSpinner.Start();
-            ROS.WaitForMaster();
             nodeHandle = new NodeHandle();
             Init();
         }
