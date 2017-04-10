@@ -236,7 +236,7 @@ namespace Uml.Robotics.Ros
             var result = new XmlRpcValue();
             var payload = new XmlRpcValue();
 
-            if (!master.execute("registerPublisher", args, result, payload, true))
+            if (!Master.execute("registerPublisher", args, result, payload, true))
             {
                 this.Logger.LogError("RPC \"registerService\" for service " + ops.topic + " failed.");
                 return false;
@@ -512,7 +512,7 @@ namespace Uml.Robotics.Ros
             var args = new XmlRpcValue(ThisNode.Name, s.name, datatype, uri);
             var result = new XmlRpcValue();
             var payload = new XmlRpcValue();
-            if (!master.execute("registerSubscriber", args, result, payload, true))
+            if (!Master.execute("registerSubscriber", args, result, payload, true))
             {
                 Logger.LogError("RPC \"registerSubscriber\" for service " + s.name + " failed.");
                 return false;
@@ -560,7 +560,7 @@ namespace Uml.Robotics.Ros
             bool unregisterSuccess = false;
             try
             {
-                unregisterSuccess = master.execute("unregisterSubscriber", args, result, payload, false) && result.IsEmpty;
+                unregisterSuccess = Master.execute("unregisterSubscriber", args, result, payload, false) && result.IsEmpty;
             }
             // Ignore exception during unregister
             catch (Exception e)
@@ -580,7 +580,7 @@ namespace Uml.Robotics.Ros
             bool unregisterSuccess = false;
             try
             {
-                unregisterSuccess = master.execute("unregisterPublisher", args, result, payload, false) && result.IsEmpty;
+                unregisterSuccess = Master.execute("unregisterPublisher", args, result, payload, false) && result.IsEmpty;
             }
             // Ignore exception during unregister
             catch (Exception e)

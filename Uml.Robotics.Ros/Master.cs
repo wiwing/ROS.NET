@@ -7,10 +7,10 @@ using Uml.Robotics.XmlRpc;
 
 namespace Uml.Robotics.Ros
 {
-    public static class master
+    public static class Master
     {
         // cannot use the usubal CreateLogger<master>(); here because this calls is static
-        private static ILogger Logger {get;} = ApplicationLogging.CreateLogger(nameof(master));
+        private static ILogger Logger {get;} = ApplicationLogging.CreateLogger(nameof(Master));
 
         public static int port;
         public static string host = "";
@@ -33,7 +33,7 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        ///     Checks if master is running? I think.
+        ///     Check if ROS master is running by querying the PID of the master process.
         /// </summary>
         /// <returns></returns>
         public static bool check()

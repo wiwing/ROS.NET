@@ -93,7 +93,7 @@ namespace Uml.Robotics.Ros.Samples
             IDictionary<string, string> remappings;
             RemappingHelper.GetRemappings(ref args, out remappings);
             Network.Init(remappings);
-            master.init(remappings);
+            Master.init(remappings);
             ThisNode.Init("", remappings, (int) (InitOption.AnonymousName | InitOption.NoRousout));
             Param.Init(remappings);
             //ROS.Init(args, "");

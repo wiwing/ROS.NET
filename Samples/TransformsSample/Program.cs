@@ -50,7 +50,7 @@ namespace Uml.Robotics.Ros.Samples
             );
 
             string[] nodes = null;
-            while (ROS.ok && !ROS.shutting_down && (!master.getNodes(ref nodes) || !nodes.Contains("/camera/driver")))
+            while (ROS.ok && !ROS.shutting_down && (!Master.getNodes(ref nodes) || !nodes.Contains("/camera/driver")))
             {
                 ROS.Error()("For this to work, you need to \"roslaunch openni2_launch openni2.launch\" on a PC with" +
                     "an ASUS Xtion or PrimeSense Carmine sensor plugged into it, and connect to the same master"

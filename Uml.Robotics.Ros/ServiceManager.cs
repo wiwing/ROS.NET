@@ -176,7 +176,7 @@ namespace Uml.Robotics.Ros
             args.Set(1, ops.service);
             args.Set(2, string.Format("rosrpc://{0}:{1}", Network.host, connectionManager.TCPPort));
             args.Set(3, xmlrpcManager.Uri);
-            if (!master.execute("registerService", args, result, payload, true))
+            if (!Master.execute("registerService", args, result, payload, true))
             {
                 throw new RosException("RPC \"registerService\" for service " + ops.service + " failed.");
             }
@@ -250,7 +250,7 @@ namespace Uml.Robotics.Ros
             XmlRpcValue args = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
             args.Set(0, ThisNode.Name);
             args.Set(1, name);
-            if (!master.execute("lookupService", args, result, payload, false))
+            if (!Master.execute("lookupService", args, result, payload, false))
             {
                 Logger.LogWarning("Service [{0}]: Not available at ROS master", name);
                 return false;
@@ -299,7 +299,7 @@ namespace Uml.Robotics.Ros
             bool unregisterSuccess = false;
             try
             {
-                unregisterSuccess = master.execute("unregisterService", args, result, payload, false);
+                unregisterSuccess = Master.execute("unregisterService", args, result, payload, false);
             }
             catch
             {

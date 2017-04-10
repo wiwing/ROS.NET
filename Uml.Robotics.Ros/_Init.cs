@@ -241,7 +241,7 @@ namespace Uml.Robotics.Ros
         /// </summary>
         public static void WaitForMaster()
         {
-            master.retryTimeout = TimeSpan.FromTicks(0);
+            Master.retryTimeout = TimeSpan.FromTicks(0);
         }
 
         /// <summary>
@@ -358,7 +358,7 @@ namespace Uml.Robotics.Ros
                     init_options = options;
                     _ok = true;
                     Network.Init(remappingArgs);
-                    master.init(remappingArgs);
+                    Master.init(remappingArgs);
                     ThisNode.Init(name, remappingArgs, options);
                     Param.Reset();
                     Param.Init(remappingArgs);
