@@ -4,6 +4,7 @@ using System.Linq;
 using System.IO;
 using System.Xml.Linq;
 using System.Xml;
+using System.Collections;
 
 namespace Uml.Robotics.XmlRpc
 {
@@ -21,6 +22,7 @@ namespace Uml.Robotics.XmlRpc
     }
 
     public class XmlRpcValue
+        : IEnumerable<XmlRpcValue>
     {
         private static readonly XName VALUE_TAG = "value";
         private static readonly XName BOOLEAN_TAG = "boolean";
@@ -50,6 +52,11 @@ namespace Uml.Robotics.XmlRpc
             {
                 SetFromObject(i, initialvalues[i]);
             }
+        }
+
+        public XmlRpcValue(IEnumerable<object> arrayValues)
+            : this(arrayValues.ToArray())
+        {
         }
 
         public XmlRpcValue(bool value)
@@ -486,6 +493,27 @@ namespace Uml.Robotics.XmlRpc
                     return null;
             }
             return s[key];
+        }
+
+        public IEnumerator<XmlRpcValue> GetEnumerator()
+        {
+            if (type == XmlRpcType.Array)
+            {
+                foreach (var x in this.GetArray())
+                    yield return x;
+            }
+            else if (type == XmlRpcType.Struct)
+            {
+                foreach (var x in this.GetStruct().Values)
+                    yield return x;
+            }
+
+            // for all other types we do not produce any values (enumerable is empty)
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }

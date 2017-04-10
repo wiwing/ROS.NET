@@ -156,8 +156,7 @@ namespace Uml.Robotics.Ros
 
                     try
                     {
-                        // if the client is connected, execute the RPC call
-                        var result = client.Execute(method, request);
+                        var result = client.Execute(method, request);           // execute the RPC call
                         response.Set(result.Value);
                         if (result.Success)
                         {
