@@ -151,7 +151,7 @@ namespace Uml.Robotics.Ros
 
             tcpserver_transport = new TcpListener(IPAddress.Any, Network.TcpRosServerPort);
             tcpserver_transport.Start(10);
-            acceptor = ROS.timer_manager.StartTimer(CheckAndAccept, 100, 100);
+            acceptor = ROS.timerManager.StartTimer(CheckAndAccept, 100, 100);
 
         }
 

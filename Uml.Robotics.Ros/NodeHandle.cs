@@ -414,7 +414,7 @@ namespace Uml.Robotics.Ros
                 if (nh_refcount == 0 && !ROS.isStarted())
                 {
                     node_started_by_nh = true;
-                    ROS.start();
+                    ROS.Start();
                 }
                 ++nh_refcount;
             }

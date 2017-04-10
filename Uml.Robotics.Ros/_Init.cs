@@ -20,17 +20,17 @@ namespace Uml.Robotics.Ros
     /// </summary>
     public static class ROS
     {
-        private static Task shutdownTask = null;
-        private static ILogger Logger { get; set;} = ApplicationLogging.CreateLogger(nameof(ROS));
+        private static ILogger Logger { get; set; } = ApplicationLogging.CreateLogger(nameof(ROS));
 
         private static ICallbackQueue globalCallbackQueue;
-        private static object start_mutex = new object();
+        private static object startMutex = new object();
 
-        public static TimerManager timer_manager = new TimerManager();
+        public static TimerManager timerManager = new TimerManager();
 
-        internal static bool initialized, started, atExitRegistered, _ok;
-        internal static bool _shutting_down, shutdown_requested;
-        internal static int init_options;
+        private static Task shutdownTask = null;
+        private static bool initialized, started, atExitRegistered, _ok;
+        private static bool shuttingDown, shutdownRequested;
+        private static int initOptions;
 
         public static ICallbackQueue GlobalCallbackQueue
         {
@@ -41,19 +41,19 @@ namespace Uml.Robotics.Ros
         ///     Means of setting ROS_MASTER_URI programatically before Init is called
         ///     Order of precedence: __master:=... > this variable > User Environment Variable > System Environment Variable
         /// </summary>
-        public static string ROS_MASTER_URI;
+        public static string ROS_MASTER_URI { get; set; }
 
         /// <summary>
         ///     Means of setting ROS_HOSTNAME directly before Init is called
         ///     Order of precedence: __hostname:=... > this variable > User Environment Variable > System Environment Variable
         /// </summary>
-        public static string ROS_HOSTNAME;
+        public static string ROS_HOSTNAME { get; set; }
 
         /// <summary>
         ///     Means of setting ROS_IP directly before Init is called
         ///     Order of precedence: __ip:=... > this variable > User Environment Variable > System Environment Variable
         /// </summary>
-        public static string ROS_IP;
+        public static string ROS_IP { get; set; }
 
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace Uml.Robotics.Ros
         public const int WallDuration = 10;
 
         public static NodeHandle GlobalNodeHandle;
-        private static object shutting_down_mutex = new object();
+        private static object shuttingDownMutex = new object();
 
         private static TimeSpan lastSimTime;                // last sim time time
         private static TimeSpan lastSimTimeReceived;        // last sim time received time (wall)
@@ -85,7 +85,7 @@ namespace Uml.Robotics.Ros
 
         public static bool shutting_down
         {
-            get { return _shutting_down; }
+            get { return shuttingDown; }
         }
 
         /// <summary>
@@ -162,17 +162,6 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        ///     This is self-explanatory
-        /// </summary>
-        /// <param name="type"> The type of message to make </param>
-        /// <returns> A message of that type </returns>
-        internal static RosMessage MakeMessage(string type)
-        {
-            return RosMessage.Generate(type);
-        }
-
-
-        /// <summary>
         /// Non-creatable marker class
         /// </summary>
         public class ONLY_AUTO_PARAMS
@@ -237,14 +226,6 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        /// Will make all XmlRpc calls to master that _would_already_wait_for_master_ wait INDEFINITELY
-        /// </summary>
-        public static void WaitForMaster()
-        {
-            Master.retryTimeout = TimeSpan.FromTicks(0);
-        }
-
-        /// <summary>
         ///     Set the logging factory for ROS.NET
         /// </summary>
         /// <param name="factory"> The logging factory to use for logging </param>
@@ -265,7 +246,6 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="args"> argv - parsed for remapping args (AND PARAMS??) </param>
         /// <param name="name"> the node's name </param>
-        //TODO make sure params are parsed
         public static void Init(string[] args, string name)
         {
             Init(args, name, 0);
@@ -284,8 +264,7 @@ namespace Uml.Robotics.Ros
             // 2. passed in as remap argument
             // 3. environment variable
 
-            IDictionary<string, string> remapping;
-            if (RemappingHelper.GetRemappings(ref args, out remapping))
+            if (RemappingHelper.GetRemappings(ref args, out IDictionary<string, string> remapping))
                 Init(remapping, name, options);
             else
                 throw new InvalidOperationException("Could not initialize ROS");
@@ -355,17 +334,20 @@ namespace Uml.Robotics.Ros
                         srvRegistry.ParseAssemblyAndRegisterRosServices(assembly);
                     }
 
-                    init_options = options;
+                    initOptions = options;
                     _ok = true;
+
+                    Param.Reset();
+                    SimTime.Reset();
+                    RosOutAppender.Reset();
+
                     Network.Init(remappingArgs);
                     Master.init(remappingArgs);
                     ThisNode.Init(name, remappingArgs, options);
-                    Param.Reset();
                     Param.Init(remappingArgs);
-                    SimTime.Reset();
                     SimTime.Instance.SimTimeEvent += SimTimeCallback;
 
-                    lock (shutting_down_mutex)
+                    lock (shuttingDownMutex)
                     {
                         switch(shutdownTask?.Status)
                         {
@@ -380,7 +362,6 @@ namespace Uml.Robotics.Ros
                     initialized = true;
 
                     GlobalNodeHandle = new NodeHandle(ThisNode.Namespace, remappingArgs);
-                    RosOutAppender.Reset();
                     RosOutAppender.Instance.Start();
                 }
             }
@@ -389,22 +370,22 @@ namespace Uml.Robotics.Ros
         /// <summary>
         ///     shutdowns are async with the call to shutdown. This delays shutting down ROS feels like it.
         /// </summary>
-        internal static void checkForShutdown()
+        internal static void CheckForShutdown()
         {
-            lock (shutting_down_mutex)
+            lock (shuttingDownMutex)
             {
-                if (!shutdown_requested || (shutdownTask == null) || (shutdownTask.Status != TaskStatus.Created))
+                if (!shutdownRequested || shutdownTask == null || shutdownTask.Status != TaskStatus.Created)
                     return;
                 shutdownTask.Start();
             }
         }
 
         /// <summary>
-        ///     This is called when rosnode kill is invoked, or something
+        ///     This is called when rosnode kill is invoked
         /// </summary>
         /// <param name="p"> pointer to unmanaged XmlRpcValue containing params </param>
         /// <param name="r"> pointer to unmanaged XmlRpcValue that will contain return value </param>
-        private static void shutdownCallback(XmlRpcValue parms, XmlRpcValue r)
+        private static void ShutdownCallback(XmlRpcValue parms, XmlRpcValue r)
         {
             int num_params = 0;
             if (parms.Type == XmlRpcType.Array)
@@ -428,53 +409,45 @@ namespace Uml.Robotics.Ros
             {
                 throw new NullReferenceException($"{nameof(shutdownTask)} was not initialized. You need to call ROS.init first.");
             }
-            shutdownTask.GetAwaiter().GetResult();
+            shutdownTask.Wait();
         }
 
 
         /// <summary>
         ///     Finishes intialization This is called by the first NodeHandle when it initializes
         /// </summary>
-        internal static void start()
+        internal static void Start()
         {
-            lock (start_mutex)
+            lock (startMutex)
             {
                 if (started)
                     return;
 
                 PollManager.Reset();
-                PollManager.Instance.AddPollThreadListener(checkForShutdown);
+                ServiceManager.Reset();
                 XmlRpcManager.Reset();
-                XmlRpcManager.Instance.Bind("shutdown", shutdownCallback);
-                //initInternalTimerManager();
                 TopicManager.Reset();
-                TopicManager.Instance.Start();
-                try
-                {
-                    ServiceManager.Reset();
-                    ServiceManager.Instance.Start();
-                }
-                catch (Exception e)
-                {
-                    Logger.LogError(e.ToString());
-                }
                 ConnectionManager.Reset();
+
+                PollManager.Instance.AddPollThreadListener(CheckForShutdown);
+                XmlRpcManager.Instance.Bind("shutdown", ShutdownCallback);
+                TopicManager.Instance.Start();
+                ServiceManager.Instance.Start();
                 ConnectionManager.Instance.Start();
                 PollManager.Instance.Start();
                 XmlRpcManager.Instance.Start();
 
-                //Time.Init();
-                shutdown_requested = false;
-                _shutting_down = false;
+                shutdownRequested = false;
+                shuttingDown = false;
                 started = true;
                 _ok = true;
             }
         }
 
         /// <summary>
-        ///     self explanatory
+        /// Check whether ROS.init() has been called.
         /// </summary>
-        /// <returns> guess </returns>
+        /// <returns>System.Boolean indicating whether ROS has been started.</returns>
         public static bool isStarted()
         {
             return started;
@@ -485,11 +458,11 @@ namespace Uml.Robotics.Ros
         /// </summary>
         public static Task shutdown()
         {
-            lock (shutting_down_mutex)
+            lock (shuttingDownMutex)
             {
                 if ((shutdownTask == null) || shutdownTask.Status == TaskStatus.Created)
                 {
-                    shutdown_requested = true;
+                    shutdownRequested = true;
                 }
             }
 
@@ -498,17 +471,17 @@ namespace Uml.Robotics.Ros
 
 
         /// <summary>
-        ///     Kills all the things. Called by checkForShutdown
+        /// Internal ROS deinitialization method. Called by checkForShutdown.
         /// </summary>
         private static void _shutdown()
         {
-            lock (shutting_down_mutex)
+            lock (shuttingDownMutex)
             {
-                if (_shutting_down)
+                if (shuttingDown)
                 {
                     return;
                 }
-                _shutting_down = true;
+                shuttingDown = true;
             }
 
             if (started)
@@ -542,11 +515,11 @@ namespace Uml.Robotics.Ros
             globalCallbackQueue = null;
             initialized = false;
             _ok = false;
-            timer_manager = new TimerManager();
+            timerManager = new TimerManager();
             started = false;
             _ok = false;
-            _shutting_down = false;
-            shutdown_requested = false;
+            shuttingDown = false;
+            shutdownRequested = false;
         }
 
     }

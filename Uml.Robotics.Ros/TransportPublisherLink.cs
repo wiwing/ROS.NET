@@ -27,7 +27,7 @@ namespace Uml.Robotics.Ros
             dropping = true;
             if (retry_timer != null)
             {
-                ROS.timer_manager.RemoveTimer(ref retry_timer);
+                ROS.timerManager.RemoveTimer(ref retry_timer);
             }
             connection.drop(Connection.DropReason.Destructing);
         }
@@ -82,7 +82,7 @@ namespace Uml.Robotics.Ros
                 next_retry = DateTime.UtcNow.Add(retry_period);
                 if (retry_timer == null)
                 {
-                    retry_timer = ROS.timer_manager.StartTimer(onRetryTimer, 100);
+                    retry_timer = ROS.timerManager.StartTimer(onRetryTimer, 100);
                 }
                 else
                 {
@@ -110,7 +110,7 @@ namespace Uml.Robotics.Ros
                 return false;
             }
             if (retry_timer != null)
-                ROS.timer_manager.RemoveTimer(ref retry_timer);
+                ROS.timerManager.RemoveTimer(ref retry_timer);
             connection.read(4, onMessageLength);
             return true;
         }
@@ -134,7 +134,7 @@ namespace Uml.Robotics.Ros
         private bool onMessageLength(Connection conn, byte[] buffer, int size, bool success)
         {
             if (retry_timer != null)
-                ROS.timer_manager.RemoveTimer(ref retry_timer);
+                ROS.timerManager.RemoveTimer(ref retry_timer);
             if (!success)
             {
                 if (connection != null)

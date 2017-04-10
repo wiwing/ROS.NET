@@ -69,7 +69,7 @@ namespace Uml.Robotics.Ros
         public virtual MReq deserialize<MReq, MRes>(ServiceCallbackHelperParams<MReq, MRes> parms) where MReq : RosMessage where MRes : RosMessage
         {
             //Logger.LogDebug("ISubscriptionCallbackHelper: deserialize");
-            RosMessage msg = ROS.MakeMessage(type);
+            RosMessage msg = RosMessage.Generate(type);
             assignSubscriptionConnectionHeader(ref msg, parms.connection_header);
             MReq t = (MReq) msg;
             t.Deserialize(parms.response.Serialized);

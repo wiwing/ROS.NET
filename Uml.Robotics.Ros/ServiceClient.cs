@@ -120,7 +120,7 @@ namespace Uml.Robotics.Ros
 
         protected bool postcall(bool retval)
         {
-            while (ROS._shutting_down && ROS.ok)
+            while (ROS.shuttingDown && ROS.ok)
             {
                 Thread.Sleep(new TimeSpan(0, 0, 0, 0, ROS.WallDuration));
             }
