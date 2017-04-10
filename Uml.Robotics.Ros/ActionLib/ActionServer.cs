@@ -18,8 +18,8 @@ namespace Uml.Robotics.Ros.ActionLib
         public TimeSpan StatusListTimeout { get; private set; } = new TimeSpan(0, 0, 5);
         public double StatusFrequencySeconds { get; private set; } = 5;
 
-        private readonly string ACTIONLIB_STATUS_FREQUENCY = "actionlib_status_frequency";
-        private readonly string STATUS_LIST_TIMEOUT = "status_list_timeout";
+        private const string ACTIONLIB_STATUS_FREQUENCY = "actionlib_status_frequency";
+        private const string STATUS_LIST_TIMEOUT = "status_list_timeout";
         private bool started;
         private Dictionary<string, ServerGoalHandle<TGoal, TResult, TFeedback>> goalHandles;
         private NodeHandle nodeHandle;

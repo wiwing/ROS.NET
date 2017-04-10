@@ -71,12 +71,12 @@ namespace Uml.Robotics.Ros
         private static TimeSpan lastSimTime;                // last sim time time
         private static TimeSpan lastSimTimeReceived;        // last sim time received time (wall)
 
-        private static readonly string ROSOUT_FMAT = "{0} {1}";
-        private static readonly string ROSOUT_DEBUG_PREFIX = "[Debug]";
-        private static readonly string ROSOUT_INFO_PREFIX  = "[Info ]";
-        private static readonly string ROSOUT_WARN_PREFIX  = "[Warn ]";
-        private static readonly string ROSOUT_ERROR_PREFIX = "[Error]";
-        private static readonly string ROSOUT_FATAL_PREFIX = "[FATAL]";
+        private const string ROSOUT_FMAT = "{0} {1}";
+        private const string ROSOUT_DEBUG_PREFIX = "[Debug]";
+        private const string ROSOUT_INFO_PREFIX  = "[Info ]";
+        private const string ROSOUT_WARN_PREFIX  = "[Warn ]";
+        private const string ROSOUT_ERROR_PREFIX = "[Error]";
+        private const string ROSOUT_FATAL_PREFIX = "[FATAL]";
 
         private static Dictionary<RosOutAppender.ROSOUT_LEVEL, string> ROSOUT_PREFIX =
             new Dictionary<RosOutAppender.ROSOUT_LEVEL, string> {
