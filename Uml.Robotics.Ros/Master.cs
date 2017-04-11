@@ -12,13 +12,14 @@ namespace Uml.Robotics.Ros
         // cannot use the usubal CreateLogger<master>(); here because this calls is static
         private static ILogger Logger {get;} = ApplicationLogging.CreateLogger(nameof(Master));
 
-        public static int port;
-        public static string host = "";
-        public static string uri = "";
+        private static int port;
+        private static string host;
+        private static string uri;
         public static TimeSpan retryTimeout = TimeSpan.FromSeconds(5);
 
         public static void init(IDictionary<string, string> remapping_args)
         {
+            uri = string.Empty;
             if (remapping_args.ContainsKey("__master"))
             {
                 uri = (string) remapping_args["__master"];

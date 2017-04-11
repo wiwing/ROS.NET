@@ -277,20 +277,10 @@ namespace Uml.Robotics.Ros
         /// <summary>
         ///     Initializes ROS so nodehandles and nodes can exist
         /// </summary>
-        /// <param name="remapping_args"> Dictionary of remapping args </param>
-        /// <param name="name"> node name </param>
-        internal static void Init(IDictionary<string, string> remapping_args, string name)
-        {
-            Init(remapping_args, name, 0);
-        }
-
-        /// <summary>
-        ///     Initializes ROS so nodehandles and nodes can exist
-        /// </summary>
         /// <param name="remappingArgs"> dictionary of remapping args </param>
         /// <param name="name"> node name </param>
-        /// <param name="options"> options? </param>
-        internal static void Init(IDictionary<string, string> remappingArgs, string name, int options)
+        /// <param name="options"> options </param>
+        public static void Init(IDictionary<string, string> remappingArgs, string name, int options = 0)
         {
             lock (typeof(ROS))
             {
