@@ -21,7 +21,7 @@ namespace Uml.Robotics.Ros
         private bool checkedSimTime;
         private NodeHandle nodeHandle;
         private bool simTime;
-        private Subscriber<Clock> simTimeSubscriber;
+        private Subscriber simTimeSubscriber;
 
 
         internal static void Terminate()

@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Uml.Robotics.Ros
 {
-    public class Subscriber<M> : ISubscriber
+    public class Subscriber : ISubscriber
     {
         /// <summary>
         ///     Creates a ROS Subscriber
@@ -15,20 +15,20 @@ namespace Uml.Robotics.Ros
             : base(topic)
         {
             this.topic = topic;
-            nodehandle = new NodeHandle(nodeHandle);
-            helper = cb;
+            this.nodehandle = new NodeHandle(nodeHandle);
+            this.helper = cb;
         }
 
         /// <summary>
         ///     Deep Copy of a subscriber
         /// </summary>
         /// <param name="s">Subscriber to copy</param>
-        public Subscriber(Subscriber<M> s)
+        public Subscriber(Subscriber s)
             : base(s.topic)
         {
-            topic = s.topic;
-            nodehandle = new NodeHandle(s.nodehandle);
-            helper = s.helper;
+            this.topic = s.topic;
+            this.nodehandle = new NodeHandle(s.nodehandle);
+            this.helper = s.helper;
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace Uml.Robotics.Ros
         }
     }
 
-    public class ISubscriber
+    public abstract class ISubscriber : IDisposable
     {
         protected ISubscriber(string topic)
         {
@@ -92,9 +92,11 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        public virtual void shutdown()
+        public abstract void shutdown();
+
+        public void Dispose()
         {
-            throw new NotImplementedException();
+            shutdown();
         }
     }
 }

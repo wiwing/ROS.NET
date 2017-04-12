@@ -45,13 +45,10 @@ namespace Uml.Robotics.Ros
 
         protected IServiceCallbackHelper()
         {
-            // Logger.LogDebug("ISubscriptionCallbackHelper: 0 arg constructor");
         }
 
         protected IServiceCallbackHelper(ServiceFunction<RosMessage, RosMessage> Callback)
         {
-            //Logger.LogDebug("ISubscriptionCallbackHelper: 1 arg constructor");
-            //throw new NotImplementedException();
             _callback = Callback;
         }
 
@@ -68,19 +65,11 @@ namespace Uml.Robotics.Ros
 
         public virtual MReq deserialize<MReq, MRes>(ServiceCallbackHelperParams<MReq, MRes> parms) where MReq : RosMessage where MRes : RosMessage
         {
-            //Logger.LogDebug("ISubscriptionCallbackHelper: deserialize");
             RosMessage msg = RosMessage.Generate(type);
-            assignSubscriptionConnectionHeader(ref msg, parms.connection_header);
+            msg.connection_header = new Dictionary<string, string>(parms.connection_header);
             MReq t = (MReq) msg;
             t.Deserialize(parms.response.Serialized);
             return t;
-            //return SerializationHelper.Deserialize<T>(parms.buffer);
-        }
-
-        private void assignSubscriptionConnectionHeader(ref RosMessage msg, IDictionary<string, string> p)
-        {
-            // Logger.LogDebug("ISubscriptionCallbackHelper: assignSubscriptionConnectionHeader");
-            msg.connection_header = new Dictionary<string, string>(p);
         }
     }
 }

@@ -246,14 +246,14 @@ namespace Uml.Robotics.Ros
         }
 
 
-        public bool subscribe<T>(SubscribeOptions<T> ops) where T : RosMessage, new()
+        public void subscribe(SubscribeOptions ops)
         {
             lock (subcriptionsMutex)
             {
                 if (addSubCallback(ops))
-                    return true;
+                    return;
                 if (shuttingDown)
-                    return false;
+                    return;
             }
             if (string.IsNullOrEmpty(ops.md5sum))
                 throw subscribeFail(ops, "with an empty md5sum");
@@ -268,20 +268,20 @@ namespace Uml.Robotics.Ros
             s.addCallback(ops.helper, ops.md5sum, ops.callback_queue, ops.queue_size, ops.allow_concurrent_callbacks, ops.topic);
             if (!registerSubscriber(s, ops.datatype))
             {
-                this.Logger.LogError("Couldn't register subscriber on topic [{0}]", ops.topic);
+                string error = $"Couldn't register subscriber on topic [{ops.topic}]";
                 s.shutdown();
-                return false;
+                this.Logger.LogError(error);
+                throw new RosException(error);
             }
 
             lock (subcriptionsMutex)
             {
                 subscriptions.Add(s);
             }
-            return true;
         }
 
 
-        public Exception subscribeFail<T>(SubscribeOptions<T> ops, string reason) where T : RosMessage, new()
+        public Exception subscribeFail(SubscribeOptions ops, string reason)
         {
             return new Exception("Subscribing to topic [" + ops.topic + "] " + reason);
         }
@@ -418,7 +418,7 @@ namespace Uml.Robotics.Ros
         }
 
 
-        public bool addSubCallback<M>(SubscribeOptions<M> ops) where M : RosMessage, new()
+        public bool addSubCallback(SubscribeOptions ops)
         {
             bool found = false;
             bool found_topic = false;
@@ -689,7 +689,7 @@ namespace Uml.Robotics.Ros
 
         public bool pubUpdate(string topic, List<string> pubs)
         {
-            using (this.Logger.BeginScope ($"{ nameof(pubUpdate) }"))
+            using (this.Logger.BeginScope(nameof(pubUpdate)))
             {
                 this.Logger.LogDebug("TopicManager is updating publishers for " + topic);
 

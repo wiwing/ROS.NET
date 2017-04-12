@@ -209,7 +209,7 @@ namespace Uml.Robotics.Ros
 
         private static void _rosout(object format, object[] args, RosOutAppender.ROSOUT_LEVEL level, CallerInfo callerInfo)
         {
-            using (Logger.BeginScope ($"{ nameof(_rosout) }"))
+            using (Logger.BeginScope(nameof(_rosout)))
             {
                 if (format == null)
                     throw new ArgumentNullException(nameof(format));

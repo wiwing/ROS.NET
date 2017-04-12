@@ -27,10 +27,10 @@ namespace Uml.Robotics.Ros.ActionLib
         private Dictionary<string, ClientGoalHandle<TGoal, TResult, TFeedback>> goalHandles;
         private Dictionary<string, int> goalSubscriberCount;
         private Dictionary<string, int> cancelSubscriberCount;
-        private Subscriber<GoalStatusArray> statusSubscriber;
-        private Subscriber<FeedbackActionMessage<TFeedback>> feedbackSubscriber;
-        private Subscriber<ResultActionMessage<TResult>> resultSubscriber;
-        private int nextGoalId = 0; // Shared amon all clients
+        private Subscriber statusSubscriber;
+        private Subscriber feedbackSubscriber;
+        private Subscriber resultSubscriber;
+        private int nextGoalId = 0; // Shared among all clients
         private string statusCallerId = null;
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ActionClient<TGoal, TResult, TFeedback>>();
         private Object lockId = new Object();
@@ -47,9 +47,9 @@ namespace Uml.Robotics.Ros.ActionLib
             this.goalSubscriberCount = new Dictionary<string, int>();
             this.cancelSubscriberCount = new Dictionary<string, int>();
 
-            statusSubscriber = nodeHandle.subscribe<GoalStatusArray>("status", (uint)QueueSize, OnStatusMessage);
-            feedbackSubscriber = nodeHandle.subscribe<FeedbackActionMessage<TFeedback>>("feedback", (uint)QueueSize, OnFeedbackMessage);
-            resultSubscriber = nodeHandle.subscribe<ResultActionMessage<TResult>>("result", (uint)QueueSize, OnResultMessage);
+            statusSubscriber = nodeHandle.subscribe<GoalStatusArray>("status", this.QueueSize, OnStatusMessage);
+            feedbackSubscriber = nodeHandle.subscribe<FeedbackActionMessage<TFeedback>>("feedback", this.QueueSize, OnFeedbackMessage);
+            resultSubscriber = nodeHandle.subscribe<ResultActionMessage<TResult>>("result", this.QueueSize, OnResultMessage);
 
             GoalPublisher = nodeHandle.advertise<GoalActionMessage<TGoal>>("goal", QueueSize, OnGoalConnectCallback,
                 OnGoalDisconnectCallback

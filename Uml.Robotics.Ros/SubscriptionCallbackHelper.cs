@@ -3,9 +3,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
-    public class SubscriptionCallbackHelper<M> : ISubscriptionCallbackHelper where M : RosMessage, new()
+    public class SubscriptionCallbackHelper<M>
+        : ISubscriptionCallbackHelper where M : RosMessage, new()
     {
-        public SubscriptionCallbackHelper(string t, CallbackDelegate<M> cb) : this(new Callback<M>(cb))
+        public SubscriptionCallbackHelper(string t, CallbackDelegate<M> cb)
+            : this(Ros.Callback.Create(cb))
         {
             type = t;
         }
@@ -19,11 +21,6 @@ namespace Uml.Robotics.Ros
             : base(q)
         {
         }
-
-        public override void call(RosMessage msg)
-        {
-            Callback.SendEvent(msg);
-        }
     }
 
     public class ISubscriptionCallbackHelper
@@ -35,20 +32,22 @@ namespace Uml.Robotics.Ros
 
         protected ISubscriptionCallbackHelper()
         {
-            // Logger.LogDebug("ISubscriptionCallbackHelper: 0 arg constructor");
+        }
+
+        public ISubscriptionCallbackHelper(string type)
+        {
+            this.type = type;
         }
 
         protected ISubscriptionCallbackHelper(CallbackInterface Callback)
         {
-            //Logger.LogDebug("ISubscriptionCallbackHelper: 1 arg constructor");
-            //throw new NotImplementedException();
             this.Callback = Callback;
         }
 
-        public virtual void call(RosMessage parms)
+
+        public virtual void call(RosMessage msg)
         {
-            // Logger.LogDebug("ISubscriptionCallbackHelper: call");
-            throw new NotImplementedException();
+            Callback.SendEvent(msg);
         }
     }
 }

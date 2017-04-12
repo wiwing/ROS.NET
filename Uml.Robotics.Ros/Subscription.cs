@@ -183,7 +183,7 @@ namespace Uml.Robotics.Ros
 
         public bool pubUpdate(IEnumerable<string> publisherUris)
         {
-            using (Logger.BeginScope ($"{ nameof(pubUpdate) }"))
+            using (Logger.BeginScope(nameof(pubUpdate)))
             {
                 lock (shutdown_mutex)
                 {
@@ -449,14 +449,14 @@ namespace Uml.Robotics.Ros
             shutdown();
         }
 
-        internal bool addCallback<M>(
-            SubscriptionCallbackHelper<M> helper,
+        internal bool addCallback(
+            ISubscriptionCallbackHelper helper,
             string md5sum,
             ICallbackQueue queue,
-            uint queue_size,
+            int queue_size,
             bool allow_concurrent_callbacks,
             string topiclol
-        ) where M : RosMessage, new()
+        )
         {
             lock (md5sum_mutex)
             {
@@ -469,8 +469,12 @@ namespace Uml.Robotics.Ros
 
             lock (callbacks_mutex)
             {
-                var info = new CallbackInfo<M> {helper = helper, callback = queue, subscription_queue =
-                    new Callback<M>(helper.Callback.SendEvent, topiclol, queue_size, allow_concurrent_callbacks)};
+                ICallbackInfo info = new ICallbackInfo
+                {
+                    helper = helper,
+                    callback = queue,
+                    subscription_queue = new Callback(helper.Callback.SendEvent, topiclol, queue_size, allow_concurrent_callbacks)
+                };
 
                 //if (!helper.isConst())
                 //{
@@ -566,14 +570,14 @@ namespace Uml.Robotics.Ros
             public CallbackInterface subscription_queue;
         }
 
-        private class CallbackInfo<M>
-            : ICallbackInfo where M : RosMessage, new()
-        {
-            public CallbackInfo()
-            {
-                helper = new SubscriptionCallbackHelper<M>(new M().MessageType);
-            }
-        }
+        //private class CallbackInfo<M>
+        //    : ICallbackInfo where M : RosMessage, new()
+        //{
+        //    public CallbackInfo()
+        //    {
+        //        helper = new SubscriptionCallbackHelper<M>(new M().MessageType);
+        //    }
+        //}
 
         private class LatchInfo
         {

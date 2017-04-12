@@ -4,26 +4,31 @@ using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
-    internal class Callback<T>
-        : CallbackInterface where T : RosMessage, new()
+    internal class Callback
+        : CallbackInterface
     {
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Callback<T>>();
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Callback>();
         private volatile bool callback_state;
 
         private readonly bool allow_concurrent_callbacks;
         private readonly Queue<Item> queue = new Queue<Item>();
-        private uint size;
+        private int size;
 
-        public Callback(CallbackDelegate<T> f, string topic, uint queue_size, bool allow_concurrent_callbacks)
+        public static Callback Create<M>(CallbackDelegate<M> f) where M : RosMessage, new()
+        {
+            return new Callback(msg => f(msg as M));
+        }
+
+        public Callback(CallbackDelegate f, string topic, int queue_size, bool allow_concurrent_callbacks)
             : this(f)
         {
             this.allow_concurrent_callbacks = allow_concurrent_callbacks;
             size = queue_size;
         }
 
-        public Callback(CallbackDelegate<T> f)
+        public Callback(CallbackDelegate f)
         {
-            base.Event += msg => f(msg as T);
+            base.Event += f;
         }
 
         public override void AddToCallbackQueue(ISubscriptionCallbackHelper helper, RosMessage message, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time)
@@ -124,7 +129,7 @@ namespace Uml.Robotics.Ros
             this.Uid = NewUniqueId();
         }
 
-        public CallbackInterface(CallbackDelegate f) 
+        public CallbackInterface(CallbackDelegate f)
             : this()
         {
             Event += f;
@@ -137,7 +142,7 @@ namespace Uml.Robotics.Ros
             Invalid
         }
 
-        public void SendEvent<T>(T msg) where T : RosMessage, new()
+        public void SendEvent(RosMessage msg)
         {
             if (Event != null)
             {

@@ -29,8 +29,8 @@ namespace Uml.Robotics.Ros.ActionLib
         private Publisher<ResultActionMessage<TResult>> resultPublisher;
         private Publisher<FeedbackActionMessage<TFeedback>> feedbackPublisher;
         private Publisher<GoalStatusArray> goalStatusPublisher;
-        private Subscriber<GoalActionMessage<TGoal>> goalSubscriber;
-        private Subscriber<GoalID> cancelSubscriber;
+        private Subscriber goalSubscriber;
+        private Subscriber cancelSubscriber;
         private TimeSpan statusInterval;
         private DateTime nextStatusPublishTime;
         private long spinCallbackId = 0;
@@ -126,8 +126,8 @@ namespace Uml.Robotics.Ros.ActionLib
             }
 
             // Message consumers
-            goalSubscriber = nodeHandle.subscribe<GoalActionMessage<TGoal>>("goal", (uint)QueueSize, GoalCallback);
-            cancelSubscriber = nodeHandle.subscribe<GoalID>("cancel", (uint)QueueSize, CancelCallback);
+            goalSubscriber = nodeHandle.subscribe<GoalActionMessage<TGoal>>("goal", this.QueueSize, GoalCallback);
+            cancelSubscriber = nodeHandle.subscribe<GoalID>("cancel", this.QueueSize, CancelCallback);
 
             started = true;
             PublishStatus();

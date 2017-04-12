@@ -19,7 +19,7 @@ namespace Listener
             var spinner = new AsyncSpinner();
             spinner.Start();
             NodeHandle node = new NodeHandle();
-            Subscriber<std_msgs.String> Subscriber = node.subscribe<std_msgs.String>("/chatter", 1, chatterCallback);
+            Subscriber Subscriber = node.subscribe<std_msgs.String>("/chatter", 1, chatterCallback);
             ROS.waitForShutdown();
         }
     }

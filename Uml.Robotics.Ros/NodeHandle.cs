@@ -222,31 +222,19 @@ namespace Uml.Robotics.Ros
             return null;
         }
 
-        /// <summary>
-        ///     Creates a subscriber with the given topic name.
-        /// </summary>
-        /// <typeparam name="M">Type of the subscriber message</typeparam>
-        /// <param name="topic">Topic name</param>
-        /// <param name="queue_size">How many messages to qeueue</param>
-        /// <param name="cb">Callback to fire when a message is receieved</param>
-        /// <returns>A subscriber</returns>
-        public Subscriber<M> subscribe<M>(string topic, uint queue_size, CallbackDelegate<M> cb) where M : RosMessage, new()
-        {
-            return subscribe<M>(topic, queue_size, new Callback<M>(cb), false);
-        }
 
         /// <summary>
         ///     Creates a subscriber with the given topic name.
         /// </summary>
         /// <typeparam name="M">Type of the subscriber message</typeparam>
         /// <param name="topic">Topic name</param>
-        /// <param name="queue_size">How many messages to qeueue</param>
+        /// <param name="queueSize">How many messages to qeueue</param>
         /// <param name="cb">Callback to fire when a message is receieved</param>
-        /// <param name="allow_concurrent_callbacks">Probably breaks things when true</param>
+        /// <param name="allowConcurrentCallbacks">Probably breaks things when true</param>
         /// <returns>A subscriber</returns>
-        public Subscriber<M> subscribe<M>(string topic, uint queue_size, CallbackDelegate<M> cb, bool allow_concurrent_callbacks) where M : RosMessage, new()
+        public Subscriber subscribe<M>(string topic, int queueSize, CallbackDelegate<M> cb, bool allowConcurrentCallbacks = false) where M : RosMessage, new()
         {
-            return subscribe<M>(topic, queue_size, new Callback<M>(cb), allow_concurrent_callbacks);
+            return subscribe<M>(topic, queueSize, Ros.Callback.Create(cb), allowConcurrentCallbacks);
         }
 
         /// <summary>
@@ -254,21 +242,44 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <typeparam name="M">Topic type</typeparam>
         /// <param name="topic">Topic name</param>
-        /// <param name="queue_size">How many messages to qeueue</param>
+        /// <param name="queueSize">How many messages to qeueue</param>
         /// <param name="cb">Function to fire when a message is recieved</param>
-        /// <param name="allow_concurrent_callbacks">Probably breaks things when true</param>
+        /// <param name="allowConcurrentCallbacks">Probably breaks things when true</param>
         /// <returns>A subscriber</returns>
-        public Subscriber<M> subscribe<M>(string topic, uint queue_size, CallbackInterface cb, bool allow_concurrent_callbacks)
+        public Subscriber subscribe<M>(string topic, int queueSize, CallbackInterface cb, bool allowConcurrentCallbacks)
             where M : RosMessage, new()
         {
             if (_callback == null)
             {
                 _callback = ROS.GlobalCallbackQueue;
             }
-            var ops = new SubscribeOptions<M>(topic, queue_size, cb.SendEvent)
+
+            var ops = new SubscribeOptions<M>(topic, queueSize, cb.SendEvent)
             {
                 callback_queue = _callback,
-                allow_concurrent_callbacks = allow_concurrent_callbacks
+                allow_concurrent_callbacks = allowConcurrentCallbacks
+            };
+            ops.callback_queue.AddCallback(cb);
+            return subscribe(ops);
+        }
+
+        public Subscriber Subscribe(string topic, string messageType, int queueSize, CallbackDelegate<RosMessage> cb, bool allowConcurrentCallbacks = false)
+        {
+            return Subscribe(topic, messageType, queueSize, Ros.Callback.Create(cb), allowConcurrentCallbacks);
+        }
+
+        public Subscriber Subscribe(string topic, string messageType, int queueSize, CallbackInterface cb, bool allowConcurrentCallbacks = false)
+        {
+            if (_callback == null)
+            {
+                _callback = ROS.GlobalCallbackQueue;
+            }
+
+            var message = RosMessage.Generate(messageType);
+            var ops = new SubscribeOptions(topic, message.MessageType, message.MD5Sum(), queueSize, new SubscriptionCallbackHelper<RosMessage>(message.MessageType, cb.SendEvent))
+            {
+                callback_queue = _callback,
+                allow_concurrent_callbacks = allowConcurrentCallbacks
             };
             ops.callback_queue.AddCallback(cb);
             return subscribe(ops);
@@ -277,26 +288,24 @@ namespace Uml.Robotics.Ros
         /// <summary>
         ///     Creates a subscriber with given subscriber options
         /// </summary>
-        /// <typeparam name="M">Topic type</typeparam>
         /// <param name="ops">Subscriber options</param>
         /// <returns>A subscriber</returns>
-        public Subscriber<M> subscribe<M>(SubscribeOptions<M> ops) where M : RosMessage, new()
+        public Subscriber subscribe(SubscribeOptions ops)
         {
             ops.topic = resolveName(ops.topic);
             if (ops.callback_queue == null)
             {
                 ops.callback_queue = Callback;
             }
-            if (TopicManager.Instance.subscribe(ops))
+
+            TopicManager.Instance.subscribe(ops);
+
+            var sub = new Subscriber(ops.topic, this, ops.helper);
+            lock (collection.mutex)
             {
-                var sub = new Subscriber<M>(ops.topic, this, ops.helper);
-                lock (collection.mutex)
-                {
-                    collection.subscribers.Add(sub);
-                }
-                return sub;
+                collection.subscribers.Add(sub);
             }
-            return new Subscriber<M>();
+            return sub;
         }
 
         /// <summary>
