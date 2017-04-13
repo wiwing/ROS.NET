@@ -52,7 +52,7 @@ namespace Uml.Robotics.Ros.Samples
 
     public class RosoutDebug
     {
-        Subscriber<Messages.rosgraph_msgs.Log> subscriber;
+        Subscriber subscriber;
         private NodeHandle nodeHandle;
         private int verboseLevel;
 
