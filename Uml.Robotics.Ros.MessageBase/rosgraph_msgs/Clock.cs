@@ -46,7 +46,7 @@ namespace Messages.rosgraph_msgs
         public override byte[] Serialize(bool partofsomethingelse)
         {
             List<byte[]> pieces = new List<byte[]>();
-         
+
             //clock
             pieces.Add(BitConverter.GetBytes(clock.data.sec));
             pieces.Add(BitConverter.GetBytes(clock.data.nsec));
@@ -74,10 +74,11 @@ namespace Messages.rosgraph_msgs
 
         public override bool Equals(RosMessage ____other)
         {
-            if (____other == null)
+            var other = ____other as Messages.rosgraph_msgs.Clock;
+            if (other == null)
                 return false;
+
             bool ret = true;
-            rosgraph_msgs.Clock other = (Messages.rosgraph_msgs.Clock)____other;
 
             ret &= clock.data.Equals(other.clock.data);
             // for each SingleType st:

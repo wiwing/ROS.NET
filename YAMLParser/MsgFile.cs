@@ -479,7 +479,10 @@ namespace FauxMessages
             if (md5 == null)
                 return null;
 
-            GeneratedEqualityCode += string.Format("{0} other = (Messages.{0})____other;\n", Name);
+            GeneratedEqualityCode += string.Format(@"var other = ____other as Messages.{0};
+            if (other == null)
+                return false;", Name);
+
             for (int i = 0; i < Stuff.Count; i++)
             {
                 GeneratedDeserializationCode += this.GenerateDeserializationCode(Stuff[i]);

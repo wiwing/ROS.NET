@@ -129,11 +129,11 @@ string frame_id"; }
 
         public override bool Equals(RosMessage ____other)
         {
-            if (____other == null)
+            var other = ____other as Messages.std_msgs.Header;
+            if (other == null)
                 return false;
-            bool ret = true;
-            std_msgs.Header other = (Messages.std_msgs.Header)____other;
 
+            bool ret = true;
             ret &= seq == other.seq;
             ret &= stamp.data.Equals(other.stamp.data);
             ret &= frame_id == other.frame_id;

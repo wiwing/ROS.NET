@@ -131,10 +131,11 @@ string text"; }
 
         public override bool Equals(RosMessage ____other)
         {
-            if (____other == null)
+            var other = ____other as Messages.actionlib_msgs.GoalStatus;
+            if (other == null)
                 return false;
+
             bool ret = true;
-            actionlib_msgs.GoalStatus other = (Messages.actionlib_msgs.GoalStatus)____other;
 
             ret &= goal_id.Equals(other.goal_id);
             ret &= status == other.status;

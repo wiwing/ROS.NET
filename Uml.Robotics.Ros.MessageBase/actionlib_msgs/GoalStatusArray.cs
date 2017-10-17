@@ -110,10 +110,11 @@ GoalStatus[] status_list"; }
 
         public override bool Equals(RosMessage ____other)
         {
-            if (____other == null)
+            var other = ____other as Messages.actionlib_msgs.GoalStatusArray;
+            if (other == null)
                 return false;
+
             bool ret = true;
-            actionlib_msgs.GoalStatusArray other = (Messages.actionlib_msgs.GoalStatusArray)____other;
 
             ret &= header.Equals(other.header);
             if (status_list.Length != other.status_list.Length)

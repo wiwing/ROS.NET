@@ -104,10 +104,11 @@ string id"; }
 
         public override bool Equals(RosMessage ____other)
         {
-            if (____other == null)
+            var other = ____other as Messages.actionlib_msgs.GoalID;
+            if (other == null)
                 return false;
+
             bool ret = true;
-            actionlib_msgs.GoalID other = (Messages.actionlib_msgs.GoalID)____other;
 
             ret &= stamp.data.Equals(other.stamp.data);
             ret &= id == other.id;

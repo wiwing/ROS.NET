@@ -281,10 +281,11 @@ string[] topics"; }
 
         public override bool Equals(RosMessage ____other)
         {
-            if (____other == null)
+            var other = ____other as Messages.rosgraph_msgs.Log;
+            if (other == null)
                 return false;
+
             bool ret = true;
-            rosgraph_msgs.Log other = (Messages.rosgraph_msgs.Log)____other;
 
             ret &= header.Equals(other.header);
             ret &= level == other.level;

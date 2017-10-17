@@ -76,10 +76,11 @@ namespace Messages.std_msgs
 
         public override bool Equals(RosMessage ____other)
         {
-            if (____other == null)
+            var other = ____other as Messages.std_msgs.Time;
+            if (other == null)
                 return false;
+
             bool ret = true;
-            std_msgs.Time other = (Messages.std_msgs.Time)____other;
 
             ret &= data.Equals(other.data);
             // for each SingleType st:

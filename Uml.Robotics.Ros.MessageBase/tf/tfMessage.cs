@@ -98,13 +98,15 @@ namespace Messages.tf
 
         public override bool Equals(RosMessage ____other)
         {
-            if (____other == null)
+            var other = ____other as Messages.tf.tfMessage;
+            if (other == null)
                 return false;
-            bool ret = true;
-            tf.tfMessage other = (Messages.tf.tfMessage)____other;
 
             if (transforms.Length != other.transforms.Length)
                 return false;
+
+            bool ret = true;
+
             for (int __i__=0; __i__ < transforms.Length; __i__++)
             {
                 ret &= transforms[__i__].Equals(other.transforms[__i__]);

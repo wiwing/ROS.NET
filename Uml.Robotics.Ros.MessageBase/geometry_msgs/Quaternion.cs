@@ -68,7 +68,7 @@ float64 w"; }
             y = (double)Marshal.PtrToStructure(h, typeof(double));
             Marshal.FreeHGlobal(h);
             currentIndex += piecesize;
-            
+
             //z
             piecesize = Marshal.SizeOf(typeof(double));
             h = IntPtr.Zero;
@@ -160,10 +160,11 @@ float64 w"; }
 
         public override bool Equals(RosMessage ____other)
         {
-            if (____other == null)
+            var other = ____other as Messages.geometry_msgs.Quaternion;
+            if (other == null)
                 return false;
+
             bool ret = true;
-            geometry_msgs.Quaternion other = (Messages.geometry_msgs.Quaternion)____other;
 
             ret &= x == other.x;
             ret &= y == other.y;

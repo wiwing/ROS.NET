@@ -112,10 +112,11 @@ Transform transform"; }
 
         public override bool Equals(RosMessage ____other)
         {
-            if (____other == null)
+            var other = ____other as Messages.geometry_msgs.TransformStamped;
+            if (other == null)
                 return false;
+
             bool ret = true;
-            geometry_msgs.TransformStamped other = (Messages.geometry_msgs.TransformStamped)____other;
 
             ret &= header.Equals(other.header);
             ret &= child_frame_id == other.child_frame_id;

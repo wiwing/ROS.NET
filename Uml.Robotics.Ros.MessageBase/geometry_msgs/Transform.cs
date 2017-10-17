@@ -80,10 +80,11 @@ Quaternion rotation"; }
 
         public override bool Equals(RosMessage ____other)
         {
-            if (____other == null)
-				return false;
+            var other = ____other as Messages.geometry_msgs.Transform;
+            if (other == null)
+                return false;
+
             bool ret = true;
-            geometry_msgs.Transform other = (Messages.geometry_msgs.Transform)____other;
 
             ret &= translation.Equals(other.translation);
             ret &= rotation.Equals(other.rotation);

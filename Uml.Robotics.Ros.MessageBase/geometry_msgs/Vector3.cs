@@ -129,10 +129,11 @@ float64 z"; }
 
         public override bool Equals(RosMessage ____other)
         {
-            if (____other == null)
+            var other = ____other as Messages.geometry_msgs.Vector3;
+            if (other == null)
                 return false;
+
             bool ret = true;
-            geometry_msgs.Vector3 other = (Messages.geometry_msgs.Vector3)____other;
 
             ret &= x == other.x;
             ret &= y == other.y;
