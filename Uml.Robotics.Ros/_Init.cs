@@ -444,7 +444,10 @@ namespace Uml.Robotics.Ros
         /// <returns>System.Boolean indicating whether ROS has been started.</returns>
         public static bool isStarted()
         {
-            return started;
+            lock (startMutex)
+            {
+                return started;
+            }
         }
 
         /// <summary>
@@ -454,7 +457,7 @@ namespace Uml.Robotics.Ros
         {
             lock (shuttingDownMutex)
             {
-                if ((shutdownTask == null) || shutdownTask.Status == TaskStatus.Created)
+                if (shutdownTask == null || shutdownTask.Status == TaskStatus.Created)
                 {
                     shutdownRequested = true;
                 }
@@ -472,17 +475,15 @@ namespace Uml.Robotics.Ros
             lock (shuttingDownMutex)
             {
                 if (shuttingDown)
-                {
                     return;
-                }
+
                 shuttingDown = true;
+                _ok = false;
             }
 
             if (started)
             {
                 Logger.LogInformation("ROS is shutting down.");
-                started = false;
-                _ok = false;
 
                 SimTime.Terminate();
                 RosOutAppender.Terminate();
@@ -499,7 +500,11 @@ namespace Uml.Robotics.Ros
                 ConnectionManager.Terminate();
                 PollManager.Terminate();
 
-                ResetStaticMembers();
+                lock (startMutex)
+                {
+                    started = false;
+                    ResetStaticMembers();
+                }
             }
         }
 
