@@ -3,7 +3,6 @@ using System.Threading;
 
 using Uml.Robotics.Ros;
 using Uml.Robotics.Ros.ActionLib;
-using Messages.xamlamoveit;
 using Messages.control_msgs;
 using System.Collections.Generic;
 

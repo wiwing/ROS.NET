@@ -183,36 +183,12 @@ trajectory_msgs/JointTrajectoryPoint error";
                 };
                 #endregion
 
-                #region MoveJ.Action
-                var moveJ = new MsgFileLocation(@"common_msgs\xamlamoveit\action\moveJ.action", ".");
-                string moveJContent = @"trajectory_msgs/JointTrajectoryPoint goal
-std_msgs/String group_name
----
-#result definition
-int32 result
----
-#feedback
-bool isconverged";
-                var moveJLines = moveJContent.Split('\n');
-                var moveJMd5 = new Dictionary<string, string> {
-                    { "Goal", "c7bcc2c998bce789339fce00c90ffcb6"},
-                    { "ActionGoal",  "daa6781fce61e84ee3b4fca6481bb5f4"},
-                    { "Result", "034a8e20d6a306665e3a5b340fab3f09"},
-                    { "ActionResult", "3d669e3a63aa986c667ea7b0f46ce85e"},
-                    { "Feedback", "8cdd7ff86298bccaacf17f4bc4cf27ae"},
-                    { "ActionFeedback", "adbfe27f81e2f9b87fc195d89c2d0120"}
-                };
-                #endregion
-
-
                 return new[]
                 {
                     // Action File with empty result
-                    //new object[] { singleJointPosition, singleJointPositionLines, singleJointPositionMd5 },
+                    new object[] { singleJointPosition, singleJointPositionLines, singleJointPositionMd5 },
                     // Complete Action File
-                    //new object[] { followJointTrajectory, followJointTrajectoryLines, followJointTrajectoryMd5 },
-                    // Custom Xamla Action File
-                    new object[] { moveJ, moveJLines, moveJMd5 }
+                    new object[] { followJointTrajectory, followJointTrajectoryLines, followJointTrajectoryMd5 },
                 };
             }
         }
