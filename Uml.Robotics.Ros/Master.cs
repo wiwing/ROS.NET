@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using Uml.Robotics.XmlRpc;
+using System.Threading.Tasks;
 
 namespace Uml.Robotics.Ros
 {
@@ -131,6 +132,7 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
+        /// Execute a remote procedure call on the ROS master.
         /// </summary>
         /// <param name="method"></param>
         /// <param name="request">Full request to send to the master </param>
@@ -138,26 +140,23 @@ namespace Uml.Robotics.Ros
         /// <param name="response">Full response including status code and status message. Initially empty.</param>
         /// <param name="payload">Location to store the actual data requested, if any.</param>
         /// <returns></returns>
-        public static bool execute(string method, XmlRpcValue request, XmlRpcValue response, XmlRpcValue payload, bool waitForMaster)
+        public static async Task<bool> ExecuteAsync(string method, XmlRpcValue request, XmlRpcValue response, XmlRpcValue payload, bool waitForMaster)
         {
+            bool supprressWarning = false;
+            var startTime = DateTime.UtcNow;
             try
             {
-                DateTime startTime = DateTime.UtcNow;
-                string master_host = host;
-                int master_port = port;
+                var client = new XmlRpcClient(host, port);
 
-                var client = new XmlRpcClient(master_host, master_port);
-                bool printed = false;
-
-                for (;;)
+                while (true)
                 {
-                    // Check if we are shutting down
+                    // check if we are shutting down
                     if (XmlRpcManager.Instance.IsShuttingDown)
                         return false;
 
                     try
                     {
-                        var result = client.Execute(method, request);           // execute the RPC call
+                        var result = await client.ExecuteAsync(method, request);           // execute the RPC call
                         response.Set(result.Value);
                         if (result.Success)
                         {
@@ -181,35 +180,34 @@ namespace Uml.Robotics.Ros
                         // no connection to ROS Master
                         if (waitForMaster)
                         {
-                            if (!printed)
+                            if (!supprressWarning)
                             {
                                 Logger.LogWarning(
-                                    "[{0}] Could not connect to master at [{1}:{2}]. " +
-                                    "Retrying for the next {3} seconds.",
-                                    method, master_host, master_port,
-                                    retryTimeout.TotalSeconds);
-                                printed = true;
+                                    $"[{method}] Could not connect to master at [{host}:{port}]. Retrying for the next {retryTimeout.TotalSeconds} seconds."
+                                );
+                                supprressWarning = true;
                             }
 
                             // timeout expired, throw exception
                             if (retryTimeout.TotalSeconds > 0 && DateTime.UtcNow.Subtract(startTime) > retryTimeout)
                             {
                                 Logger.LogError("[{0}] Timed out trying to connect to the master [{1}:{2}] after [{1}] seconds",
-                                                method, master_host, master_port, retryTimeout.TotalSeconds);
+                                                method, host, port, retryTimeout.TotalSeconds);
 
-                                throw new RosException(String.Format("Cannot connect to ROS Master at {0}:{1}", master_host, master_port), ex);
+                                throw new RosException($"Cannot connect to ROS Master at {host}:{port}", ex);
                             }
                         }
                         else
                         {
-                            throw new RosException(String.Format("Cannot connect to ROS Master at {0}:{1}", master_host, master_port), ex);
+                            throw new RosException($"Cannot connect to ROS Master at {host}:{port}", ex);
                         }
 
                     }
 
-                    // recreate the client, thereby causing it to reinitiate its connection
-                    Thread.Sleep(250);
-                    client = new XmlRpcClient(master_host, master_port);
+                    await Task.Delay(250);
+
+                    // recreate the client and reinitiate master connection
+                    client = new XmlRpcClient(host, port);
                 }
             }
             catch (ArgumentNullException e)
@@ -218,6 +216,19 @@ namespace Uml.Robotics.Ros
             }
             Logger.LogError("Master API call: {0} failed!\n\tRequest:\n{1}", method, request);
             return false;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="method"></param>
+        /// <param name="request">Full request to send to the master </param>
+        /// <param name="waitForMaster">If you recieve an unseccessful status code, keep retrying.</param>
+        /// <param name="response">Full response including status code and status message. Initially empty.</param>
+        /// <param name="payload">Location to store the actual data requested, if any.</param>
+        /// <returns></returns>
+        public static bool execute(string method, XmlRpcValue request, XmlRpcValue response, XmlRpcValue payload, bool waitForMaster)
+        {
+            return ExecuteAsync(method, request, response, payload, waitForMaster).Result;
         }
     }
 }

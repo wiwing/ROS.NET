@@ -5,19 +5,20 @@ using Microsoft.Extensions.Logging;
 namespace Uml.Robotics.Ros
 {
     public class NodeHandle
+        : IDisposable
     {
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<NodeHandle>();
-        private string Namespace = "", UnresolvedNamespace = "";
-        private ICallbackQueue _callback;
+
+        private object gate = new object();
+        private string Namespace = "";
+        private string UnresolvedNamespace = "";
+        private ICallbackQueue callbackQueue;
         private bool _ok = true;
         private NodeHandleBackingCollection collection = new NodeHandleBackingCollection();
-        private int nh_refcount;
-        private object nh_refcount_mutex = new object();
-        private bool no_validate = false;
-        private bool node_started_by_nh;
-
+        private int referenceCount;
+        private bool initializedRos;
         private IDictionary<string, string> remappings = new Dictionary<string, string>();
-        private IDictionary<string, string> unresolved_remappings = new Dictionary<string, string>();
+        private IDictionary<string, string> unresolvedRemappings = new Dictionary<string, string>();
 
         /// <summary>
         ///     Creates a new node
@@ -40,7 +41,7 @@ namespace Uml.Robotics.Ros
         {
             Callback = rhs.Callback;
             remappings = new Dictionary<string, string>(rhs.remappings);
-            unresolved_remappings = new Dictionary<string, string>(rhs.unresolved_remappings);
+            unresolvedRemappings = new Dictionary<string, string>(rhs.unresolvedRemappings);
             construct(rhs.Namespace, true);
             UnresolvedNamespace = rhs.UnresolvedNamespace;
         }
@@ -55,7 +56,7 @@ namespace Uml.Robotics.Ros
             Namespace = parent.Namespace;
             Callback = parent.Callback;
             remappings = new Dictionary<string, string>(parent.remappings);
-            unresolved_remappings = new Dictionary<string, string>(parent.unresolved_remappings);
+            unresolvedRemappings = new Dictionary<string, string>(parent.unresolvedRemappings);
             construct(ns, false);
         }
 
@@ -76,14 +77,16 @@ namespace Uml.Robotics.Ros
         /// <summary>
         ///     Creates a new nodehandle using the default ROS callback queue
         /// </summary>
-        public NodeHandle() : this(ThisNode.Namespace, null)
+        public NodeHandle()
+            : this(ThisNode.Namespace, null)
         {
         }
 
         /// <summary>
         ///     Creates a new nodehandle using the given callback queue
         /// </summary>
-        public NodeHandle(ICallbackQueue callbackQueue) : this(ThisNode.Namespace, null)
+        public NodeHandle(ICallbackQueue callbackQueue)
+            : this(ThisNode.Namespace, null)
         {
             Callback = callbackQueue;
         }
@@ -96,14 +99,14 @@ namespace Uml.Robotics.Ros
         {
             get
             {
-                if (_callback == null)
+                if (callbackQueue == null)
                 {
-                    _callback = ROS.GlobalCallbackQueue;
+                    callbackQueue = ROS.GlobalCallbackQueue;
                 }
 
-                return _callback;
+                return callbackQueue;
             }
-            set { _callback = value; }
+            set { callbackQueue = value; }
         }
 
         /// <summary>
@@ -112,25 +115,26 @@ namespace Uml.Robotics.Ros
         public bool ok
         {
             get { return ROS.ok && _ok; }
-            set { _ok = value; }
+            private set { _ok = value; }
         }
-
 
         /// <summary>
         ///     Unregister every subscriber and publisher in this node
         /// </summary>
         public void shutdown()
         {
-            lock (collection.mutex)
+            lock (gate)
             {
-                foreach (ISubscriber sub in collection.subscribers)
+                _ok = false;
+
+                foreach (ISubscriber sub in collection.Subscribers)
                     sub.unsubscribe();
-                foreach (IPublisher pub in collection.publishers)
+                foreach (IPublisher pub in collection.Publishers)
                     pub.unadvertise();
 
-                foreach (IServiceClient client in collection.serviceclients)
+                foreach (IServiceClient client in collection.Serviceclients)
                     client.shutdown();
-                foreach (ServiceServer srv in collection.serviceservers)
+                foreach (ServiceServer srv in collection.Serviceservers)
                     srv.shutdown();
                 collection.ClearAll();
             }
@@ -212,9 +216,9 @@ namespace Uml.Robotics.Ros
             if (TopicManager.Instance.advertise(ops, callbacks))
             {
                 var pub = new Publisher<M>(ops.topic, ops.md5Sum, ops.dataType, this, callbacks);
-                lock (collection.mutex)
+                lock (gate)
                 {
-                    collection.publishers.Add(pub);
+                    collection.Publishers.Add(pub);
                 }
                 return pub;
             }
@@ -249,14 +253,14 @@ namespace Uml.Robotics.Ros
         public Subscriber subscribe<M>(string topic, int queueSize, CallbackInterface cb, bool allowConcurrentCallbacks)
             where M : RosMessage, new()
         {
-            if (_callback == null)
+            if (callbackQueue == null)
             {
-                _callback = ROS.GlobalCallbackQueue;
+                callbackQueue = ROS.GlobalCallbackQueue;
             }
 
             var ops = new SubscribeOptions<M>(topic, queueSize, cb.SendEvent)
             {
-                callback_queue = _callback,
+                callback_queue = callbackQueue,
                 allow_concurrent_callbacks = allowConcurrentCallbacks
             };
             ops.callback_queue.AddCallback(cb);
@@ -270,15 +274,15 @@ namespace Uml.Robotics.Ros
 
         public Subscriber Subscribe(string topic, string messageType, int queueSize, CallbackInterface cb, bool allowConcurrentCallbacks = false)
         {
-            if (_callback == null)
+            if (callbackQueue == null)
             {
-                _callback = ROS.GlobalCallbackQueue;
+                callbackQueue = ROS.GlobalCallbackQueue;
             }
 
             var message = RosMessage.Generate(messageType);
             var ops = new SubscribeOptions(topic, message.MessageType, message.MD5Sum(), queueSize, new SubscriptionCallbackHelper<RosMessage>(message.MessageType, cb.SendEvent))
             {
-                callback_queue = _callback,
+                callback_queue = callbackQueue,
                 allow_concurrent_callbacks = allowConcurrentCallbacks
             };
             ops.callback_queue.AddCallback(cb);
@@ -301,9 +305,9 @@ namespace Uml.Robotics.Ros
             TopicManager.Instance.subscribe(ops);
 
             var sub = new Subscriber(ops.topic, this, ops.helper);
-            lock (collection.mutex)
+            lock (gate)
             {
-                collection.subscribers.Add(sub);
+                collection.Subscribers.Add(sub);
             }
             return sub;
         }
@@ -342,9 +346,9 @@ namespace Uml.Robotics.Ros
             if (ServiceManager.Instance.AdvertiseService(ops))
             {
                 ServiceServer srv = new ServiceServer(ops.service, this);
-                lock (collection.mutex)
+                lock (gate)
                 {
-                    collection.serviceservers.Add(srv);
+                    collection.Serviceservers.Add(srv);
                 }
                 return srv;
             }
@@ -412,31 +416,32 @@ namespace Uml.Robotics.Ros
         private void construct(string ns, bool validate_name)
         {
             if (!ROS.initialized)
-                throw new Exception("You must call ROS.Init before instantiating the first nodehandle");
+                throw new Exception("You must call ROS.Init() before instantiating the first nodehandle");
+
             collection = new NodeHandleBackingCollection();
             UnresolvedNamespace = ns;
             Namespace = validate_name ? resolveName(ns) : resolveName(ns, true, true);
 
             ok = true;
-            lock (nh_refcount_mutex)
+            lock (gate)
             {
-                if (nh_refcount == 0 && !ROS.isStarted())
+                if (referenceCount == 0 && !ROS.isStarted())
                 {
-                    node_started_by_nh = true;
+                    initializedRos = true;
                     ROS.Start();
                 }
-                ++nh_refcount;
+                ++referenceCount;
             }
         }
 
         private void destruct()
         {
-            lock (nh_refcount_mutex)
+            lock (gate)
             {
-                --nh_refcount;
+                --referenceCount;
             }
-            _callback = null;
-            if (nh_refcount == 0 && node_started_by_nh)
+            callbackQueue = null;
+            if (referenceCount == 0 && initializedRos)
                 ROS.shutdown();
         }
 
@@ -454,7 +459,7 @@ namespace Uml.Robotics.Ros
                     string resolved_left = resolveName(left, false);
                     string resolved_right = resolveName(right, false);
                     remappings[resolved_left] = resolved_right;
-                    unresolved_remappings[left] = right;
+                    unresolvedRemappings[left] = right;
                 }
             }
         }
@@ -478,7 +483,7 @@ namespace Uml.Robotics.Ros
         {
             if (!Names.Validate(name, out string error))
                 throw new InvalidNameException(error);
-            return resolveName(name, remap, no_validate);
+            return resolveName(name, remap, false);
         }
 
         private string resolveName(string name, bool remap, bool novalidate)
@@ -502,27 +507,25 @@ namespace Uml.Robotics.Ros
             return Names.Resolve(final, false);
         }
 
-        #region Nested type: NodeHandleBackingCollection
+        public void Dispose()
+        {
+            shutdown();
+        }
 
         private class NodeHandleBackingCollection
         {
-            public readonly object mutex = new object();
-            public List<IPublisher> publishers = new List<IPublisher>();
-
-            public List<IServiceClient> serviceclients = new List<IServiceClient>();
-            public List<ServiceServer> serviceservers = new List<ServiceServer>();
-            public List<ISubscriber> subscribers = new List<ISubscriber>();
+            public List<IPublisher> Publishers = new List<IPublisher>();
+            public List<IServiceClient> Serviceclients = new List<IServiceClient>();
+            public List<ServiceServer> Serviceservers = new List<ServiceServer>();
+            public List<ISubscriber> Subscribers = new List<ISubscriber>();
 
             public void ClearAll()
             {
-                publishers.Clear();
-                subscribers.Clear();
-
-                serviceservers.Clear();
-                serviceclients.Clear();
+                Publishers.Clear();
+                Subscribers.Clear();
+                Serviceservers.Clear();
+                Serviceclients.Clear();
             }
         }
-
-        #endregion
     }
 }

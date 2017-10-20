@@ -196,25 +196,32 @@ namespace Uml.Robotics.XmlRpc
             return value != null ? value.GetHashCode() : base.GetHashCode();
         }
 
-        public void Copy(XmlRpcValue other)
+        public void Copy(XmlRpcValue source)
         {
-            switch (other.type)
+            switch (source.type)
             {
                 case XmlRpcType.Base64:
-                    value = other.GetBinary().Clone();
+                    value = source.GetBinary().Clone();
                     break;
                 case XmlRpcType.Array:
-                    value = other.GetArray().Clone();
+                    value = source.GetArray().Clone();
                     break;
                 case XmlRpcType.Struct:
-                    value = new Dictionary<string, XmlRpcValue>(other.GetStruct());
+                    value = new Dictionary<string, XmlRpcValue>(source.GetStruct());
                     break;
                 default:
-                    value = other.value;
+                    value = source.value;
                     break;
             }
 
-            type = other.type;
+            type = source.type;
+        }
+
+        public XmlRpcValue Clone()
+        {
+            var clone = new XmlRpcValue();
+            clone.Copy(this);
+            return clone;
         }
 
         public bool HasMember(string name)
