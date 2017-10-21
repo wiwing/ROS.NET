@@ -45,7 +45,7 @@ namespace Uml.Robotics.Ros
             {
                 DateTime begin = DateTime.UtcNow;
                 callbackQueue.CallAvailable(ROS.WallDuration);
-    
+
                 if (token.IsCancellationRequested)
                     break;
 
@@ -92,6 +92,7 @@ namespace Uml.Robotics.Ros
 
         public void Dispose()
         {
+            Stop(true);
             tokenSource.Dispose();
         }
 
@@ -102,14 +103,16 @@ namespace Uml.Robotics.Ros
                 token = tokenSource.Token;
                 var spinner = new SingleThreadSpinner(callbackQueue);
                 spinner.Spin(token);
-            });
+            }, TaskCreationOptions.LongRunning);
         }
 
-        public void Stop()
+        public void Stop(bool wait = true)
         {
             if (spinTask != null)
             {
                 tokenSource.Cancel();
+                if (wait)
+                    spinTask.Wait();
                 spinTask = null;
             }
         }
