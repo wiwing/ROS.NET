@@ -390,7 +390,7 @@ namespace Uml.Robotics.Ros
             try
             {
                 bool r = call((RosService) srv);
-                if (srv.ResponseMessage != null)
+                if (srv.ResponseMessage?.Serialized != null)
                     srv.ResponseMessage.Deserialize(srv.ResponseMessage.Serialized);
                 else
                     srv.ResponseMessage = null;

@@ -50,22 +50,27 @@ namespace Uml.Robotics.XmlRpc
         // the socket for events, false to remove it from the dispatcher.
         public override XmlRpcDispatch.EventType HandleEvent(XmlRpcDispatch.EventType eventType)
         {
-            if (_connectionState == ServerConnectionState.READ_HEADER)
+            if (eventType.HasFlag(XmlRpcDispatch.EventType.ReadableEvent))
             {
-                if (!readHeader(ref header))
-                    return 0;
-            }
+                if (_connectionState == ServerConnectionState.READ_HEADER)
+                {
+                    if (!readHeader(ref header))
+                        return 0;
+                }
 
-            if (_connectionState == ServerConnectionState.READ_REQUEST)
-            {
-                if (!readRequest())
-                    return 0;
+                if (_connectionState == ServerConnectionState.READ_REQUEST)
+                {
+                    if (!readRequest())
+                        return 0;
+                }
             }
-
-            if (_connectionState == ServerConnectionState.WRITE_RESPONSE)
+            else if (eventType.HasFlag(XmlRpcDispatch.EventType.WritableEvent))
             {
-                if (!writeResponse(header.DataString))
-                    return 0;
+                if (_connectionState == ServerConnectionState.WRITE_RESPONSE)
+                {
+                    if (!writeResponse(header.DataString))
+                        return 0;
+                }
             }
 
             return (_connectionState == ServerConnectionState.WRITE_RESPONSE)
