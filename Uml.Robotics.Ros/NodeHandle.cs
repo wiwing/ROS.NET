@@ -146,11 +146,11 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <typeparam name="M">Type of topic</typeparam>
         /// <param name="topic">Name of topic</param>
-        /// <param name="q_size">How many messages to qeueue if asynchrinous</param>
+        /// <param name="queueSize">How many messages to qeueue if asynchrinous</param>
         /// <returns>A publisher with the specified topic type, name and options</returns>
-        public Publisher<M> advertise<M>(string topic, int q_size) where M : RosMessage, new()
+        public Publisher<M> advertise<M>(string topic, int queueSize) where M : RosMessage, new()
         {
-            return advertise<M>(topic, q_size, false);
+            return advertise<M>(topic, queueSize, false);
         }
 
         /// <summary>
@@ -158,12 +158,12 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <typeparam name="M">Type of topic</typeparam>
         /// <param name="topic">Name of topic</param>
-        /// <param name="q_size">How many messages to enqueue if asynchrinous</param>
-        /// <param name="l">Boolean determines whether the given publisher will latch or not</param>
+        /// <param name="queueSize">How many messages to enqueue if asynchrinous</param>
+        /// <param name="latch">Boolean determines whether the given publisher will latch or not</param>
         /// <returns>A publisher with the specified topic type, name and options</returns>
-        public Publisher<M> advertise<M>(string topic, int q_size, bool l) where M : RosMessage, new()
+        public Publisher<M> advertise<M>(string topic, int queueSize, bool latch) where M : RosMessage, new()
         {
-            return advertise(new AdvertiseOptions<M>(topic, q_size) {latch = l});
+            return advertise(new AdvertiseOptions<M>(topic, queueSize) {latch = latch});
         }
 
         /// <summary>
@@ -171,15 +171,15 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <typeparam name="M">Type of topic</typeparam>
         /// <param name="topic">Name of topic</param>
-        /// <param name="queue_size">How many messages to enqueue if asynchrinous</param>
-        /// <param name="connectcallback">Callback to fire when this node connects</param>
-        /// <param name="disconnectcallback">Callback to fire when this node disconnects</param>
+        /// <param name="queueSize">How many messages to enqueue if asynchrinous</param>
+        /// <param name="connectCallback">Callback to fire when this node connects</param>
+        /// <param name="disconnectCallback">Callback to fire when this node disconnects</param>
         /// <returns>A publisher with the specified topic type, name and options</returns>
-        public Publisher<M> advertise<M>(string topic, int queue_size, SubscriberStatusCallback connectcallback,
-            SubscriberStatusCallback disconnectcallback)
+        public Publisher<M> advertise<M>(string topic, int queueSize, SubscriberStatusCallback connectCallback,
+            SubscriberStatusCallback disconnectCallback)
             where M : RosMessage, new()
         {
-            return advertise<M>(topic, queue_size, connectcallback, disconnectcallback, false);
+            return advertise<M>(topic, queueSize, connectCallback, disconnectCallback, false);
         }
 
         /// <summary>
@@ -187,16 +187,16 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <typeparam name="M">Type of topic</typeparam>
         /// <param name="topic">Name of topic</param>
-        /// <param name="queue_size">How many messages to enqueue if asynchrinous</param>
-        /// <param name="connectcallback">Callback to fire when this node connects</param>
-        /// <param name="disconnectcallback">Callback to fire when this node disconnects</param>
-        /// <param name="l">Boolean determines whether the given publisher will latch or not</param>
+        /// <param name="queueSize">How many messages to enqueue if asynchrinous</param>
+        /// <param name="connectCallback">Callback to fire when this node connects</param>
+        /// <param name="disconnectCallback">Callback to fire when this node disconnects</param>
+        /// <param name="latch">Boolean determines whether the given publisher will latch or not</param>
         /// <returns>A publisher with the specified topic type, name and options</returns>
-        public Publisher<M> advertise<M>(string topic, int queue_size, SubscriberStatusCallback connectcallback,
-            SubscriberStatusCallback disconnectcallback, bool l)
+        public Publisher<M> advertise<M>(string topic, int queueSize, SubscriberStatusCallback connectCallback,
+            SubscriberStatusCallback disconnectCallback, bool latch)
             where M : RosMessage, new()
         {
-            return advertise(new AdvertiseOptions<M>(topic, queue_size, connectcallback, disconnectcallback) {latch = l});
+            return advertise(new AdvertiseOptions<M>(topic, queueSize, connectCallback, disconnectCallback) {latch = latch});
         }
 
         /// <summary>
