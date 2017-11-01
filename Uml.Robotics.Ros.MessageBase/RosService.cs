@@ -24,7 +24,7 @@ namespace Uml.Robotics.Ros
 
         public virtual string ServiceDefinition() { return ""; }
 
-        public virtual string ServiceType { get { return "xamla/unkown"; } }
+        public virtual string ServiceType { get { return "undefined/unknown"; } }
 
         public string msgtype_req
         {

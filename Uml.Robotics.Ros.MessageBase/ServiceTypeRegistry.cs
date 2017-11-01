@@ -38,7 +38,7 @@ namespace Uml.Robotics.Ros
                 }
 
                 RosService service = Activator.CreateInstance(type) as RosService;
-                if (service.ServiceType == "xamla/unkown")
+                if (service.ServiceType == "undefined/unknown")
                 {
                     throw new Exception("Invalid servive type. Service type field (srvtype) was not initialized correctly.");
                 }

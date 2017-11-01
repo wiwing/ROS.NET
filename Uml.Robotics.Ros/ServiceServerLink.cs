@@ -90,7 +90,7 @@ namespace Uml.Robotics.Ros
 
         private void onConnectionDropped(Connection connection, Connection.DropReason dr)
         {
-            if (connection != this.connection) throw new ArgumentException("Unkown connection", nameof(connection));
+            if (connection != this.connection) throw new ArgumentException("Unknown connection", nameof(connection));
 
             Logger.LogDebug("Service client from [{0}] for [{1}] dropped", connection.RemoteString, name);
 
@@ -233,7 +233,7 @@ namespace Uml.Robotics.Ros
         {
             if (conn != connection)
             {
-                throw new ArgumentException("Unkown connection", nameof(conn));
+                throw new ArgumentException("Unknown connection", nameof(conn));
             }
             if (size != 5)
             {
@@ -275,7 +275,7 @@ namespace Uml.Robotics.Ros
         private bool onResponse(Connection conn, byte[] buf, int size, bool success)
         {
             if (conn != connection)
-                throw new ArgumentException("Unkown connection", nameof(conn));
+                throw new ArgumentException("Unknown connection", nameof(conn));
 
             if (!success)
                 return false;

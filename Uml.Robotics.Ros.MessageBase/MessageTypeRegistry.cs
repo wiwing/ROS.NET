@@ -74,7 +74,7 @@ namespace Uml.Robotics.Ros
                 else
                 {
                     message = Activator.CreateInstance(othertype) as RosMessage;
-                    if ((message != null) && (message.MessageType == "xamla/unkown"))
+                    if ((message != null) && (message.MessageType == "undefined/unknown"))
                     {
                         throw new Exception("Invalid message type. Message type field (msgtype) was not initialized correctly.");
                     }
