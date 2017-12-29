@@ -14,7 +14,7 @@ namespace Uml.Robotics.Ros
     {
         public static void SetTcpKeepAlive(this Socket socket, uint keepaliveTime, uint keepaliveInterval)
         {
-            // Argument structure for SIO_KEEPALIVE_VALS 
+            // Argument structure for SIO_KEEPALIVE_VALS
             // struct tcp_keepalive
             // {
             //     u_long onoff;
@@ -35,6 +35,12 @@ namespace Uml.Robotics.Ros
 
     public class Socket : IDisposable
     {
+        public const int POLLERR = 0x008;
+        public const int POLLHUP = 0x010;
+        public const int POLLNVAL = 0x020;
+        public const int POLLIN = 0x001;
+        public const int POLLOUT = 0x004;
+
         public class SocketInfo
         {
             public int Events;
@@ -43,12 +49,12 @@ namespace Uml.Robotics.Ros
             public TcpTransport Transport;
         }
 
-
         private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Socket>();
         internal ns.Socket realSocket { get; private set; }
 
         private string attemptedConnectionEndpoint;
         private bool disposed;
+        private int poll_timeout = 10;
 
         public Socket(ns.Socket sock)
         {
@@ -208,15 +214,7 @@ namespace Uml.Robotics.Ros
             return " -- " + attemptedConnectionEndpoint + (Info != null ? " for " + Info.Transport._topic : "");
         }
 
-
-        public const int POLLERR = 0x008;
-        public const int POLLHUP = 0x010;
-        public const int POLLNVAL = 0x020;
-        public const int POLLIN = 0x001;
-        public const int POLLOUT = 0x004;
-        private int poll_timeout = 10;
-
-        internal void _poll(int POLLFLAGS)
+        internal void _poll(int pollFlags)
         {
             if (realSocket == null || !realSocket.Connected || disposed)
             {
@@ -224,20 +222,23 @@ namespace Uml.Robotics.Ros
             }
             else
             {
-                Info.REvents |= POLLFLAGS;
+                Info.REvents |= pollFlags;
             }
+
             if (Info.REvents == 0)
             {
                 return;
             }
-            if (Info.Func != null &&
-                ((Info.Events & Info.REvents) != 0 || (Info.REvents & POLLERR) != 0 || (Info.REvents & POLLHUP) != 0 ||
-                    (Info.REvents & POLLNVAL) != 0))
+
+            if (
+                Info.Func != null
+                && ((Info.Events & Info.REvents) != 0 || (Info.REvents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
+            )
             {
                 bool skip = false;
                 if ((Info.REvents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
                 {
-                    if (realSocket == null || disposed || !realSocket.Connected)
+                    if (realSocket == null || disposed)
                         skip = true;
                 }
 

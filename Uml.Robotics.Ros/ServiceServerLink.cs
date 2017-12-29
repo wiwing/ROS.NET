@@ -25,8 +25,13 @@ namespace Uml.Robotics.Ros
         public string name;
         public bool persistent;
 
-        public IServiceServerLink(string name, bool persistent, string requestMd5Sum, string responseMd5Sum,
-            IDictionary<string, string> header_values)
+        public IServiceServerLink(
+            string name,
+            bool persistent,
+            string requestMd5Sum,
+            string responseMd5Sum,
+            IDictionary<string, string> header_values
+        )
         {
             this.name = name;
             this.persistent = persistent;
@@ -57,7 +62,8 @@ namespace Uml.Robotics.Ros
             ResponseType = srv.ResponseMessage.MessageType;
         }
 
-        public void initialize<MReq, MRes>() where MReq : RosMessage, new() where MRes : RosMessage, new()
+        public void initialize<MReq, MRes>()
+            where MReq : RosMessage, new() where MRes : RosMessage, new()
         {
             MReq req = new MReq();
             MRes res = new MRes();
@@ -73,24 +79,27 @@ namespace Uml.Robotics.Ros
             connection.DroppedEvent += onConnectionDropped;
             connection.setHeaderReceivedCallback(onHeaderReceived);
 
-            IDictionary<string, string> dict = new Dictionary<string, string>();
-            dict["service"] = name;
-            dict["md5sum"] = RosService.Generate(RequestType.Replace("__Request", "").Replace("__Response", "")).MD5Sum();
-            dict["callerid"] = ThisNode.Name;
-            dict["persistent"] = persistent ? "1" : "0";
+            IDictionary<string, string> header = new Dictionary<string, string>
+            {
+                ["service"] = name,
+                ["md5sum"] = RosService.Generate(RequestType.Replace("__Request", "").Replace("__Response", "")).MD5Sum(),
+                ["callerid"] = ThisNode.Name,
+                ["persistent"] = persistent ? "1" : "0"
+            };
             if (header_values != null)
             {
                 foreach (string o in header_values.Keys)
                 {
-                    dict[o] = header_values[o];
+                    header[o] = header_values[o];
                 }
             }
-            connection.writeHeader(dict, onHeaderWritten);
+            connection.writeHeader(header, onHeaderWritten);
         }
 
-        private void onConnectionDropped(Connection connection, Connection.DropReason dr)
+        private void onConnectionDropped(Connection connection, Connection.DropReason reason)
         {
-            if (connection != this.connection) throw new ArgumentException("Unknown connection", nameof(connection));
+            if (connection != this.connection)
+                throw new ArgumentException("Unknown connection", nameof(connection));
 
             Logger.LogDebug("Service client from [{0}] for [{1}] dropped", connection.RemoteString, name);
 
@@ -105,19 +114,22 @@ namespace Uml.Robotics.Ros
         {
             string md5sum;
             if (header.Values.ContainsKey("md5sum"))
-                md5sum = (string) header.Values["md5sum"];
+            {
+                md5sum = header.Values["md5sum"];
+            }
             else
             {
                 ROS.Error()("TcpRos header from service server did not have required element: md5sum");
                 Logger.LogError("TcpRos header from service server did not have required element: md5sum");
                 return false;
             }
+
             //TODO check md5sum
 
             bool empty = false;
             lock (call_queue_mutex)
             {
-                empty = call_queue.Count == 0;
+                empty = (call_queue.Count == 0);
                 if (empty)
                     header_read = true;
             }
@@ -195,25 +207,30 @@ namespace Uml.Robotics.Ros
         {
             CallInfo local_current;
             lock (call_queue_mutex)
+            {
                 local_current = current_call;
+            }
             if (local_current != null)
+            {
                 cancelCall(local_current);
+            }
+
             lock (call_queue_mutex)
             {
                 while (call_queue.Count > 0)
+                {
                     cancelCall(call_queue.Dequeue());
+                }
             }
         }
 
         private void cancelCall(CallInfo info)
         {
-            CallInfo local = info;
-            lock (local.finished_mutex)
+            lock (info.finished_mutex)
             {
-                local.finished = true;
-                local.notify_all();
+                info.finished = true;
+                info.notify_all();
             }
-            //yield
         }
 
         private bool onHeaderWritten(Connection conn)
@@ -235,10 +252,12 @@ namespace Uml.Robotics.Ros
             {
                 throw new ArgumentException("Unknown connection", nameof(conn));
             }
+
             if (size != 5)
             {
                 throw new ArgumentException($"Wrong size {size}", nameof(size));
             }
+
             if (!success)
                 return false;
 
@@ -252,6 +271,7 @@ namespace Uml.Robotics.Ros
                 connection.drop(Connection.DropReason.Destructing);
                 return false;
             }
+
             lock (call_queue_mutex)
             {
                 if (ok != 0)
@@ -259,6 +279,7 @@ namespace Uml.Robotics.Ros
                 else
                     current_call.success = false;
             }
+
             if (len > 0)
             {
                 Logger.LogDebug($"Reading message with length of {len}.");
@@ -320,11 +341,11 @@ namespace Uml.Robotics.Ros
             lock (call_queue_mutex)
             {
                 if (connection.dropped)
-                {
                     return false;
-                }
+
                 if (call_queue.Count == 0 && header_written && header_read)
                     immediate = true;
+
                 call_queue.Enqueue(info);
             }
 

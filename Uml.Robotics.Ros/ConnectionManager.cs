@@ -1,15 +1,16 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using Microsoft.Extensions.Logging;
 
 namespace Uml.Robotics.Ros
 {
     public class ConnectionManager
     {
+        private static Lazy<ConnectionManager> instance = new Lazy<ConnectionManager>(LazyThreadSafetyMode.ExecutionAndPublication);
+
         public static ConnectionManager Instance
         {
             get { return instance.Value; }
@@ -20,34 +21,31 @@ namespace Uml.Robotics.Ros
             Instance.Shutdown();
         }
 
-
         internal static void Reset()
         {
             instance = new Lazy<ConnectionManager>(LazyThreadSafetyMode.ExecutionAndPublication);
         }
 
+        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ConnectionManager>();
         private uint connection_id_counter;
         private object connection_id_counter_mutex = new object();
         private List<Connection> connections = new List<Connection>();
         private object connections_mutex = new object();
         private List<Connection> dropped_connections = new List<Connection>();
         private object dropped_connections_mutex = new object();
-        private TcpListener tcpserver_transport;
+        private TcpListener listener;
         private WrappedTimer acceptor;
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ConnectionManager>();
-        private static Lazy<ConnectionManager> instance = new Lazy<ConnectionManager>(LazyThreadSafetyMode.ExecutionAndPublication);
-
 
         public int TCPPort
         {
             get
             {
-                if (tcpserver_transport == null || tcpserver_transport.LocalEndpoint == null)
+                if (listener == null || listener.LocalEndpoint == null)
                     return -1;
-                return ((IPEndPoint) tcpserver_transport.LocalEndpoint).Port;
+
+                return ((IPEndPoint)listener.LocalEndpoint).Port;
             }
         }
-
 
         public uint GetNewConnectionId()
         {
@@ -56,7 +54,6 @@ namespace Uml.Robotics.Ros
                 return connection_id_counter++;
             }
         }
-
 
         public void AddConnection(Connection connection)
         {
@@ -67,40 +64,43 @@ namespace Uml.Robotics.Ros
             }
         }
 
-
         public void Clear(Connection.DropReason reason)
         {
             RemoveDroppedConnections();
-            List<Connection> local_connections = null;
+
+            Connection[] localConnections = null;
             lock (connections_mutex)
             {
-                local_connections = new List<Connection>(connections);
+                localConnections = connections.ToArray();
                 connections.Clear();
             }
-            foreach (Connection c in local_connections)
+
+            foreach (Connection c in localConnections)
             {
                 if (!c.dropped)
                     c.drop(reason);
             }
-            lock (dropped_connections_mutex)
-                dropped_connections.Clear();
-        }
 
+            lock (dropped_connections_mutex)
+            {
+                dropped_connections.Clear();
+            }
+        }
 
         public void Shutdown()
         {
             acceptor.Stop();
 
-            if (tcpserver_transport != null)
+            if (listener != null)
             {
-                tcpserver_transport.Stop();
-                tcpserver_transport = null;
+                listener.Stop();
+                listener = null;
             }
+
             PollManager.Instance.RemovePollThreadListener(RemoveDroppedConnections);
 
             Clear(Connection.DropReason.Destructing);
         }
-
 
         public void TcpRosAcceptConnection(TcpTransport transport)
         {
@@ -135,45 +135,43 @@ namespace Uml.Robotics.Ros
             return ret;
         }
 
-
         public void CheckAndAccept(object nothing)
         {
-            while (tcpserver_transport != null && tcpserver_transport.Pending())
+            while (listener != null && listener.Pending())
             {
-                TcpRosAcceptConnection(new TcpTransport(tcpserver_transport.AcceptSocketAsync().Result, PollManager.Instance.poll_set));
+                TcpRosAcceptConnection(new TcpTransport(listener.AcceptSocketAsync().Result, PollManager.Instance.poll_set));
             }
         }
-
 
         public void Start()
         {
             PollManager.Instance.AddPollThreadListener(RemoveDroppedConnections);
 
-            tcpserver_transport = new TcpListener(IPAddress.Any, Network.TcpRosServerPort);
-            tcpserver_transport.Start(10);
+            listener = new TcpListener(IPAddress.Any, Network.TcpRosServerPort);
+            listener.Start(16);
             acceptor = ROS.timerManager.StartTimer(CheckAndAccept, 100, 100);
-
         }
-
 
         private void OnConnectionDropped(Connection conn, Connection.DropReason r)
         {
             lock (dropped_connections_mutex)
+            {
                 dropped_connections.Add(conn);
+            }
         }
-
 
         private void RemoveDroppedConnections()
         {
-            List<Connection> localDropped = null;
+            Connection[] localDroppedConnections = null;
             lock (dropped_connections_mutex)
             {
-                localDropped = new List<Connection>(dropped_connections);
+                localDroppedConnections = dropped_connections.ToArray();
                 dropped_connections.Clear();
             }
+
             lock (connections_mutex)
             {
-                foreach (Connection c in localDropped)
+                foreach (Connection c in localDroppedConnections)
                 {
                     Logger.LogDebug("Removing dropped connection: " + c.CallerID);
                     connections.Remove(c);

@@ -54,7 +54,6 @@ namespace Uml.Robotics.Ros
         {
         }
 
-
         public TcpTransport(System.Net.Sockets.Socket s, PollSet pollset)
             : this(s, pollset, 0)
         {
@@ -364,17 +363,17 @@ namespace Uml.Robotics.Ros
                 if (closed)
                     return -1;
             }
-            int num_bytes = 0;
-            SocketError err;
-            num_bytes = socket.realSocket.Receive(buffer, pos, length, SocketFlags.None, out err);
-            if (num_bytes < 0)
+
+            int num_bytes = socket.realSocket.Receive(buffer, pos, length, SocketFlags.None, out SocketError err);
+            if (num_bytes <= 0)
             {
                 if (err == SocketError.TryAgain || err == SocketError.WouldBlock)
+                {
                     num_bytes = 0;
-                else if (err != SocketError.InProgress && err != SocketError.IsConnected && err != SocketError.Success)
+                }
+                else
                 {
                     close();
-                    num_bytes = -1;
                 }
             }
             return num_bytes;
@@ -388,13 +387,14 @@ namespace Uml.Robotics.Ros
                     return -1;
             }
 
-            SocketError err;
-            int num_bytes = socket.Send(buffer, pos, size, SocketFlags.None, out err);
+            int num_bytes = socket.Send(buffer, pos, size, SocketFlags.None, out SocketError err);
             if (num_bytes <= 0)
             {
                 if (err == SocketError.TryAgain || err == SocketError.WouldBlock)
+                {
                     num_bytes = 0;
-                else if (err != SocketError.InProgress && err != SocketError.IsConnected && err != SocketError.Success)
+                }
+                else if (err != SocketError.Success)
                 {
                     close();
                     return -1;

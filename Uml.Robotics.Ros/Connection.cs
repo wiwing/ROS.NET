@@ -141,16 +141,16 @@ namespace Uml.Robotics.Ros
 
         public void drop(DropReason reason)
         {
-            bool did_drop = false;
+            bool didDrop = false;
+
             if (!dropped)
             {
                 dropped = true;
-                did_drop = true;
-                if (DroppedEvent != null)
-                    DroppedEvent(this, reason);
+                didDrop = true;
+                DroppedEvent?.Invoke(this, reason);
             }
 
-            if (did_drop)
+            if (didDrop)
             {
                 transport.close();
             }
@@ -158,10 +158,7 @@ namespace Uml.Robotics.Ros
 
         public void initialize(TcpTransport trans, bool is_server, HeaderReceivedFunc header_func)
         {
-            if (trans == null)
-                throw new ArgumentNullException("Connection innitialized with null transport", nameof(trans));
-
-            transport = trans;
+            transport = trans ?? throw new ArgumentNullException("Connection innitialized with null transport", nameof(trans));
             this.header_func = header_func;
             this.is_server = is_server;
 
@@ -201,6 +198,7 @@ namespace Uml.Robotics.Ros
             {
                 return false;
             }
+
             string error_msg = "";
             if (!header.Parse(data, (int) size, ref error_msg))
             {
