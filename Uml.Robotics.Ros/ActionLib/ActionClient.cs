@@ -417,6 +417,7 @@ namespace Uml.Robotics.Ros.ActionLib
         private void OnStatusMessage(GoalStatusArray statusArray)
         {
             string callerId;
+            var timestamp = statusArray.header.stamp;
             bool callerIdPresent = statusArray.connection_header.TryGetValue("callerid", out callerId);
             if (callerIdPresent)
             {
@@ -442,7 +443,7 @@ namespace Uml.Robotics.Ros.ActionLib
                     statusReceived = true;
                     statusCallerId = callerId;
                 }
-                LatestStatusTime = statusArray.header.stamp;
+                LatestStatusTime = timestamp;
 
                 // Create a copy of all goal handle references in thread safe environment so it can be looped over all goal
                 // handles without blocking the sending of new goals
@@ -456,11 +457,14 @@ namespace Uml.Robotics.Ros.ActionLib
                 var completedGoals = new List<string>();
                 foreach (var pair in goalHandlesReferenceCopy)
                 {
-                    var goalStatus = FindGoalInStatusList(statusArray, pair.Key);
-                    UpdateStatus(pair.Value, goalStatus);
-                    if (pair.Value.State == CommunicationState.DONE)
+                    if ((pair.Value.LatestResultAction != null) && (ROS.GetTime(pair.Value.LatestResultAction.Header.stamp) < ROS.GetTime(timestamp))) 
                     {
-                        completedGoals.Add(pair.Key);
+                        var goalStatus = FindGoalInStatusList(statusArray, pair.Key);
+                        UpdateStatus(pair.Value, goalStatus);
+                        if (pair.Value.State == CommunicationState.DONE)
+                        {
+                            completedGoals.Add(pair.Key);
+                        }
                     }
                 }
 
