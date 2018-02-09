@@ -8,6 +8,7 @@ using Messages.actionlib_msgs;
 using Messages.std_msgs;
 using System.Threading;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace Uml.Robotics.Ros.ActionLib
 {
@@ -496,6 +497,50 @@ namespace Uml.Robotics.Ros.ActionLib
             TransitionToState(goalHandle, CommunicationState.DONE);
         }
 
+        public async Task<TResult> SendGoalAsync(
+           TGoal goal,
+           CancellationToken cancel = default(CancellationToken),
+           Action<ClientGoalHandle<TGoal, TResult, TFeedback>> OnTransistionCallback = null,
+           Action<ClientGoalHandle<TGoal, TResult, TFeedback>, FeedbackActionMessage<TFeedback>> OnFeedbackCallback = null
+           )
+        {
+            var tcs = new TaskCompletionSource<TResult>();
+            if (!this.WaitForActionServerToStart(TimeSpan.FromSeconds(3)))
+                throw new TimeoutException($"Action server {this.Name} is not available.");
+
+            void OnTransistion(ClientGoalHandle<TGoal, TResult, TFeedback> goalHandle)
+            {
+                if (goalHandle.State == CommunicationState.DONE && !tcs.Task.IsCompleted)
+                {
+                    var goalStatus = goalHandle.LatestGoalStatus;
+                    if (goalStatus?.status == Messages.actionlib_msgs.GoalStatus.SUCCEEDED)
+                    {
+                        var result = goalHandle.Result;
+                        tcs.SetResult(result);
+                    }
+                    else if (goalStatus?.status == Messages.actionlib_msgs.GoalStatus.PREEMPTED)
+                    {
+                        tcs.SetCanceled();
+                    }
+                    else
+                    {
+                        tcs.SetException(new ActionFailedExeption(this.Name, goalStatus));
+                    }
+                }
+                OnTransistionCallback?.Invoke(goalHandle);
+            }
+
+            void OnFeedback(ClientGoalHandle<TGoal, TResult, TFeedback> goalHandle, FeedbackActionMessage<TFeedback> feedback)
+            {
+                OnFeedbackCallback?.Invoke(goalHandle, feedback);
+            }
+
+            var gh = this.SendGoal(goal, OnTransistion, OnFeedback);
+            using (cancel.Register(gh.Cancel))
+            {
+                return await tcs.Task;
+            }
+        }
 
         private void UpdateStatus(ClientGoalHandle<TGoal, TResult, TFeedback> goalHandle, GoalStatus goalStatus)
         {
