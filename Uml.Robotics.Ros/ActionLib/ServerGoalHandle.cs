@@ -65,7 +65,8 @@ namespace Uml.Robotics.Ros.ActionLib
             if ((GoalStatus.status == GoalStatus.PREEMPTING) || (GoalStatus.status == GoalStatus.ACTIVE))
             {
                 SetGoalResult(GoalStatus.ABORTED, text, result);
-            } else
+            }
+            else
             {
                 ROS.Error()("actionlib", "To transition to an aborted state, the goal must be in a preempting or active state, " +
                     $"it is currently in state: {GoalStatus.status}");
@@ -100,10 +101,12 @@ namespace Uml.Robotics.Ros.ActionLib
             if ((GoalStatus.status == GoalStatus.PENDING) || (GoalStatus.status == GoalStatus.RECALLING))
             {
                 SetGoalResult(GoalStatus.RECALLED, text, result);
-            } else if ((GoalStatus.status == GoalStatus.ACTIVE) || (GoalStatus.status == GoalStatus.PREEMPTING))
+            }
+            else if ((GoalStatus.status == GoalStatus.ACTIVE) || (GoalStatus.status == GoalStatus.PREEMPTING))
             {
                 SetGoalResult(GoalStatus.PREEMPTED, text, result);
-            } else
+            }
+            else
             {
                 ROS.Error()("actionlib", "To transition to a cancelled state, the goal must be in a pending, recalling, active, " +
                     $"or preempting state, it is currently in state: {GoalStatus.status}");

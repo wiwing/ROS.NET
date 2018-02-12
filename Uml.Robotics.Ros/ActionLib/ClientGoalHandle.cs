@@ -22,6 +22,7 @@ namespace Uml.Robotics.Ros.ActionLib
         public bool Active { get; set; }
         public GoalStatus LatestGoalStatus { get; set; }
         public ResultActionMessage<TResult> LatestResultAction { get; set; }
+
         public TResult Result
         {
             get
@@ -84,16 +85,18 @@ namespace Uml.Robotics.Ros.ActionLib
             actionClient.CancelPublisher.publish(cancelMessage);
             actionClient.TransitionToState(this, CommunicationState.WAITING_FOR_CANCEL_ACK);
 
-            Task.Run(() =>
-            {
-                Thread.Sleep(3000);
+            CheckDoneAsync();
+        }
 
-                if (this.State != CommunicationState.DONE)
-                {
-                    ROS.Warn()("actionlib", $"Did not receive cancel acknowledgement for canceled goal id {this.Id}. Assuming that action server has been shutdown.");
-                    this.actionClient.ProcessLost(this);
-                }
-            });
+
+        private async void CheckDoneAsync()
+        {
+            await Task.Delay(3000);
+            if (this.State != CommunicationState.DONE)
+            {
+                ROS.Warn()("actionlib", $"Did not receive cancel acknowledgement for canceled goal id {this.Id}. Assuming that action server has been shutdown.");
+                this.actionClient.ProcessLost(this);
+            }
         }
 
 

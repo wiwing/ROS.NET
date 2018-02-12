@@ -20,19 +20,19 @@ namespace Uml.Robotics.Ros.ActionLib
         void ProcessLost(ClientGoalHandle<TGoal, TResult, TFeedback> goalHandle);
         TGoal CreateGoal();
         void Shutdown();
-        bool WaitForActionServerToStart(TimeSpan timeout);
-        bool WaitForActionServerToStartSpinning(TimeSpan timeout, SingleThreadSpinner spinner);
+        bool WaitForActionServerToStart(TimeSpan? timeout = null);
+        bool WaitForActionServerToStartSpinning(TimeSpan? timeout, SingleThreadSpinner spinner);
         bool IsServerConnected();
         Task<TResult> SendGoalAsync(
            TGoal goal,
            CancellationToken cancel = default(CancellationToken),
            Action<ClientGoalHandle<TGoal, TResult, TFeedback>> OnTransistionCallback = null,
            Action<ClientGoalHandle<TGoal, TResult, TFeedback>, FeedbackActionMessage<TFeedback>> OnFeedbackCallback = null
-           );
+        );
     }
 
     public class ActionFailedExeption
-    : Exception
+        : Exception
     {
         public static string GetGoalStatusString(GoalStatus goalStatus)
         {
@@ -55,6 +55,7 @@ namespace Uml.Robotics.Ros.ActionLib
             this.FinalGoalStatus = (goalStatus)?.status ?? GoalStatus.LOST;
             this.StatusText = goalStatus?.text;
         }
+
         public string ActionName { get; }
         public byte FinalGoalStatus { get; }
         public string StatusText { get; }
