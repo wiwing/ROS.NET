@@ -4,6 +4,8 @@ using System.Text;
 
 using Messages;
 using Messages.actionlib_msgs;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace Uml.Robotics.Ros.ActionLib
 {
@@ -38,7 +40,6 @@ namespace Uml.Robotics.Ros.ActionLib
         }
 
         private IActionClient<TGoal, TResult, TFeedback> actionClient;
-
 
         public ClientGoalHandle(IActionClient<TGoal, TResult, TFeedback> actionClient, GoalActionMessage<TGoal> goalAction,
             Action<ClientGoalHandle<TGoal, TResult, TFeedback>> OnTransitionCallback,
@@ -75,12 +76,24 @@ namespace Uml.Robotics.Ros.ActionLib
               State == CommunicationState.WAITING_FOR_CANCEL_ACK))
             {
                 ROS.Debug()("actionlib", $"BUG: Unhandled CommState: {State}");
+                return;
             }
 
             var cancelMessage = new GoalID();
             cancelMessage.id = Id;
             actionClient.CancelPublisher.publish(cancelMessage);
-            actionClient.TransitionToState(this, State);
+            actionClient.TransitionToState(this, CommunicationState.WAITING_FOR_CANCEL_ACK);
+
+            Task.Run(() =>
+            {
+                Thread.Sleep(3000);
+
+                if (this.State != CommunicationState.DONE)
+                {
+                    ROS.Warn()("actionlib", $"Did not receive cancel acknowledgement for canceled goal id {this.Id}. Assuming that action server has been shutdown.");
+                    this.actionClient.ProcessLost(this);
+                }
+            });
         }
 
 

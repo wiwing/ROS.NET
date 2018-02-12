@@ -90,7 +90,7 @@ namespace Uml.Robotics.Ros.ActionLib
         }
 
 
-        public ClientGoalHandle<TGoal, TResult, TFeedback> SendGoal(TGoal goal,
+        private ClientGoalHandle<TGoal, TResult, TFeedback> SendGoal(TGoal goal,
             Action<ClientGoalHandle<TGoal, TResult, TFeedback>> OnTransistionCallback,
             Action<ClientGoalHandle<TGoal, TResult, TFeedback>, FeedbackActionMessage<TFeedback>> OnFeedbackCallback)
         {
@@ -486,7 +486,7 @@ namespace Uml.Robotics.Ros.ActionLib
         }
 
 
-        private void ProcessLost(ClientGoalHandle<TGoal, TResult, TFeedback> goalHandle)
+        public void ProcessLost(ClientGoalHandle<TGoal, TResult, TFeedback> goalHandle)
         {
             ROS.Warn()("Transitioning goal to LOST");
             if (goalHandle.LatestGoalStatus != null)
@@ -526,7 +526,7 @@ namespace Uml.Robotics.Ros.ActionLib
                     {
                         tcs.SetException(new ActionFailedExeption(this.Name, goalStatus));
                     }
-                }
+                } 
                 OnTransistionCallback?.Invoke(goalHandle);
             }
 

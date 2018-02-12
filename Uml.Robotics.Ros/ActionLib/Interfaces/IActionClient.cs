@@ -1,8 +1,10 @@
 ﻿using Messages.actionlib_msgs;
+using Messages.std_msgs;
 using System;
 using System.Collections.Generic;
 using System.Text;
-
+using System.Threading;
+using System.Threading.Tasks;
 using Uml.Robotics.Ros;
 
 namespace Uml.Robotics.Ros.ActionLib
@@ -15,6 +17,18 @@ namespace Uml.Robotics.Ros.ActionLib
         Publisher<GoalActionMessage<TGoal>> GoalPublisher { get; }
         Publisher<GoalID> CancelPublisher { get; }
         void TransitionToState(ClientGoalHandle<TGoal, TResult, TFeedback> goalHandle, CommunicationState state);
+        void ProcessLost(ClientGoalHandle<TGoal, TResult, TFeedback> goalHandle);
+        TGoal CreateGoal();
+        void Shutdown();
+        bool WaitForActionServerToStart(TimeSpan timeout);
+        bool WaitForActionServerToStartSpinning(TimeSpan timeout, SingleThreadSpinner spinner);
+        bool IsServerConnected();
+        Task<TResult> SendGoalAsync(
+           TGoal goal,
+           CancellationToken cancel = default(CancellationToken),
+           Action<ClientGoalHandle<TGoal, TResult, TFeedback>> OnTransistionCallback = null,
+           Action<ClientGoalHandle<TGoal, TResult, TFeedback>, FeedbackActionMessage<TFeedback>> OnFeedbackCallback = null
+           );
     }
 
     public class ActionFailedExeption
