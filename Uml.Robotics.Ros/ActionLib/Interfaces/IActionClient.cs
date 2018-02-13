@@ -23,6 +23,7 @@ namespace Uml.Robotics.Ros.ActionLib
         bool WaitForActionServerToStart(TimeSpan? timeout = null);
         bool WaitForActionServerToStartSpinning(TimeSpan? timeout, SingleThreadSpinner spinner);
         bool IsServerConnected();
+        int? PreemptTimeout { get; }
         Task<TResult> SendGoalAsync(
            TGoal goal,
            CancellationToken cancel = default(CancellationToken),

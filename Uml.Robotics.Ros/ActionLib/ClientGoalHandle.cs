@@ -91,7 +91,7 @@ namespace Uml.Robotics.Ros.ActionLib
 
         private async void CheckDoneAsync()
         {
-            await Task.Delay(3000);
+            await Task.Delay(this.actionClient.PreemptTimeout ?? 3000);
             if (this.State != CommunicationState.DONE)
             {
                 ROS.Warn()("actionlib", $"Did not receive cancel acknowledgement for canceled goal id {this.Id}. Assuming that action server has been shutdown.");

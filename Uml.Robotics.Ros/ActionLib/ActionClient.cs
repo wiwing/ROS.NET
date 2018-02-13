@@ -22,6 +22,7 @@ namespace Uml.Robotics.Ros.ActionLib
         public Publisher<GoalActionMessage<TGoal>> GoalPublisher { get; private set; }
         public Publisher<GoalID> CancelPublisher { get; private set; }
         public Time LatestStatusTime { get; private set; }
+        public int? PreemptTimeout { get; set; } = null;
 
         private NodeHandle nodeHandle;
         private bool statusReceived;
