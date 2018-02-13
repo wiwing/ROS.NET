@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Uml.Robotics.Ros;
+using System.Linq;
 
 namespace Uml.Robotics.Ros.ActionLib
 {
@@ -39,11 +40,16 @@ namespace Uml.Robotics.Ros.ActionLib
         {
             if (goalStatus == null)
                 return "null";
-
-            if (Enum.IsDefined(typeof(GoalStatus), goalStatus.status))
+            try
             {
-                byte status = goalStatus.status;
-                return status.ToString("g");
+                var statusRef = typeof(GoalStatus).GetFields().First(x =>
+                {
+                    return x.FieldType == typeof(System.Byte) && x.IsStatic && (byte)x.GetValue(null) == goalStatus.status;
+                }
+                );
+                return statusRef.Name;
+            } catch
+            {
             }
 
             return $"INVALID GOAL STATUS {goalStatus.status}";

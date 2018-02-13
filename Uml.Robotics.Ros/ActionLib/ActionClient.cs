@@ -22,6 +22,7 @@ namespace Uml.Robotics.Ros.ActionLib
         public Publisher<GoalActionMessage<TGoal>> GoalPublisher { get; private set; }
         public Publisher<GoalID> CancelPublisher { get; private set; }
         public Time LatestStatusTime { get; private set; }
+        public uint? LatestSequenceNumber { get; private set; } = null;
         public int? PreemptTimeout { get; set; } = null;
 
         private NodeHandle nodeHandle;
@@ -300,6 +301,16 @@ namespace Uml.Robotics.Ros.ActionLib
             return result;
         }
 
+        private void handleConnectionLost()
+        {
+            lock (goalHandles)
+            {
+                foreach (var pair in this.goalHandles)
+                {
+                    this.ProcessLost(pair.Value);
+                }
+            }
+        }
 
         private void OnCancelConnectCallback(SingleSubscriberPublisher publisher)
         {
@@ -463,6 +474,12 @@ namespace Uml.Robotics.Ros.ActionLib
                     statusCallerId = callerId;
                 }
                 LatestStatusTime = timestamp;
+                if (LatestSequenceNumber != null && statusArray.header.seq <= LatestSequenceNumber)
+                {
+                    ROS.Warn()("Status sequence number was decreased. This can only happen when the action server was restarted. Assume all active goals are lost.");
+                    handleConnectionLost();
+                }
+                LatestSequenceNumber = statusArray.header.seq;
 
                 // Create a copy of all goal handle references in thread safe environment so it can be looped over all goal
                 // handles without blocking the sending of new goals
