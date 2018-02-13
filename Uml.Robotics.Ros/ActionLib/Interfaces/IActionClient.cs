@@ -27,9 +27,23 @@ namespace Uml.Robotics.Ros.ActionLib
         int? PreemptTimeout { get; }
         Task<TResult> SendGoalAsync(
            TGoal goal,
-           CancellationToken cancel = default(CancellationToken),
            Action<ClientGoalHandle<TGoal, TResult, TFeedback>> OnTransistionCallback = null,
-           Action<ClientGoalHandle<TGoal, TResult, TFeedback>, FeedbackActionMessage<TFeedback>> OnFeedbackCallback = null
+           Action<ClientGoalHandle<TGoal, TResult, TFeedback>, FeedbackActionMessage<TFeedback>> OnFeedbackCallback = null,
+           CancellationToken cancel = default(CancellationToken)
+        );
+        Task<TResult> SendGoalAsync(
+           TGoal goal,
+           CancellationToken cancel = default(CancellationToken)
+        );
+        Task<TResult> SendGoalAsync(
+           TGoal goal,
+           Action<ClientGoalHandle<TGoal, TResult, TFeedback>> OnTransistionCallback = null,
+           CancellationToken cancel = default(CancellationToken)
+        );
+        Task<TResult> SendGoalAsync(
+           TGoal goal,
+           Action<ClientGoalHandle<TGoal, TResult, TFeedback>, FeedbackActionMessage<TFeedback>> OnFeedbackCallback = null,
+           CancellationToken cancel = default(CancellationToken)
         );
     }
 

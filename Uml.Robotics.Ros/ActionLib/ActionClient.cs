@@ -493,7 +493,7 @@ namespace Uml.Robotics.Ros.ActionLib
                 var completedGoals = new List<string>();
                 foreach (var pair in goalHandlesReferenceCopy)
                 {
-                    if ((pair.Value.LatestResultAction != null) && (ROS.GetTime(pair.Value.LatestResultAction.Header.stamp) < ROS.GetTime(timestamp))) 
+                    if ((pair.Value.LatestResultAction == null) || (ROS.GetTime(pair.Value.LatestResultAction.Header.stamp) < ROS.GetTime(timestamp))) 
                     {
                         var goalStatus = FindGoalInStatusList(statusArray, pair.Key);
                         UpdateStatus(pair.Value, goalStatus);
@@ -535,9 +535,9 @@ namespace Uml.Robotics.Ros.ActionLib
 
         public async Task<TResult> SendGoalAsync(
            TGoal goal,
-           CancellationToken cancel = default(CancellationToken),
            Action<ClientGoalHandle<TGoal, TResult, TFeedback>> OnTransistionCallback = null,
-           Action<ClientGoalHandle<TGoal, TResult, TFeedback>, FeedbackActionMessage<TFeedback>> OnFeedbackCallback = null
+           Action<ClientGoalHandle<TGoal, TResult, TFeedback>, FeedbackActionMessage<TFeedback>> OnFeedbackCallback = null,
+           CancellationToken cancel = default(CancellationToken)
         )
         {
             var tcs = new TaskCompletionSource<TResult>();
@@ -938,6 +938,21 @@ namespace Uml.Robotics.Ros.ActionLib
                 ROS.Error()("Invalid comm State: %u", goalHandle.State);
             }
 
+        }
+
+        public Task<TResult> SendGoalAsync(TGoal goal, CancellationToken cancel = default(CancellationToken))
+        {
+            return SendGoalAsync(goal, null, null, cancel);
+        }
+
+        public Task<TResult> SendGoalAsync(TGoal goal, Action<ClientGoalHandle<TGoal, TResult, TFeedback>> OnTransistionCallback = null, CancellationToken cancel = default(CancellationToken))
+        {
+            return SendGoalAsync(goal, OnTransistionCallback, null, cancel);
+        }
+
+        public Task<TResult> SendGoalAsync(TGoal goal, Action<ClientGoalHandle<TGoal, TResult, TFeedback>, FeedbackActionMessage<TFeedback>> OnFeedbackCallback = null, CancellationToken cancel = default(CancellationToken))
+        {
+            return SendGoalAsync(goal, null, OnFeedbackCallback, cancel);
         }
     }
 
