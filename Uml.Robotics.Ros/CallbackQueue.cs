@@ -169,7 +169,13 @@ namespace Uml.Robotics.Ros
                     tls.SpliceOut(info);
                     if (!info.MarkedForRemoval)
                     {
-                        result = cb.Call();
+                        try
+                        {
+                            result = cb.Call();
+                        } catch (Exception ex)
+                        {
+                            ROS.Error()("Error during callback. Error: %s, Stacktrace: %s", ex.ToString(), ex.StackTrace);
+                        }
                     }
                     if (result == CallbackInterface.CallResult.TryAgain && !info.MarkedForRemoval)
                     {
