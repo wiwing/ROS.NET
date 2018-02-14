@@ -1,12 +1,8 @@
 ﻿using Messages.actionlib_msgs;
-using Messages.std_msgs;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Uml.Robotics.Ros;
-using System.Linq;
 
 namespace Uml.Robotics.Ros.ActionLib
 {
@@ -50,20 +46,16 @@ namespace Uml.Robotics.Ros.ActionLib
     public class ActionFailedExeption
         : Exception
     {
+        private static readonly List<string> GoalStates = new List<string>() {"PENDING", "ACTIVE", "PREEMPTED", "SUCCEEDED", "ABORTED", "REJECTED", "PREEMPTING", "RECALLING", "RECALLED", "LOST" };
+
         public static string GetGoalStatusString(GoalStatus goalStatus)
         {
             if (goalStatus == null)
-                return "null";
-            try
+                return "INVALID GOAL STATUS 'null'";
+
+            if (goalStatus.status >= 0 && goalStatus.status < GoalStates.Count)
             {
-                var statusRef = typeof(GoalStatus).GetFields().First(x =>
-                {
-                    return x.FieldType == typeof(System.Byte) && x.IsStatic && (byte)x.GetValue(null) == goalStatus.status;
-                }
-                );
-                return statusRef.Name;
-            } catch
-            {
+                return GoalStates[goalStatus.status];
             }
 
             return $"INVALID GOAL STATUS {goalStatus.status}";
