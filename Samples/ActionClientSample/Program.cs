@@ -82,8 +82,10 @@ namespace ActionClientSample
                     counter += 1;
 
                     Console.WriteLine($"Send goal {goal.goal} from client");
-                    actionClient.SendGoal(goal,
-                        (goalHandle) => {
+                    var cts = new CancellationTokenSource();
+                    actionClient.SendGoalAsync(goal,
+                        (goalHandle) =>
+                        {
                             if (goalHandle.State == CommunicationState.DONE)
                             {
                                 semaphore.Release();
@@ -92,17 +94,20 @@ namespace ActionClientSample
                                 if (result != null)
                                 {
                                     Console.WriteLine($"Got Result for goal {g}: {goalHandle.Result.result}");
-                                } else
+                                }
+                                else
                                 {
                                     Console.WriteLine($"Result for goal {g} is NULL!");
                                 }
                                 dict.Remove(g);
                             }
                         },
-                        (goalHandle, feedback) => {
+                        (goalHandle, feedback) =>
+                        {
                             Console.WriteLine($"Feedback: {feedback}");
-                        }
-                    );
+                        },
+                        cts.Token
+                    ).GetAwaiter().GetResult();
                 }
 
                 Console.WriteLine("Wait for 15s for open goals");

@@ -26,15 +26,18 @@ namespace ActionClientTestbed
                 Thread.Sleep(1);
             }
 
-            (new Program()).Start(2000);
+            Console.WriteLine("Start ROS");
+            ROS.ROS_MASTER_URI = "http://rosvita:11311";
+            ROS.Init(new string[0], "ActionClient");
+
+            //(new Program()).Start(1);
+            (new TestActionServerKill()).Start(5);
+            ROS.shutdown();
         }
 
 
         private void Start(int numberOfRuns)
         {
-            Console.WriteLine("Start ROS");
-            ROS.Init(new string[0], "ActionClient");
-
             NodeHandle clientNodeHandle = new NodeHandle();
             spinner = new SingleThreadSpinner(ROS.GlobalCallbackQueue);
 
@@ -108,7 +111,6 @@ namespace ActionClientTestbed
             Console.WriteLine("Shutdown client");
             actionClient.Shutdown();
             clientNodeHandle.shutdown();
-            ROS.shutdown();
         }
 
 
@@ -122,7 +124,8 @@ namespace ActionClientTestbed
             var goal = new Messages.actionlib.TestGoal();
             goal.goal = 42;
 
-            var clientHandle = actionClient.SendGoal(goal,
+            var cts = new CancellationTokenSource();
+            var clientHandle = actionClient.SendGoalAsync(goal,
                 (goalHandle) => {
                     Console.WriteLine($"Transition: {goalHandle.State} {goalHandle.LatestGoalStatus.status} {goalHandle.Result?.result}");
 
@@ -157,7 +160,8 @@ namespace ActionClientTestbed
                 (goalHandle, feedback) => {
                     //Console.WriteLine($"Feedback {feedback.Feedback.feedback} {feedback.GoalStatus.status}");
                     receivedFeedback += 1;
-                }
+                },
+                cts.Token
             );
             Console.WriteLine($"Sent goal {clientHandle.Id}");
 
@@ -165,7 +169,7 @@ namespace ActionClientTestbed
             {
                 Thread.Sleep(100);
                 Console.WriteLine("Canceling goal");
-                actionClient.CancelPublisher.publish(clientHandle.Goal.GoalId);
+                cts.Cancel();
             }
 
             WaitForSuccessWithTimeOut(5, expectedNumberOfFeedback, expectedGoal);
@@ -201,6 +205,105 @@ namespace ActionClientTestbed
             Failed
         }
 
+    }
+
+    // thanks: https://loune.net/2017/06/running-shell-bash-commands-in-net-core/
+    public static class ShellHelper
+    {
+        public static string Bash(this string cmd)
+        {
+            var escapedArgs = cmd.Replace("\"", "\\\"");
+
+            var process = new Process()
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "/bin/bash",
+                    Arguments = $"-c \"{escapedArgs}\"",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                }
+            };
+            process.Start();
+            //string result = process.StandardOutput.ReadToEnd();
+            //process.WaitForExit();
+            return ""; //result;
+        }
+    }
+
+    public class TestActionServerKill
+    {
+        public void Start(int numberOfTries)
+        {
+            NodeHandle clientNodeHandle = new NodeHandle();
+            var spinner = new AsyncSpinner();
+            spinner.Start();
+            //var spinner = new SingleThreadSpinner(ROS.GlobalCallbackQueue);
+
+            /*Console.WriteLine("Start Action Server");
+            ShellHelper.Bash("screen -dmS selfkill th SelfKillingActionServer.th");
+            Console.WriteLine("Ok");
+            Thread.Sleep(300000);*/
+
+            Console.WriteLine("Start Action Client");
+            var actionClient = new ActionClient<Messages.actionlib.TestGoal, Messages.actionlib.TestResult,
+                Messages.actionlib.TestFeedback>("self_killing_action", clientNodeHandle, 10);
+            int numberReceived = 0;
+            int numberTimeout = 0;
+            for (int i = 0; i < numberOfTries; i++)
+            {
+                bool started = actionClient.WaitForActionServerToStart(TimeSpan.FromSeconds(10));
+
+                if (started)
+                {
+                    var g = new Messages.actionlib.TestGoal();
+                    g.goal = 12;
+                    Console.WriteLine("Sent");
+                    var c = new CancellationTokenSource();
+                    //c.CancelAfter(6000);
+                    var gh = actionClient.SendGoalAsync(g, (cgh) => { }, (cgh, fb) => { }, c.Token);
+                    bool received = false;
+                    var start = DateTime.UtcNow;
+                    while (true)
+                    {
+                        if (gh.IsCompleted)
+                        {
+                            if (gh.IsCanceled)
+                            {
+                                break;
+                            }
+                            else if (gh.IsFaulted)
+                            {
+                                break;
+                            }
+                            else if (gh.Result.result == 123)
+                            {
+                                received = true;
+                                break;
+                            } 
+                        }
+                        Thread.Sleep(0);
+                        //spinner.SpinOnce();
+                    }
+                    if (received)
+                    {
+                        Console.WriteLine("Received");
+                        numberReceived += 1;
+                    } else
+                    {
+                        Console.WriteLine("Timeout");
+                        numberTimeout += 1;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Could not connect to Action Server");
+                }
+            }
+
+            Console.WriteLine($"Done Received: {numberReceived} / Timeout: {numberTimeout}");
+        }
     }
 
     public class TestParameters
