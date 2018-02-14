@@ -23,7 +23,7 @@ namespace Uml.Robotics.Ros.IntegrationTests
 
 
         [Fact]
-        public async void Should_CreateGoalAndGetItDone()
+        public void Should_CreateGoalAndGetItDone()
         {
             NodeHandle serverNodeHandle = new NodeHandle();
             NodeHandle clientNodeHandle = new NodeHandle();
@@ -56,7 +56,7 @@ namespace Uml.Robotics.Ros.IntegrationTests
 
             Console.WriteLine("Send goal from client");
             var cts = new CancellationTokenSource();
-            await actionClient.SendGoalAsync(goal, cts.Token);
+            actionClient.SendGoalAsync(goal, cts.Token).GetAwaiter().GetResult();
 
             Console.WriteLine("Wait for action server receiving the goal");
             while (!goalRegistered)
