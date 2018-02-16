@@ -187,6 +187,45 @@ namespace Uml.Robotics.Ros.ActionLib
 
 
         /// <summary>
+        /// Waits for the ActionServer to connect to this client. Note: This expects the callback queue to be threaded, it does
+        /// not spin the callbacks.
+        /// Often, it can take a second for the action server &amp; client to negotiate
+        /// a connection, thus, risking the first few goals to be dropped.This call lets
+        /// the user wait until the network connection to the server is negotiated
+        /// NOTE: Using this call in a single threaded ROS application, or any
+        /// application where the action client's callback queue is not being
+        /// serviced, will not work.Without a separate thread servicing the queue, or
+        /// a multi-threaded spinner, there is no way for the client to tell whether
+        /// or not the server is up because it can't receive a status message.
+        /// </summary>
+        /// <param name="timeout">Max time to block before returning. A null timeout is interpreted as an infinite timeout.</param>
+        /// <returns>True if the server connected in the allocated time, false on timeout</returns>
+        public async Task<bool> WaitForActionServerToStartAsync(TimeSpan? timeout = null, CancellationToken cancel = default(CancellationToken))
+        {
+            var tic = DateTime.UtcNow;
+            while (ROS.ok)
+            {
+                if (IsServerConnected())
+                    return true;
+
+                if (cancel.IsCancellationRequested)
+                    return false;
+
+                if (timeout != null)
+                {
+                    var toc = DateTime.UtcNow;
+                    if (toc - tic > timeout)
+                        return false;
+                }
+
+                await Task.Delay(1);
+            }
+
+            return false;
+        }
+
+
+        /// <summary>
         /// Waits for the ActionServer to connect to this client. Spins the callbacks.
         /// <seealso cref="WaitForActionServerToStart"/>
         /// </summary>
@@ -493,7 +532,7 @@ namespace Uml.Robotics.Ros.ActionLib
                 var completedGoals = new List<string>();
                 foreach (var pair in goalHandlesReferenceCopy)
                 {
-                    if ((pair.Value.LatestResultAction == null) || (ROS.GetTime(pair.Value.LatestResultAction.Header.stamp) < ROS.GetTime(timestamp))) 
+                    if ((pair.Value.LatestResultAction == null) || (ROS.GetTime(pair.Value.LatestResultAction.Header.stamp) < ROS.GetTime(timestamp)))
                     {
                         var goalStatus = FindGoalInStatusList(statusArray, pair.Key);
                         UpdateStatus(pair.Value, goalStatus);
@@ -562,7 +601,7 @@ namespace Uml.Robotics.Ros.ActionLib
                     {
                         tcs.SetException(new ActionFailedExeption(this.Name, goalStatus));
                     }
-                } 
+                }
                 OnTransistionCallback?.Invoke(goalHandle);
             }
 
