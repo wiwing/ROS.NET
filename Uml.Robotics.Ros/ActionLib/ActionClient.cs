@@ -580,7 +580,7 @@ namespace Uml.Robotics.Ros.ActionLib
         )
         {
             var tcs = new TaskCompletionSource<TResult>();
-            if (!this.WaitForActionServerToStart(TimeSpan.FromSeconds(3)))
+            if (!await this.WaitForActionServerToStartAsync(TimeSpan.FromSeconds(3)))
                 throw new TimeoutException($"Action server {this.Name} is not available.");
 
             void OnTransistion(ClientGoalHandle<TGoal, TResult, TFeedback> goalHandle)
