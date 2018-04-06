@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 using Messages;
 using Messages.actionlib_msgs;
@@ -39,6 +40,13 @@ namespace Uml.Robotics.Ros.ActionLib
         private Object lockId = new Object();
         private Object lockGoalHandles = new Object();
 
+        public string CurrentGoalId {
+            get {
+                var goalIds = goalHandles.Select(x => x.Key).ToList();
+                goalIds.Sort();
+                return goalIds.FirstOrDefault();
+            }
+        }
 
         public ActionClient(string name, NodeHandle parentNodeHandle, int queueSize = 50)
         {
