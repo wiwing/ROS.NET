@@ -5,6 +5,7 @@ using System.IO;
 using System.Xml.Linq;
 using System.Xml;
 using System.Collections;
+using System.Globalization;
 
 namespace Uml.Robotics.XmlRpc
 {
@@ -438,14 +439,32 @@ namespace Uml.Robotics.XmlRpc
         public static explicit operator DateTime (XmlRpcValue value) => value.GetDateTime();
         public static explicit operator string(XmlRpcValue value) => value.GetString();
 
-        public IDictionary<string, XmlRpcValue> GetStruct() => (IDictionary<string, XmlRpcValue>)value;
-        public XmlRpcValue[] GetArray() => (XmlRpcValue[])value;
-        public int GetInt() => (int)value;
-        public string GetString() => (string)value;
-        public bool GetBool() => (bool)value;
-        public double GetDouble() => (double)value;
-        public DateTime GetDateTime() => (DateTime)value;
-        public byte[] GetBinary() => (byte[])value;
+        public IDictionary<string, XmlRpcValue> GetStruct() =>
+            (IDictionary<string, XmlRpcValue>)value;
+
+        public XmlRpcValue[] GetArray() =>
+            (XmlRpcValue[])value;
+
+        public int GetInt() =>
+            Convert.ToInt32(value, CultureInfo.InvariantCulture);
+
+        public string GetString() =>
+            Convert.ToString(value, CultureInfo.InvariantCulture);
+
+        public bool GetBool() =>
+            Convert.ToBoolean(value, CultureInfo.InvariantCulture);
+
+        public double GetDouble() =>
+            Convert.ToDouble(value, CultureInfo.InvariantCulture);
+
+        public DateTime GetDateTime() =>
+            (DateTime)value;
+
+        public byte[] GetBinary() =>
+            (byte[])value;
+
+        public object Value =>
+            value;
 
         public override string ToString()
         {

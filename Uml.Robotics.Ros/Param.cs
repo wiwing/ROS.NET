@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Uml.Robotics.XmlRpc;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Globalization;
 
 namespace Uml.Robotics.Ros
 {
@@ -224,40 +225,33 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        private static async Task<XmlRpcValue> GetParamTypeCheckedAsync(string key, XmlRpcType expectedType, bool useCache = false)
+        private static async Task<XmlRpcValue> GetParamCheckedAsync(string key, bool useCache = false)
         {
             var result = new XmlRpcValue();
             if (!await GetParamAsync(key, result, useCache))
                 throw new RosException($"Getting ROS param '{key}' failed.");
+            return result;
+        }
 
+        private static async Task<XmlRpcValue> GetParamTypeCheckedAsync(string key, XmlRpcType expectedType, bool useCache = false)
+        {
+            var result = await GetParamCheckedAsync(key, useCache);
             if (result.Type != expectedType)
                 throw new XmlRpcException($"{expectedType} response expected");
             return result;
         }
 
-        public static async Task<int> GetIntAsync(string key)
-        {
-            var rpcResult = await GetParamTypeCheckedAsync(key, XmlRpcType.Int);
-            return rpcResult.GetInt();
-        }
+        public static async Task<int> GetIntAsync(string key) =>
+            (await GetParamCheckedAsync(key)).GetInt();
 
-        public static async Task<bool> GetBoolAsync(string key)
-        {
-            var rpcResult = await GetParamTypeCheckedAsync(key, XmlRpcType.Boolean);
-            return rpcResult.GetBool();
-        }
+        public static async Task<bool> GetBoolAsync(string key) =>
+            (await GetParamCheckedAsync(key)).GetBool();
 
-        public static async Task<double> GetDoubleAsync(string key)
-        {
-            var rpcResult = await GetParamTypeCheckedAsync(key, XmlRpcType.Double);
-            return rpcResult.GetDouble();
-        }
+        public static async Task<double> GetDoubleAsync(string key) =>
+            (await GetParamCheckedAsync(key)).GetDouble();
 
-        public static async Task<string> GetStringAsync(string key)
-        {
-            var rpcResult = await GetParamTypeCheckedAsync(key, XmlRpcType.String);
-            return rpcResult.GetString();
-        }
+        public static async Task<string> GetStringAsync(string key) =>
+            (await GetParamCheckedAsync(key)).GetString();
 
         public static  async Task<DateTime> GetDateTimeAsync(string key)
         {
@@ -271,40 +265,33 @@ namespace Uml.Robotics.Ros
             return rpcResult.GetBinary();
         }
 
-        private static XmlRpcValue GetParamTypeChecked(string key, XmlRpcType expectedType, bool useCache = false)
+        private static XmlRpcValue GetParamChecked(string key, bool useCache = false)
         {
             var result = GetParam(key, useCache);
             if (result == null)
                 throw new RosException($"Getting ROS param '{key}' failed.");
+            return result;
+        }
 
+        private static XmlRpcValue GetParamTypeChecked(string key, XmlRpcType expectedType, bool useCache = false)
+        {
+            var result = GetParamChecked(key, useCache);
             if (result.Type != expectedType)
                 throw new XmlRpcException($"{expectedType} response expected");
             return result;
         }
 
-        public static int GetInt(string key)
-        {
-            var rpcResult = GetParamTypeChecked(key, XmlRpcType.Int);
-            return rpcResult.GetInt();
-        }
+        public static int GetInt(string key) =>
+            GetParamChecked(key).GetInt();
 
-        public static bool GetBool(string key)
-        {
-            var rpcResult = GetParamTypeChecked(key, XmlRpcType.Boolean);
-            return rpcResult.GetBool();
-        }
+        public static bool GetBool(string key) =>
+            GetParamChecked(key).GetBool();
 
-        public static double GetDouble(string key)
-        {
-            var rpcResult = GetParamTypeChecked(key, XmlRpcType.Double);
-            return rpcResult.GetDouble();
-        }
+        public static double GetDouble(string key) =>
+            GetParamChecked(key).GetDouble();
 
-        public static string GetString(string key)
-        {
-            var rpcResult = GetParamTypeChecked(key, XmlRpcType.String);
-            return rpcResult.GetString();
-        }
+        public static string GetString(string key) =>
+            GetParamChecked(key).GetString();
 
         public static DateTime GetDateTime(string key)
         {
