@@ -90,10 +90,8 @@ namespace Uml.Robotics.Ros
         {
         }
 
-        public bool IsValid
-        {
-            get { return !persistent || (!is_shutdown && server_link != null && server_link.IsValid); }
-        }
+        public bool IsValid => !persistent || (!is_shutdown && server_link != null && server_link.IsValid);
+        public string ServiceName => service;
 
         protected bool precall(string service_md5sum)
         {
