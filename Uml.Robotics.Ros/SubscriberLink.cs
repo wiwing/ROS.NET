@@ -2,19 +2,20 @@
 
 namespace Uml.Robotics.Ros
 {
-    public class SubscriberLink
+    internal abstract class SubscriberLink
+        : IDisposable
     {
-        public class Stats
+        public class SubscriberStats
         {
-            public long bytesSent;
-            public long messageDataSent;
-            public long messagesSent;
+            public long BytesSent;
+            public long MessageDataSent;
+            public long MessagesSent;
         }
 
-        public uint connection_id;
-        public string destination_caller_id = "";
+        public int connectionId;
+        public string DestinationCallerId = "";
         protected Publication parent;
-        public Stats stats = new Stats();
+        public SubscriberStats Stats { get; private set; } = new SubscriberStats();
         public string topic = "";
 
         public string Md5sum
@@ -23,7 +24,7 @@ namespace Uml.Robotics.Ros
             {
                 lock (parent)
                 {
-                    return parent.Md5sum;
+                    return parent.Md5Sum;
                 }
             }
         }
@@ -50,20 +51,8 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        internal virtual void EnqueueMessage(MessageAndSerializerFunc holder)
-        {
-            throw new NotImplementedException();
-        }
-
-        public virtual void Drop()
-        {
-            throw new NotImplementedException();
-        }
-
-        public virtual void getPublishTypes(ref bool ser, ref bool nocopy, string type_info)
-        {
-            ser = true;
-            nocopy = false;
-        }
+        public abstract void EnqueueMessage(MessageAndSerializerFunc holder);
+        public abstract void GetPublishTypes(ref bool ser, ref bool nocopy, string type_info);
+        public abstract void Dispose();
     }
 }

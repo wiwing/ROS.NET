@@ -1,58 +1,85 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
+using Xamla.Robotics.Ros.Async;
 
 namespace Uml.Robotics.Ros
 {
-    public class IServiceServerLink : IDisposable
+    internal class ServiceServerLink
+        : IServiceServerLinkAsync
     {
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<IServiceServerLink>();
-        public bool IsValid;
-        public string RequestMd5Sum;
-        public string RequestType;
-        public string ResponseMd5Sum;
-        public string ResponseType;
+        const int MAX_CALL_QUEUE_LENGTH = 8096;
 
-        private Queue<CallInfo> call_queue = new Queue<CallInfo>();
-        private object call_queue_mutex = new object();
-        public Connection connection;
-        private CallInfo current_call;
-        public bool header_read;
-        private IDictionary<string, string> header_values;
-        public bool header_written;
-        public string name;
-        public bool persistent;
+        class CallInfo
+        {
+            public TaskCompletionSource<bool> Tcs { get; } = new TaskCompletionSource<bool>();
+            public Task<bool> AsyncResult => this.Tcs.Task;
+            public RosMessage Request { get; set; }
+            public RosMessage Response { get; set; }
+            public string ErrorMessage { get; set; }
+        }
 
-        public IServiceServerLink(
+        private readonly ILogger logger = ApplicationLogging.CreateLogger<ServiceServerLink>();
+
+        private Connection connection;
+        private AsyncQueue<CallInfo> callQueue = new AsyncQueue<CallInfo>(MAX_CALL_QUEUE_LENGTH, true);
+
+        private readonly string name;
+        private readonly bool persistent;
+
+        private readonly CancellationTokenSource cancellationTokenSource;
+        private readonly CancellationToken cancel;
+
+        private IDictionary<string, string> headerValues;
+        Task connectionTask;
+
+        public ServiceServerLink(
+            Connection connection,
             string name,
             bool persistent,
             string requestMd5Sum,
             string responseMd5Sum,
-            IDictionary<string, string> header_values
+            IDictionary<string, string> headerValues
         )
         {
+            this.connection = connection;
             this.name = name;
             this.persistent = persistent;
-            RequestMd5Sum = requestMd5Sum;
-            ResponseMd5Sum = responseMd5Sum;
-            this.header_values = header_values;
+            this.RequestMd5Sum = requestMd5Sum;
+            this.ResponseMd5Sum = responseMd5Sum;
+            this.headerValues = headerValues;
+
+            this.cancellationTokenSource = new CancellationTokenSource();
+            this.cancel = cancellationTokenSource.Token;
         }
 
-        /// <summary>
-        ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
+        public Socket Socket =>
+            connection?.Socket;
+
+        public NetworkStream Stream =>
+            connection?.Stream;
+
+        public bool IsValid =>
+            !cancellationTokenSource.IsCancellationRequested && connection != null && !connectionTask.IsCompleted && !callQueue.IsCompleted;
+
+        public string RequestMd5Sum { get; private set; }
+        public string RequestType { get; private set; }
+        public string ResponseMd5Sum { get; private set; }
+        public string ResponseType { get; private set; }
+        public string ServiceMd5Sum { get; private set; }
+
         public void Dispose()
         {
-            if (connection != null && !connection.dropped)
-            {
-                connection.drop(Connection.DropReason.Destructing);
-                connection = null;
-            }
+            cancellationTokenSource.Cancel();
+            connection?.Dispose();
+            connection = null;
         }
 
-        public void initialize<MSrv>()
+        public void Initialize<MSrv>()
             where MSrv : RosService, new()
         {
             MSrv srv = new MSrv();
@@ -60,9 +87,12 @@ namespace Uml.Robotics.Ros
             ResponseMd5Sum = srv.ResponseMessage.MD5Sum();
             RequestType = srv.RequestMessage.MessageType;
             ResponseType = srv.ResponseMessage.MessageType;
+            ServiceMd5Sum = srv.MD5Sum();
+
+            this.connectionTask = HandleConnection();
         }
 
-        public void initialize<MReq, MRes>()
+        public void Initialize<MReq, MRes>()
             where MReq : RosMessage, new() where MRes : RosMessage, new()
         {
             MReq req = new MReq();
@@ -71,376 +101,198 @@ namespace Uml.Robotics.Ros
             ResponseMd5Sum = res.MD5Sum();
             RequestType = req.MessageType;
             ResponseType = res.MessageType;
+
+            this.connectionTask = HandleConnection();
         }
 
-        internal void initialize(Connection connection)
+        private async Task WriteHeader()
         {
-            this.connection = connection;
-            connection.DroppedEvent += onConnectionDropped;
-            connection.setHeaderReceivedCallback(onHeaderReceived);
-
-            IDictionary<string, string> header = new Dictionary<string, string>
+            var header = new Dictionary<string, string>
             {
                 ["service"] = name,
                 ["md5sum"] = RosService.Generate(RequestType.Replace("__Request", "").Replace("__Response", "")).MD5Sum(),
                 ["callerid"] = ThisNode.Name,
                 ["persistent"] = persistent ? "1" : "0"
             };
-            if (header_values != null)
+
+            if (headerValues != null)
             {
-                foreach (string o in header_values.Keys)
+                foreach (string o in headerValues.Keys)
                 {
-                    header[o] = header_values[o];
+                    header[o] = headerValues[o];
                 }
             }
-            connection.writeHeader(header, onHeaderWritten);
+
+            await this.connection.WriteHeader(header, cancel);
         }
 
-        private void onConnectionDropped(Connection connection, Connection.DropReason reason)
+        private async Task<IDictionary<string, string>> ReadHeader()
         {
-            if (connection != this.connection)
-                throw new ArgumentException("Unknown connection", nameof(connection));
+            var remoteHeader = await this.connection.ReadHeader(cancel);
 
-            Logger.LogDebug("Service client from [{0}] for [{1}] dropped", connection.RemoteString, name);
-
-            clearCalls();
-
-            ServiceManager.Instance.RemoveServiceServerLink(this);
-
-            IsValid = false;
-        }
-
-        private bool onHeaderReceived(Connection conn, Header header)
-        {
-            string md5sum;
-            if (header.Values.ContainsKey("md5sum"))
+            if (!remoteHeader.TryGetValue("md5sum", out string md5sum))
             {
-                md5sum = header.Values["md5sum"];
+                string errorMessage = "TcpRos header from service server did not have required element: md5sum";
+                ROS.Error()(errorMessage);
+                throw new ConnectionError(errorMessage);
+            }
+
+            if (!string.IsNullOrEmpty(ServiceMd5Sum))
+            {
+                // TODO check md5sum
+            }
+
+            return remoteHeader;
+        }
+
+        private async Task<IDictionary<string, string>> Handshake()
+        {
+            await WriteHeader();
+            return await ReadHeader();
+        }
+
+        private async Task ProcessCall(CallInfo call)
+        {
+            RosMessage request = call.Request;
+
+            // serialize and send request
+            request.Serialized = request.Serialize();
+
+            await connection.WriteBlock(BitConverter.GetBytes(request.Serialized.Length), 0, 4, cancel);
+            await connection.WriteBlock(request.Serialized, 0, request.Serialized.Length, cancel);
+
+            // read response header
+            var receiveBuffer = await connection.ReadBlock(5, cancel);
+
+            bool success = receiveBuffer[0] != 0;
+            int responseLength = BitConverter.ToInt32(receiveBuffer, 1);
+
+            if (responseLength < 0 || responseLength > Connection.MESSAGE_SIZE_LIMIT)
+            {
+                var errorMessage = $"Message length exceeds limit of {Connection.MESSAGE_SIZE_LIMIT}. Dropping connection.";
+                ROS.Error()(errorMessage);
+                throw new ConnectionError(errorMessage);
+            }
+
+            if (responseLength > 0)
+            {
+                logger.LogDebug($"Reading message with length of {responseLength}.");
+                receiveBuffer = await connection.ReadBlock(responseLength, cancel);
             }
             else
             {
-                ROS.Error()("TcpRos header from service server did not have required element: md5sum");
-                Logger.LogError("TcpRos header from service server did not have required element: md5sum");
-                return false;
+                receiveBuffer = new byte[0];
             }
 
-            //TODO check md5sum
-
-            bool empty = false;
-            lock (call_queue_mutex)
+            if (success)
             {
-                empty = (call_queue.Count == 0);
-                if (empty)
-                    header_read = true;
+                call.Response.Serialized = receiveBuffer;
+                call.Tcs.TrySetResult(true);
             }
-
-            IsValid = true;
-
-            if (!empty)
+            else
             {
-                processNextCall();
-                header_read = true;
-            }
+                if (receiveBuffer.Length > 0)
+                {
+                    // call failed with reason
+                    call.Tcs.TrySetException(new Exception(Encoding.UTF8.GetString(receiveBuffer)));
+                }
 
-            return true;
+                call.Tcs.TrySetResult(false);
+            }
         }
 
-        private void callFinished()
+        async Task HandleConnection()
         {
-            CallInfo saved_call;
-            IServiceServerLink self;
-            lock (call_queue_mutex)
+            try
             {
-                lock (current_call.finished_mutex)
+                await Handshake();
+
+                while (await callQueue.MoveNext(cancel))
                 {
-                    current_call.finished = true;
-                    current_call.notify_all();
-
-                    saved_call = current_call;
-                    current_call = null;
-
-                    self = this;
+                    var call = callQueue.Current;
+                    await ProcessCall(call);
                 }
             }
-            saved_call = new CallInfo();
-            processNextCall();
+            catch (Exception e)
+            {
+                logger.LogDebug($"Service client for [{name}] dropped: {e.Message}");
+
+                // cancel current call if any
+                if (callQueue.Current != null)
+                {
+                    callQueue.Current.Tcs.TrySetException(e);
+                }
+
+                ClearCalls(e);
+
+                throw;
+            }
+            finally
+            {
+                logger.LogDebug($"Removing service client for [{name}] from ServiceManagare.");
+                ServiceManager.Instance.RemoveServiceServerLinkAsync(this);
+            }
         }
 
-        private void processNextCall()
+        private void ClearCalls(Exception e)
         {
-            bool empty = false;
-            lock (call_queue_mutex)
+            // dispose queue to ensure no further inserts can happen
+            callQueue.Dispose();
+
+            // cancel all other calls
+            var remainingCalls = callQueue.Flush();
+            foreach (var call in remainingCalls)
             {
-                if (current_call != null)
-                    return;
-                if (call_queue.Count > 0)
-                {
-                    current_call = call_queue.Dequeue();
-                }
-                else
-                    empty = true;
+                call.Tcs.TrySetException(e);
             }
-            if (empty)
+
+            callQueue = new AsyncQueue<CallInfo>(MAX_CALL_QUEUE_LENGTH, true);
+        }
+
+        public async Task<bool> Call(RosService srv)
+        {
+            (bool result, RosMessage response) = await Call(srv.RequestMessage);
+            srv.ResponseMessage = response;
+            return result;
+        }
+
+        public async Task<(bool, RosMessage)> Call(RosMessage request)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            RosMessage response = RosMessage.Generate(request.MessageType.Replace("Request", "Response"));
+            if (response == null)
+                throw new Exception("Response message generation failed.");
+
+            var queue = callQueue;
+            try
+            {
+                var call = new CallInfo { Request = request, Response = response };
+                await queue.OnNext(call, cancel);
+
+                bool success = await call.AsyncResult;
+                if (success)
+                {
+                    // response is only sent on success
+                    response.Deserialize(response.Serialized);
+                }
+
+                return (success, response);
+            }
+            catch (Exception e)
+            {
+                string message = $"Service call failed: service [{name}] responded with an error: {e.Message}";
+                ROS.Error()(message);
+                return (false, null);
+            }
+            finally
             {
                 if (!persistent)
                 {
-                    connection.drop(Connection.DropReason.Destructing);
+                    queue.OnCompleted();
                 }
             }
-            else
-            {
-                RosMessage request;
-                lock (call_queue_mutex)
-                {
-                    request = current_call.req;
-                }
-
-                request.Serialized = request.Serialize();
-                byte[] tosend = new byte[request.Serialized.Length + 4];
-                Array.Copy(BitConverter.GetBytes(request.Serialized.Length), tosend, 4);
-                Array.Copy(request.Serialized, 0, tosend, 4, request.Serialized.Length);
-                connection.write(tosend, tosend.Length, onRequestWritten);
-            }
-        }
-
-        private void clearCalls()
-        {
-            CallInfo local_current;
-            lock (call_queue_mutex)
-            {
-                local_current = current_call;
-            }
-            if (local_current != null)
-            {
-                cancelCall(local_current);
-            }
-
-            lock (call_queue_mutex)
-            {
-                while (call_queue.Count > 0)
-                {
-                    cancelCall(call_queue.Dequeue());
-                }
-            }
-        }
-
-        private void cancelCall(CallInfo info)
-        {
-            lock (info.finished_mutex)
-            {
-                info.finished = true;
-                info.notify_all();
-            }
-        }
-
-        private bool onHeaderWritten(Connection conn)
-        {
-            header_written = true;
-            return true;
-        }
-
-        private bool onRequestWritten(Connection conn)
-        {
-            Logger.LogInformation("onRequestWritten(Connection conn)");
-            connection.read(5, onResponseOkAndLength);
-            return true;
-        }
-
-        private bool onResponseOkAndLength(Connection conn, byte[] buf, int size, bool success)
-        {
-            if (conn != connection)
-            {
-                throw new ArgumentException("Unknown connection", nameof(conn));
-            }
-
-            if (size != 5)
-            {
-                throw new ArgumentException($"Wrong size {size}", nameof(size));
-            }
-
-            if (!success)
-                return false;
-
-            byte ok = buf[0];
-            int len = BitConverter.ToInt32(buf, 1);
-            int lengthLimit = 1000000000;
-            if (len > lengthLimit)
-            {
-                ROS.Error()($"Message length exceeds limit of {lengthLimit}. Dropping connection.");
-                Logger.LogError($"Message length exceeds limit of {lengthLimit}. Dropping connection.");
-                connection.drop(Connection.DropReason.Destructing);
-                return false;
-            }
-
-            lock (call_queue_mutex)
-            {
-                if (ok != 0)
-                    current_call.success = true;
-                else
-                    current_call.success = false;
-            }
-
-            if (len > 0)
-            {
-                Logger.LogDebug($"Reading message with length of {len}.");
-                connection.read(len, onResponse);
-            }
-            else
-            {
-                byte[] f = new byte[0];
-                onResponse(conn, f, 0, true);
-            }
-            return true;
-        }
-
-        private bool onResponse(Connection conn, byte[] buf, int size, bool success)
-        {
-            if (conn != connection)
-                throw new ArgumentException("Unknown connection", nameof(conn));
-
-            if (!success)
-                return false;
-
-            lock (call_queue_mutex)
-            {
-                if (current_call.success)
-                {
-                    if (current_call.resp == null)
-                        throw new NullReferenceException("Service response is null");
-                    current_call.resp.Serialized = buf;
-                }
-                else if (buf.Length > 0)
-                {
-                    // call failed with reason
-                    current_call.exception = Encoding.UTF8.GetString(buf);
-                }
-                else { } // call failed, but no reason is given
-
-            }
-
-            callFinished();
-            return true;
-        }
-
-        public bool call(RosService srv)
-        {
-            return call(srv.RequestMessage, ref srv.ResponseMessage);
-        }
-
-        public bool call(RosMessage req, ref RosMessage resp)
-        {
-            if (resp == null)
-            {
-                //instantiate null response IN CASE this call succeeds
-                resp = RosMessage.Generate(req.MessageType.Replace("Request", "Response"));
-            }
-
-            CallInfo info = new CallInfo {req = req, resp = resp, success = false, finished = false};
-
-            bool immediate = false;
-            lock (call_queue_mutex)
-            {
-                if (connection.dropped)
-                    return false;
-
-                if (call_queue.Count == 0 && header_written && header_read)
-                    immediate = true;
-
-                call_queue.Enqueue(info);
-            }
-
-            if (immediate)
-                processNextCall();
-
-            while (!info.finished)
-            {
-                Logger.LogDebug("info.finished_condition.WaitOne();");
-                info.finished_condition.WaitOne();
-            }
-
-            if (info.success)
-            {
-                // response is only sent on success => don't try to deserialize on failure.
-                resp.Deserialize(resp.Serialized);
-            }
-
-            if (!string.IsNullOrEmpty(info.exception))
-            {
-                ROS.Error()("Service call failed: service [{0}] responded with an error: {1}", name, info.exception);
-                Logger.LogError("Service call failed: service [{0}] responded with an error: {1}", name, info.exception);
-            }
-            return info.success;
-        }
-    }
-
-    public class ServiceServerLink<MReq, MRes> : IServiceServerLink
-        where MReq : RosMessage, new()
-        where MRes : RosMessage, new()
-    {
-        public ServiceServerLink(string name, bool persistent, string requestMd5Sum, string responseMd5Sum,
-            IDictionary<string, string> header_values)
-            : base(name, persistent, requestMd5Sum, responseMd5Sum, header_values)
-        {
-            initialize<MReq, MRes>();
-        }
-
-        public bool call(MReq req, ref MRes resp)
-        {
-            RosMessage iresp = resp;
-            bool r = call(req, ref iresp);
-            if (iresp != null)
-                resp = (MRes) iresp;
-            return r;
-        }
-    }
-
-    public class ServiceServerLink<MSrv> : IServiceServerLink
-        where MSrv : RosService, new()
-    {
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<ServiceServerLink<MSrv>>();
-        public ServiceServerLink(string name, bool persistent, string requestMd5Sum, string responseMd5Sum,
-            IDictionary<string, string> header_values)
-            : base(name, persistent, requestMd5Sum, responseMd5Sum, header_values)
-        {
-            initialize<MSrv>();
-        }
-
-        public bool call(MSrv srv)
-        {
-            bool result = false;
-            try
-            {
-                bool r = call((RosService) srv);
-                if (srv.ResponseMessage?.Serialized != null)
-                    srv.ResponseMessage.Deserialize(srv.ResponseMessage.Serialized);
-                else
-                    srv.ResponseMessage = null;
-                result = r;
-            }
-            catch(Exception ex)
-            {
-                if (ROS.isStarted() && !ROS.shutting_down)
-                {
-                    throw;
-                }
-                Logger.LogError($"Exception occurred while calling a {name}, but ROS is not started OR is shutting down\n{ex}");
-            }
-            return result;
-        }
-    }
-
-    internal class CallInfo
-    {
-        internal string exception = "";
-        internal bool finished;
-        internal Semaphore finished_condition = new Semaphore(0, int.MaxValue);
-        internal object finished_mutex = new object();
-        internal RosMessage req, resp;
-        internal bool success;
-
-        internal void notify_all()
-        {
-            finished_condition.Release();
         }
     }
 }

@@ -3,93 +3,79 @@ using System.Collections.Generic;
 
 namespace Uml.Robotics.Ros
 {
-    public class LocalPublisherLink : PublisherLink
+    internal class LocalPublisherLink : PublisherLink
     {
         private object gate = new object();
-        private bool dropped;
-        private LocalSubscriberLink publisher = null;
+        private bool disposed;
+        //private LocalSubscriberLink publisher;
 
         public LocalPublisherLink(Subscription parent, string xmlrpc_uri)
             : base(parent, xmlrpc_uri)
         {
         }
 
-        public override string TransportType
-        {
-            get { return "INTRAPROCESS"; }
-        }
+        public override string TransportType =>
+            "INTRAPROCESS";
 
-        public void setPublisher(LocalSubscriberLink pub_link)
-        {
-            lock (parent)
-            {
-                var header = new Dictionary<string, string>();
-                header["topic"] = parent.name;
-                header["md5sum"] = parent.md5sum;
-                header["callerid"] = ThisNode.Name;
-                header["type"] = parent.datatype;
-                header["tcp_nodelay"] = "1";
-                setHeader(new Header { Values = header });
-            }
-        }
-
-        public override void drop()
+        public void SetPublisher(LocalSubscriberLink link)
         {
             lock (gate)
             {
-                if (dropped)
-                    return;
-                dropped = true;
-            }
-
-            if (publisher != null)
-            {
-                publisher.Drop();
-            }
-
-            lock (parent)
-            {
-                parent.removePublisherLink(this);
-            }
-        }
-
-        public void handleMessage<T>(T m, bool ser, bool nocopy) where T : RosMessage, new()
-        {
-            stats.messagesReceived++;
-            if (m.Serialized == null)
-            {
-                // ignore stats to avoid an unnecessary allocation
-            }
-            else
-            {
-                stats.bytesReceived += m.Serialized.Length;
-            }
-            if (parent != null)
-            {
-                lock (parent)
+                var headerFields = new Dictionary<string, string>
                 {
-                    stats.drops += parent.handleMessage(m, ser, nocopy, m.connection_header, this);
-                }
+                    ["topic"] = Parent.Name,
+                    ["md5sum"] = Parent.Md5Sum,
+                    ["callerid"] = ThisNode.Name,
+                    ["type"] = Parent.DataType,
+                    ["tcp_nodelay"] = "1"
+                };
+                SetHeader(new Header(headerFields));
             }
         }
 
-        public void getPublishTypes(ref bool ser, ref bool nocopy, string messageType)
+        public override void Dispose()
         {
             lock (gate)
             {
-                if (dropped)
+                if (disposed)
+                    return;
+                disposed = true;
+            }
+
+            //publisher?.Dispose();
+            Parent.RemovePublisherLink(this);
+        }
+
+        public void HandleMessage<T>(T m, bool ser, bool nocopy) where T : RosMessage, new()
+        {
+            lock (gate)
+            {
+                Stats.MessagesReceived++;
+
+                if (m.Serialized != null)
+                {
+                    Stats.BytesReceived += m.Serialized.Length;
+                }
+
+                Stats.Drops += Parent.HandleMessage(m, ser, nocopy, m.connection_header, this);
+            }
+        }
+
+        public void GetPublishTypes(ref bool ser, ref bool nocopy, string messageType)
+        {
+            lock (gate)
+            {
+                if (disposed)
                 {
                     ser = false;
                     nocopy = false;
                     return;
                 }
             }
-            if (parent != null)
+
+            if (Parent != null)
             {
-                lock (parent)
-                {
-                    parent.getPublishTypes(ref ser, ref nocopy, messageType);
-                }
+                Parent.GetPublishTypes(ref ser, ref nocopy, messageType);
             }
             else
             {

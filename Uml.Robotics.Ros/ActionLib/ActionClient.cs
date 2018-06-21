@@ -53,18 +53,18 @@ namespace Uml.Robotics.Ros.ActionLib
             this.goalSubscriberCount = new Dictionary<string, int>();
             this.cancelSubscriberCount = new Dictionary<string, int>();
 
-            statusSubscriber = nodeHandle.subscribe<GoalStatusArray>("status", queueSize, OnStatusMessage);
-            feedbackSubscriber = nodeHandle.subscribe<FeedbackActionMessage<TFeedback>>("feedback", queueSize, OnFeedbackMessage);
-            resultSubscriber = nodeHandle.subscribe<ResultActionMessage<TResult>>("result", queueSize, OnResultMessage);
+            statusSubscriber = nodeHandle.Subscribe<GoalStatusArray>("status", queueSize, OnStatusMessage);
+            feedbackSubscriber = nodeHandle.Subscribe<FeedbackActionMessage<TFeedback>>("feedback", queueSize, OnFeedbackMessage);
+            resultSubscriber = nodeHandle.Subscribe<ResultActionMessage<TResult>>("result", queueSize, OnResultMessage);
 
-            GoalPublisher = nodeHandle.advertise<GoalActionMessage<TGoal>>(
+            GoalPublisher = nodeHandle.Advertise<GoalActionMessage<TGoal>>(
                 "goal",
                 queueSize,
                 OnGoalConnectCallback,
                 OnGoalDisconnectCallback
             );
 
-            CancelPublisher = nodeHandle.advertise<GoalID>(
+            CancelPublisher = nodeHandle.Advertise<GoalID>(
                 "cancel",
                 queueSize,
                 OnCancelConnectCallback,
@@ -150,12 +150,12 @@ namespace Uml.Robotics.Ros.ActionLib
 
         public void Shutdown()
         {
-            statusSubscriber.shutdown();
-            feedbackSubscriber.shutdown();
-            resultSubscriber.shutdown();
-            GoalPublisher.shutdown();
-            CancelPublisher.shutdown();
-            nodeHandle.shutdown();
+            statusSubscriber.Dispose();
+            feedbackSubscriber.Dispose();
+            resultSubscriber.Dispose();
+            GoalPublisher.Dispose();
+            CancelPublisher.Dispose();
+            nodeHandle.Dispose();
         }
 
 
@@ -182,7 +182,7 @@ namespace Uml.Robotics.Ros.ActionLib
         public bool WaitForActionServerToStart(TimeSpan? timeout = null)
         {
             var tic = DateTime.UtcNow;
-            while (ROS.ok)
+            while (ROS.OK)
             {
                 if (IsServerConnected())
                 {
@@ -221,7 +221,7 @@ namespace Uml.Robotics.Ros.ActionLib
         public async Task<bool> WaitForActionServerToStartAsync(TimeSpan? timeout = null, CancellationToken cancel = default(CancellationToken))
         {
             var tic = DateTime.UtcNow;
-            while (ROS.ok)
+            while (ROS.OK)
             {
                 if (IsServerConnected())
                     return true;
@@ -250,7 +250,7 @@ namespace Uml.Robotics.Ros.ActionLib
         public bool WaitForActionServerToStartSpinning(TimeSpan? timeout, SingleThreadSpinner spinner)
         {
             var tic = DateTime.UtcNow;
-            while (ROS.ok)
+            while (ROS.OK)
             {
                 if (IsServerConnected())
                 {

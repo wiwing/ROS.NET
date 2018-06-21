@@ -6,58 +6,82 @@ using Microsoft.Extensions.Logging;
 
 using Uml.Robotics.XmlRpc;
 using std_msgs = Messages.std_msgs;
+using Xamla.Robotics.Ros.Async;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace Uml.Robotics.Ros
 {
     public class Publication
+        : IDisposable
     {
-        public bool Dropped;
-        public Header connection_header;
-
-        public readonly string DataType;
-        public readonly bool HasHeader;
-        public readonly bool Latch;
-        public readonly int MaxQueue;
-        public readonly string Md5sum;
-        public readonly string MessageDefinition;
-        public readonly string Name;
-
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<Publication>();
+        private readonly ILogger logger = ApplicationLogging.CreateLogger<Publication>();
+        private readonly object gate = new object();
         private uint _seq;
+        private List<SubscriberLink> subscriberLinks = new List<SubscriberLink>();
         private List<SubscriberCallbacks> callbacks = new List<SubscriberCallbacks>();
-        private object callbacks_mutex = new object();
-        internal MessageAndSerializerFunc last_message;
-        internal Queue<MessageAndSerializerFunc> publish_queue = new Queue<MessageAndSerializerFunc>();
-        private object publish_queue_mutex = new object();
-        private object seq_mutex = new object();
-        private List<SubscriberLink> subscriber_links = new List<SubscriberLink>();
-        private object subscriber_links_mutex = new object();
 
-        public Publication(string name, string datatype, string md5sum, string message_definition, int max_queue,
-            bool latch, bool has_header)
+        internal MessageAndSerializerFunc lastMessage;
+        internal AsyncQueue<MessageAndSerializerFunc> publishQueue = new AsyncQueue<MessageAndSerializerFunc>(65535, true);
+
+        CancellationTokenSource cts;
+        CancellationToken cancel;
+        Task publishLoopTask;
+
+        public bool Dropped;
+        public Header connectionHeader;
+
+        public Publication(
+            string name,
+            string datatype,
+            string md5sum,
+            string messageDefinition,
+            int maxQueue,
+            bool latch,
+            bool hasHeader
+        )
         {
-            Name = name;
-            DataType = datatype;
-            Md5sum = md5sum;
-            MessageDefinition = message_definition;
-            MaxQueue = max_queue;
-            Latch = latch;
-            HasHeader = has_header;
+            this.Name = name;
+            this.DataType = datatype;
+            this.Md5Sum = md5sum;
+            this.MessageDefinition = messageDefinition;
+            this.MaxQueue = maxQueue;
+            this.Latch = latch;
+            this.HasHeader = hasHeader;
         }
+
+        public void Dispose()
+        {
+            lock (gate)
+            {
+                if (Dropped)
+                    return;
+                Dropped = true;
+            }
+            DropAllConnections();
+        }
+
+        public string DataType { get; }
+        public bool HasHeader { get; }
+        public bool Latch { get; }
+        public int MaxQueue { get; }
+        public string Md5Sum { get; }
+        public string MessageDefinition { get; }
+        public string Name { get; }
 
         public int NumCallbacks
         {
-            get { lock (callbacks_mutex) return callbacks.Count; }
+            get { lock (gate) return callbacks.Count; }
         }
 
         public bool HasSubscribers
         {
-            get { lock (subscriber_links_mutex) return subscriber_links.Count > 0; }
+            get { lock (gate) return subscriberLinks.Count > 0; }
         }
 
         public int NumSubscribers
         {
-            get { lock (subscriber_links_mutex) return subscriber_links.Count; }
+            get { lock (gate) return subscriberLinks.Count; }
         }
 
         public XmlRpcValue GetStats()
@@ -66,94 +90,126 @@ namespace Uml.Robotics.Ros
             stats.Set(0, Name);
             var conn_data = new XmlRpcValue();
             conn_data.SetArray(0);
-            lock (subscriber_links_mutex)
+
+            lock (gate)
             {
                 int cidx = 0;
-                foreach (SubscriberLink sub_link in subscriber_links)
+                foreach (SubscriberLink sub_link in subscriberLinks)
                 {
-                    var s = sub_link.stats;
+                    var s = sub_link.Stats;
                     var inside = new XmlRpcValue();
-                    inside.Set(0, sub_link.connection_id);
-                    inside.Set(1, s.bytesSent);
-                    inside.Set(2, s.messageDataSent);
-                    inside.Set(3, s.messagesSent);
+                    inside.Set(0, sub_link.connectionId);
+                    inside.Set(1, s.BytesSent);
+                    inside.Set(2, s.MessageDataSent);
+                    inside.Set(3, s.MessagesSent);
                     inside.Set(4, 0);
                     conn_data.Set(cidx++, inside);
                 }
             }
+
             stats.Set(1, conn_data);
             return stats;
         }
 
-        public void drop()
+        internal void AddSubscriberLink(SubscriberLink link)
         {
-            lock (publish_queue_mutex)
-            {
-                lock (subscriber_links_mutex)
-                {
-                    if (Dropped)
-                        return;
-                    Dropped = true;
-                }
-            }
-            dropAllConnections();
-        }
-
-        public void addSubscriberLink(SubscriberLink link)
-        {
-            lock (subscriber_links_mutex)
+            lock (gate)
             {
                 if (Dropped)
                     return;
 
-                subscriber_links.Add(link);
-                PollManager.Instance.AddPollThreadListener(processPublishQueue);
+                subscriberLinks.Add(link);
+                this.StartPublishLoop();
             }
 
-            if (Latch && last_message != null)
+            if (Latch && lastMessage != null)
             {
-                link.EnqueueMessage(last_message);
+                link.EnqueueMessage(lastMessage);
             }
 
-            peerConnect(link);
+            HandlePeerConnect(link);
         }
 
-        public void removeSubscriberLink(SubscriberLink link)
+        internal void RemoveSubscriberLink(SubscriberLink link)
         {
             SubscriberLink lnk = null;
-            lock (subscriber_links_mutex)
+            lock (gate)
             {
                 if (Dropped)
                     return;
-                if (subscriber_links.Contains(link))
+                if (subscriberLinks.Contains(link))
                 {
                     lnk = link;
-                    subscriber_links.Remove(lnk);
-                    if (subscriber_links.Count == 0)
-                        PollManager.Instance.RemovePollThreadListener(processPublishQueue);
+                    subscriberLinks.Remove(lnk);
+                    if (subscriberLinks.Count == 0)
+                    {
+                        StopPublishLoop();
+                    }
                 }
             }
             if (lnk != null)
-                peerDisconnect(lnk);
+                HandlePeerDisconnect(lnk);
         }
 
-        internal void publish(MessageAndSerializerFunc msg)
+        internal void Publish(MessageAndSerializerFunc msg)
         {
-            lock (publish_queue_mutex)
+            lock (gate)
             {
-                publish_queue.Enqueue(msg);
+                publishQueue.TryOnNext(msg);
             }
         }
 
-        public bool validateHeader(Header header, ref string error_message)
+        private void StartPublishLoop()
+        {
+            lock (gate)
+            {
+                if (publishLoopTask != null && !publishLoopTask.IsCompleted || publishQueue.IsCompleted)
+                    return;
+
+                cts = new CancellationTokenSource();
+                cancel = cts.Token;
+                publishLoopTask = RunPublishLoopAsync();
+            }
+        }
+
+        private void StopPublishLoop()
+        {
+            Task publishTask = null;
+
+            lock (gate)
+            {
+                if (cts != null && publishLoopTask != null)
+                {
+                    cts.Cancel();
+                    publishTask = publishLoopTask;
+                }
+            }
+
+            publishTask?.WhenCompleted()?.Wait();
+        }
+
+        private async Task RunPublishLoopAsync()
+        {
+            while (await publishQueue.MoveNext(cancel))
+            {
+                cancel.ThrowIfCancellationRequested();
+
+                if (Dropped)
+                    return;
+
+                EnqueueMessage(publishQueue.Current);
+            }
+        }
+
+        public bool ValidateHeader(Header header, out string errorMessage)
         {
             string md5sum = "", topic = "", client_callerid = "";
             if (!header.Values.ContainsKey("md5sum") || !header.Values.ContainsKey("topic") ||
                 !header.Values.ContainsKey("callerid"))
             {
                 const string msg = "Header from subscriber did not have the required elements: md5sum, topic, callerid";
-                Logger.LogWarning(msg);
-                error_message = msg;
+                logger.LogWarning(msg);
+                errorMessage = msg;
                 return false;
             }
             md5sum = (string) header.Values["md5sum"];
@@ -163,33 +219,35 @@ namespace Uml.Robotics.Ros
             {
                 string msg = "Received a tcpros connection for a nonexistent topic [" + topic + "] from [" +
                              client_callerid + "].";
-                Logger.LogWarning(msg);
-                error_message = msg;
+                logger.LogWarning(msg);
+                errorMessage = msg;
                 return false;
             }
 
-            if (Md5sum != md5sum && (md5sum != "*") && Md5sum != "*")
+            if (Md5Sum != md5sum && (md5sum != "*") && Md5Sum != "*")
             {
                 string datatype = header.Values.ContainsKey("type") ? (string) header.Values["type"] : "unknown";
                 string msg = "Client [" + client_callerid + "] wants topic [" + topic + "] to hava datatype/md5sum [" +
-                             datatype + "/" + md5sum + "], but our version has [" + DataType + "/" + Md5sum +
+                             datatype + "/" + md5sum + "], but our version has [" + DataType + "/" + Md5Sum +
                              "]. Dropping connection";
-                Logger.LogWarning(msg);
-                error_message = msg;
+                logger.LogWarning(msg);
+                errorMessage = msg;
                 return false;
             }
+
+            errorMessage = null;
             return true;
         }
 
-        public void getInfo(XmlRpcValue info)
+        public void GetInfo(XmlRpcValue info)
         {
-            lock (subscriber_links_mutex)
+            lock (gate)
             {
-                foreach (SubscriberLink c in subscriber_links)
+                foreach (SubscriberLink c in subscriberLinks)
                 {
                     var curr_info = new XmlRpcValue();
-                    curr_info.Set(0, (int) c.connection_id);
-                    curr_info.Set(1, c.destination_caller_id);
+                    curr_info.Set(0, (int) c.connectionId);
+                    curr_info.Set(1, c.DestinationCallerId);
                     curr_info.Set(2, "o");
                     curr_info.Set(3, "TCPROS");
                     curr_info.Set(4, Name);
@@ -198,29 +256,26 @@ namespace Uml.Robotics.Ros
             }
         }
 
-        public void addCallbacks(SubscriberCallbacks callbacks)
+        public void AddCallbacks(SubscriberCallbacks callbacks)
         {
-            lock (callbacks_mutex)
+            lock (gate)
             {
                 this.callbacks.Add(callbacks);
-                if (callbacks.connect != null && callbacks.CallbackQueue != null)
+                if (callbacks.OnConnect != null && callbacks.CallbackQueue != null)
                 {
-                    lock (subscriber_links_mutex)
+                    foreach (SubscriberLink i in subscriberLinks)
                     {
-                        foreach (SubscriberLink i in subscriber_links)
-                        {
-                            CallbackInterface cb = new PeerConnDisconnCallback(callbacks.connect, i);
-                            callbacks.CallbackId = cb.Uid;
-                            callbacks.CallbackQueue.AddCallback(cb);
-                        }
+                        CallbackInterface cb = new PeerConnDisconnCallback(callbacks.OnConnect, i);
+                        callbacks.CallbackId = cb.Uid;
+                        callbacks.CallbackQueue.AddCallback(cb);
                     }
                 }
             }
         }
 
-        public void removeCallbacks(SubscriberCallbacks callbacks)
+        public void RemoveCallbacks(SubscriberCallbacks callbacks)
         {
-            lock (callbacks_mutex)
+            lock (gate)
             {
                 if (callbacks.CallbackId >= 0)
                     callbacks.CallbackQueue.RemoveById(callbacks.CallbackId);
@@ -231,22 +286,24 @@ namespace Uml.Robotics.Ros
 
         internal bool EnqueueMessage(MessageAndSerializerFunc holder)
         {
-            lock (subscriber_links_mutex)
+            lock (gate)
             {
                 if (Dropped)
                     return false;
             }
 
-            uint seq = incrementSequence();
+            uint seq = IncrementSequence();
 
             if (HasHeader)
             {
                 object h = holder.msg.GetType().GetTypeInfo().GetField("header").GetValue(holder.msg);
+
                 std_msgs.Header header;
                 if (h == null)
                     header = new std_msgs.Header();
                 else
                     header = (std_msgs.Header) h;
+
                 header.seq = seq;
                 if (header.stamp == null)
                 {
@@ -258,96 +315,85 @@ namespace Uml.Robotics.Ros
                 }
                 holder.msg.GetType().GetTypeInfo().GetField("header").SetValue(holder.msg, header);
             }
-            holder.msg.connection_header = connection_header.Values;
+            holder.msg.connection_header = connectionHeader.Values;
 
-            lock (subscriber_links_mutex)
+            lock (gate)
             {
-                foreach (SubscriberLink sub_link in subscriber_links)
+                foreach (SubscriberLink link in subscriberLinks)
                 {
-                    sub_link.EnqueueMessage(holder);
+                    link.EnqueueMessage(holder);
                 }
             }
 
             if (Latch)
             {
-                last_message = new MessageAndSerializerFunc(holder.msg, holder.serfunc, false, true);
+                lastMessage = new MessageAndSerializerFunc(holder.msg, holder.serfunc, false, true);
             }
+
             return true;
         }
 
-        public void dropAllConnections()
+        public void DropAllConnections()
         {
-            List<SubscriberLink> local_publishers = null;
-            lock (subscriber_links_mutex)
+            List<SubscriberLink> subscribers = null;
+            lock (gate)
             {
-                local_publishers = new List<SubscriberLink>(subscriber_links);
-                subscriber_links.Clear();
+                subscribers = new List<SubscriberLink>(subscriberLinks);
+                subscriberLinks.Clear();
             }
-            foreach (SubscriberLink link in local_publishers)
+
+            foreach (SubscriberLink link in subscribers)
             {
-                link.Drop();
+                link.Dispose();
             }
-            local_publishers.Clear();
+
+            subscribers.Clear();
         }
 
-        public void peerConnect(SubscriberLink sub_link)
+        internal void HandlePeerConnect(SubscriberLink sub_link)
         {
             //Logger.LogDebug($"PEER CONNECT: Id: {sub_link.connection_id} Dest: {sub_link.destination_caller_id} Topic: {sub_link.topic}");
             foreach (SubscriberCallbacks cbs in callbacks)
             {
-                if (cbs.connect != null && cbs.CallbackQueue != null)
+                if (cbs.OnConnect != null && cbs.CallbackQueue != null)
                 {
-                    var cb = new PeerConnDisconnCallback(cbs.connect, sub_link);
+                    var cb = new PeerConnDisconnCallback(cbs.OnConnect, sub_link);
                     cbs.CallbackId = cb.Uid;
                     cbs.CallbackQueue.AddCallback(cb);
                 }
             }
         }
 
-        public void peerDisconnect(SubscriberLink sub_link)
+        internal void HandlePeerDisconnect(SubscriberLink sub_link)
         {
             //Logger.LogDebug("PEER DISCONNECT: [" + sub_link.topic + "]");
             foreach (SubscriberCallbacks cbs in callbacks)
             {
-                if (cbs.disconnect != null && cbs.CallbackQueue != null)
+                if (cbs.OnDisconnect != null && cbs.CallbackQueue != null)
                 {
-                    var cb = new PeerConnDisconnCallback(cbs.disconnect, sub_link);
+                    var cb = new PeerConnDisconnCallback(cbs.OnDisconnect, sub_link);
                     cbs.CallbackId = cb.Uid;
                     cbs.CallbackQueue.AddCallback(cb);
                 }
             }
         }
 
-        public uint incrementSequence()
+        public uint IncrementSequence()
         {
-            lock (seq_mutex)
+            lock (gate)
             {
                 return _seq++;
             }
         }
 
-        public void processPublishQueue()
+        internal void GetPublishTypes(ref bool serialize, ref bool nocopy, string messageType)
         {
-            lock (publish_queue_mutex)
+            lock (gate)
             {
-                if (Dropped)
-                    return;
-
-                while (publish_queue.Count > 0)
-                {
-                    EnqueueMessage(publish_queue.Dequeue());
-                }
-            }
-        }
-
-        internal void getPublishTypes(ref bool serialize, ref bool nocopy, string messageType)
-        {
-            lock (subscriber_links_mutex)
-            {
-                foreach (SubscriberLink sub in subscriber_links)
+                foreach (SubscriberLink sub in subscriberLinks)
                 {
                     bool s = false, n = false;
-                    sub.getPublishTypes(ref s, ref n, messageType);
+                    sub.GetPublishTypes(ref s, ref n, messageType);
                     serialize = serialize || s;
                     nocopy = nocopy || n;
                     if (serialize && nocopy)
@@ -357,28 +403,28 @@ namespace Uml.Robotics.Ros
         }
     }
 
-    public class PeerConnDisconnCallback : CallbackInterface
+    internal class PeerConnDisconnCallback : CallbackInterface
     {
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<PeerConnDisconnCallback>();
-        private SubscriberStatusCallback callback;
-        private SubscriberLink sub_link;
+        private readonly ILogger logger = ApplicationLogging.CreateLogger<PeerConnDisconnCallback>();
+        private readonly SubscriberStatusCallback callback;
+        private readonly SubscriberLink subscriberLink;
 
-        public PeerConnDisconnCallback(SubscriberStatusCallback callback, SubscriberLink sub_link)
+        public PeerConnDisconnCallback(SubscriberStatusCallback callback, SubscriberLink subscriberLink)
         {
             this.callback = callback;
-            this.sub_link = sub_link;
+            this.subscriberLink = subscriberLink;
         }
 
         internal override CallResult Call()
         {
             ROS.Debug()("Called PeerConnDisconnCallback");
-            SingleSubscriberPublisher pub = new SingleSubscriberPublisher(sub_link);
-            Logger.LogDebug($"Callback: Name: {pub.SubscriberName} Topic: {pub.Topic}");
+            SingleSubscriberPublisher pub = new SingleSubscriberPublisher(subscriberLink);
+            logger.LogDebug($"Callback: Name: {pub.SubscriberName} Topic: {pub.Topic}");
             callback(pub);
             return CallResult.Success;
         }
 
-        public override void AddToCallbackQueue(ISubscriptionCallbackHelper helper, RosMessage msg, bool nonconst_need_copy, ref bool was_full, TimeData receipt_time)
+        public override void AddToCallbackQueue(ISubscriptionCallbackHelper helper, RosMessage msg, bool nonconst_need_copy, ref bool wasFull, TimeData receiptTime)
         {
             throw new NotImplementedException();
         }

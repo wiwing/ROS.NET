@@ -1,4 +1,5 @@
 ﻿using Messages;
+using Xamla.Robotics.Ros.Async;
 
 namespace Uml.Robotics.Ros
 {

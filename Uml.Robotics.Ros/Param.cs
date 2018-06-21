@@ -1,11 +1,8 @@
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using Microsoft.Extensions.Logging;
-using Uml.Robotics.XmlRpc;
 using System.Threading.Tasks;
-using System.Linq;
-using System.Globalization;
+using Uml.Robotics.XmlRpc;
 
 namespace Uml.Robotics.Ros
 {
@@ -18,36 +15,26 @@ namespace Uml.Robotics.Ros
     public static class Param
     {
         static object gate = new object();
-        static ILogger Logger { get; } = ApplicationLogging.CreateLogger(nameof(Param));
+        static readonly ILogger logger = ApplicationLogging.CreateLogger(nameof(Param));
         static Dictionary<string, XmlRpcValue> cachedValues = new Dictionary<string, XmlRpcValue>();        // cache contains mapped keys
         static Dictionary<string, List<ParamDelegate>> subscriptions = new Dictionary<string, List<ParamDelegate>>();
 
-        public static void Subscribe(string key, ParamBoolDelegate callback)
-        {
+        public static Task Subscribe(string key, ParamBoolDelegate callback) =>
             SubscribeInternal(key, (name, value) => callback(name, value.GetBool()));
-        }
 
-        public static void Subscribe(string key, ParamIntDelegate callback)
-        {
+        public static Task Subscribe(string key, ParamIntDelegate callback) =>
             SubscribeInternal(key, (name, value) => callback(name, value.GetInt()));
-        }
 
-        public static void Subscribe(string key, ParamDoubleDelegate callback)
-        {
+        public static Task Subscribe(string key, ParamDoubleDelegate callback) =>
             SubscribeInternal(key, (name, value) => callback(name, value.GetDouble()));
-        }
 
-        public static void Subscribe(string key, ParamStringDelegate callback)
-        {
+        public static Task Subscribe(string key, ParamStringDelegate callback) =>
             SubscribeInternal(key, (name, value) => callback(name, value.GetString()));
-        }
 
-        public static void Subscribe(string key, ParamDelegate callback)
-        {
+        public static Task Subscribe(string key, ParamDelegate callback) =>
             SubscribeInternal(key, callback);
-        }
 
-        private static void SubscribeInternal(string key, ParamDelegate callback)
+        private static async Task SubscribeInternal(string key, ParamDelegate callback)
         {
             string mappedKey = Names.Resolve(key);
             XmlRpcValue parm = new XmlRpcValue();
@@ -55,11 +42,13 @@ namespace Uml.Robotics.Ros
             parm.Set(1, XmlRpcManager.Instance.Uri);
             parm.Set(2, mappedKey);
 
+            var result = new XmlRpcValue();
+            var payload = new XmlRpcValue();
+            bool success = await Master.ExecuteAsync("subscribeParam", parm, result, payload, false);
+
             lock (gate)
             {
-                var result = new XmlRpcValue();
-                var payload = new XmlRpcValue();
-                if (Master.execute("subscribeParam", parm, result, payload, false))
+                if (success)
                 {
                     if (!subscriptions.TryGetValue(key, out var list))
                     {
@@ -69,93 +58,94 @@ namespace Uml.Robotics.Ros
                     list.Add(callback);
                 }
             }
+
             Update(key, GetParam(key, true));
         }
 
         /// <summary>
-        ///     Sets the paramater on the parameter server
+        ///     Sets the parameter on the parameter server
         /// </summary>
-        /// <param name="mappedKey">Fully mapped name of the parameter to be set</param>
-        /// <param name="val">Value of the paramter</param>
+        /// <param name="key">Name of the parameter</param>
+        /// <param name="parm">Value of the paramter</param>
         private static void SetOnServer(string key, XmlRpcValue parm)
         {
             string mappedKey = Names.Resolve(key);
             parm.Set(0, ThisNode.Name);
             parm.Set(1, mappedKey);
-            // parm.Set(2, ...), the value to be set on the parameter server was stored in parm by the calling function already )
+            // parm.Set(2, ...); the value to be set on the parameter server was stored in parm by the calling function already
 
             lock (gate)
             {
                 var response = new XmlRpcValue();
                 var payload = new XmlRpcValue();
-                if (Master.execute("setParam", parm, response, payload, true))
+                if (Master.Execute("setParam", parm, response, payload, true))
                 {
                     if (cachedValues.ContainsKey(mappedKey))
                         cachedValues[mappedKey] = parm;
                 }
                 else
                 {
-                    throw new RosException("RPC call setParam for key " + mappedKey + " failed. ");
+                    throw new RosException($"RPC call setParam for key '{mappedKey}' failed. ");
                 }
             }
         }
 
         /// <summary>
-        ///     Sets the paramater on the parameter server
+        ///     Sets the parameter on the parameter server
         /// </summary>
         /// <param name="key">Name of the parameter</param>
         /// <param name="val">Value of the paramter</param>
         public static void Set(string key, XmlRpcValue val)
         {
-            XmlRpcValue parm = new XmlRpcValue();
+            var parm = new XmlRpcValue();
             parm.Set(2, val);
             SetOnServer(key, parm);
         }
 
         /// <summary>
-        ///     Sets the paramater on the parameter server
+        ///     Sets the parameter on the parameter server
         /// </summary>
         /// <param name="key">Name of the parameter</param>
         /// <param name="val">Value of the paramter</param>
         public static void Set(string key, string val)
         {
-            XmlRpcValue parm = new XmlRpcValue();
+            var parm = new XmlRpcValue();
             parm.Set(2, val);
             SetOnServer(key, parm);
         }
 
         /// <summary>
-        ///     Sets the paramater on the parameter server
+        ///     Sets the parameter on the parameter server
         /// </summary>
         /// <param name="key">Name of the parameter</param>
         /// <param name="val">Value of the paramter</param>
         public static void Set(string key, double val)
         {
-            XmlRpcValue parm = new XmlRpcValue();
+            var parm = new XmlRpcValue();
             parm.Set(2, val);
             SetOnServer(key, parm);
         }
 
         /// <summary>
-        ///     Sets the paramater on the parameter server
+        ///     Sets the parameter on the parameter server
         /// </summary>
         /// <param name="key">Name of the parameter</param>
         /// <param name="val">Value of the paramter</param>
         public static void Set(string key, int val)
         {
-            XmlRpcValue parm = new XmlRpcValue();
+            var parm = new XmlRpcValue();
             parm.Set(2, val);
             SetOnServer(key, parm);
         }
 
         /// <summary>
-        ///     Sets the paramater on the parameter server
+        ///     Sets the parameter on the parameter server
         /// </summary>
         /// <param name="key">Name of the parameter</param>
         /// <param name="val">Value of the paramter</param>
         public static void Set(string key, bool val)
         {
-            XmlRpcValue parm = new XmlRpcValue();
+            var parm = new XmlRpcValue();
             parm.Set(2, val);
             SetOnServer(key, parm);
         }
@@ -182,7 +172,7 @@ namespace Uml.Robotics.Ros
                 {
                     if (def == null)
                     {
-                        dest=default(T);
+                        dest = default(T);
                         return false;
                     }
                     dest = def;
@@ -305,58 +295,42 @@ namespace Uml.Robotics.Ros
             return rpcResult.GetBinary();
         }
 
-        public static bool Get(string key, out XmlRpcValue dest)
-        {
-            return SafeGet(key, out dest);
-        }
+        public static bool Get(string key, out XmlRpcValue dest) =>
+            SafeGet(key, out dest);
 
-        public static bool Get(string key, out bool dest)
-        {
-            return SafeGet(key, out dest);
-        }
+        public static bool Get(string key, out bool dest) =>
+            SafeGet(key, out dest);
 
-        public static bool Get(string key, out bool dest, bool def)
-        {
-            return SafeGet(key, out dest, def);
-        }
+        public static bool Get(string key, out bool dest, bool def) =>
+            SafeGet(key, out dest, def);
 
-        public static bool Get(string key, out int dest)
-        {
-            return SafeGet(key, out dest);
-        }
+        public static bool Get(string key, out int dest) =>
+            SafeGet(key, out dest);
 
-        public static bool Get(string key, out int dest, int def)
-        {
-            return SafeGet(key, out dest, def);
-        }
+        public static bool Get(string key, out int dest, int def) =>
+            SafeGet(key, out dest, def);
 
-        public static bool Get(string key, out double dest)
-        {
-            return SafeGet(key, out dest);
-        }
+        public static bool Get(string key, out double dest) =>
+            SafeGet(key, out dest);
 
-        public static bool Get(string key, out double dest, double def)
-        {
-            return SafeGet(key, out dest, def);
-        }
+        public static bool Get(string key, out double dest, double def) =>
+            SafeGet(key, out dest, def);
 
-        public static bool Get(string key, out string dest, string def = null)
-        {
-            return SafeGet(key, out dest, def);
-        }
+        public static bool Get(string key, out string dest, string def = null) =>
+            SafeGet(key, out dest, def);
 
-        public static List<string> List()
+        public static async Task<IList<string>> List()
         {
             var ret = new List<string>();
             var parm = new XmlRpcValue();
             var result = new XmlRpcValue();
             var payload = new XmlRpcValue();
             parm.Set(0, ThisNode.Name);
-            if (!Master.execute("getParamNames", parm, result, payload, false))
+            if (!await Master.ExecuteAsync("getParamNames", parm, result, payload, false))
                 return ret;
             if (result.Count != 3 || result[0].GetInt() != 1 || result[2].Type != XmlRpcType.Array)
             {
-                Logger.LogWarning("Expected a return code, a description, and a list!");
+                logger.LogWarning("Expected a return code, a description, and a list!");
                 return ret;
             }
             for (int i = 0; i < payload.Count; i++)
@@ -371,14 +345,14 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="key">Name of the paramerer</param>
         /// <returns></returns>
-        public static bool Has(string key)
+        public static async Task<bool> Has(string key)
         {
             var parm = new XmlRpcValue();
             var result = new XmlRpcValue();
             var payload = new XmlRpcValue();
             parm.Set(0, ThisNode.Name);
             parm.Set(1, Names.Resolve(key));
-            if (!Master.execute("hasParam", parm, result, payload, false))
+            if (!await Master.ExecuteAsync("hasParam", parm, result, payload, false))
                 return false;
             if (result.Count != 3 || result[0].GetInt() != 1 || result[2].Type != XmlRpcType.Boolean)
                 return false;
@@ -390,14 +364,14 @@ namespace Uml.Robotics.Ros
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public static bool Del(string key)
+        public static async Task<bool> Del(string key)
         {
             string mappedKey = Names.Resolve(key);
 
             XmlRpcValue parm = new XmlRpcValue(), result = new XmlRpcValue(), payload = new XmlRpcValue();
             parm.Set(0, ThisNode.Name);
             parm.Set(1, mappedKey);
-            if (!Master.execute("deleteParam", parm, result, payload, false))
+            if (!await Master.ExecuteAsync("deleteParam", parm, result, payload, false))
                 return false;
 
             lock (gate)
@@ -548,7 +522,7 @@ namespace Uml.Robotics.Ros
             parm2.Set(1, mappepKey);
             value.SetArray(0);
 
-            bool ret = Master.execute("getParam", parm2, result2, value, false);
+            bool ret = Master.Execute("getParam", parm2, result2, value, false);
             if (ret && useCache)
             {
                 lock (gate)
@@ -562,8 +536,11 @@ namespace Uml.Robotics.Ros
 
         internal static void Reset()
         {
-            cachedValues.Clear();
-            subscriptions.Clear();
+            lock (gate)
+            {
+                cachedValues.Clear();
+                subscriptions.Clear();
+            }
         }
 
         internal static void Terminate()

@@ -3,74 +3,73 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Uml.Robotics.XmlRpc;
-
+using Xamla.Robotics.Ros.Async;
 
 namespace Uml.Robotics.Ros
 {
+    public class SubscribeFailedException : RosException
+    {
+        public SubscribeFailedException(SubscribeOptions ops, string reason)
+            : base($"Subscribing to topic [{ops.topic}] failed: {reason}")
+        {
+        }
+    }
+
     public class TopicManager
     {
         public delegate byte[] SerializeFunc();
 
-        public static TopicManager Instance
-        {
-            get { return instance.Value; }
-        }
-
         private static Lazy<TopicManager> instance = new Lazy<TopicManager>(LazyThreadSafetyMode.ExecutionAndPublication);
-        private ILogger Logger { get; } = ApplicationLogging.CreateLogger<TopicManager>();
-        private List<Publication> advertisedTopics = new List<Publication>();
-        private object advertisedTopicsMutex = new object();
+
+        public static TopicManager Instance =>
+            instance.Value;
+
+        internal static void Terminate() =>
+            Instance.Shutdown().Wait();
+
+        internal static void Reset() =>
+            instance = new Lazy<TopicManager>(LazyThreadSafetyMode.ExecutionAndPublication);
+
+        private readonly ILogger logger = ApplicationLogging.CreateLogger<TopicManager>();
+        private object gate = new object();
         private bool shuttingDown;
-        private object shuttingDownMutex = new object();
-        private object subcriptionsMutex = new object();
+        private List<Publication> advertisedTopics = new List<Publication>();
         private List<Subscription> subscriptions = new List<Subscription>();
 
-
-        internal static void Terminate()
-        {
-            Instance.Shutdown();
-        }
-
-        internal static void Reset()
-        {
-            instance = new Lazy<TopicManager>(LazyThreadSafetyMode.ExecutionAndPublication);
-        }
-
-
         /// <summary>
-        ///     Binds the XmlRpc requests to callback functions, signal to start
+        /// Binds the XmlRpc requests to callback functions, signal to start
         /// </summary>
         public void Start()
         {
-            lock (shuttingDownMutex)
+            lock (gate)
             {
                 shuttingDown = false;
 
-                XmlRpcManager.Instance.Bind("publisherUpdate", publisherUpdateCallback);
-                XmlRpcManager.Instance.Bind("requestTopic", requestTopicCallback);
-                XmlRpcManager.Instance.Bind("getBusStats", getBusStatsCallback);
-                XmlRpcManager.Instance.Bind("getBusInfo", getBusInfoCallback);
-                XmlRpcManager.Instance.Bind("getSubscriptions", getSubscriptionsCallback);
-                XmlRpcManager.Instance.Bind("getPublications", getPublicationsCallback);
+                XmlRpcManager.Instance.Bind("publisherUpdate", PublisherUpdateCallback);
+                XmlRpcManager.Instance.Bind("requestTopic", RequestTopicCallback);
+                XmlRpcManager.Instance.Bind("getBusStats", GetBusStatsCallback);
+                XmlRpcManager.Instance.Bind("getBusInfo", GetBusInfoCallback);
+                XmlRpcManager.Instance.Bind("getSubscriptions", GetSubscriptionsCallback);
+                XmlRpcManager.Instance.Bind("getPublications", GetPublicationsCallback);
             }
         }
 
-
         /// <summary>
-        ///     unbinds the XmlRpc requests to callback functions, signal to shutdown
+        /// Unbinds the XmlRpc requests to callback functions, signal to shutdown
         /// </summary>
-        public void Shutdown()
+        public async Task Shutdown()
         {
-            lock (shuttingDownMutex)
+            List<Publication> pubs;
+            List<Subscription> subs;
+
+            lock (gate)
             {
                 if (shuttingDown)
                     return;
 
-                lock (subcriptionsMutex)
-                {
-                    shuttingDown = true;
-                }
+                shuttingDown = true;
 
                 XmlRpcManager.Instance.Unbind("publisherUpdate");
                 XmlRpcManager.Instance.Unbind("requestTopic");
@@ -79,76 +78,82 @@ namespace Uml.Robotics.Ros
                 XmlRpcManager.Instance.Unbind("getSubscriptions");
                 XmlRpcManager.Instance.Unbind("getPublications");
 
-                bool failedOnceToUnadvertise = false;
-                lock (advertisedTopicsMutex)
-                {
-                    foreach (Publication p in advertisedTopics)
-                    {
-                        if (!p.Dropped && !failedOnceToUnadvertise)
-                        {
-                            failedOnceToUnadvertise = !unregisterPublisher(p.Name);
-                        }
-                        p.drop();
-                    }
-                    advertisedTopics.Clear();
-                }
-
-                bool failedOnceToUnsubscribe = false;
-                lock (subcriptionsMutex)
-                {
-                    foreach (Subscription s in subscriptions)
-                    {
-                        if (!s.IsDropped && !failedOnceToUnsubscribe)
-                        {
-                            failedOnceToUnsubscribe = !unregisterSubscriber(s.name);
-                        }
-                        s.shutdown();
-                    }
-                    subscriptions.Clear();
-                }
+                pubs = advertisedTopics.ToList();
+                advertisedTopics.Clear();
+                subs = subscriptions.ToList();
+                subscriptions.Clear();
             }
-        }
 
-
-        /// <summary>
-        ///     gets the list of advertised topics.
-        /// </summary>
-        /// <param name="topics">List of topics to update</param>
-        public void getAdvertisedTopics(out string[] topics)
-        {
-            lock (advertisedTopicsMutex)
+            bool failedOnceToUnadvertise = false;
+            foreach (Publication p in pubs)
             {
-                topics = advertisedTopics.Select(a => a.Name).ToArray();
+                if (!p.Dropped && !failedOnceToUnadvertise)
+                {
+                    try
+                    {
+                        failedOnceToUnadvertise = !await UnregisterPublisher(p.Name);
+                    }
+                    catch
+                    {
+                        failedOnceToUnadvertise = true;
+                    }
+                }
+                p.Dispose();
             }
-        }
 
-
-        /// <summary>
-        ///     gets the list of subscribed topics.
-        /// </summary>
-        /// <param name="topics"></param>
-        public void getSubscribedTopics(out string[] topics)
-        {
-            lock (subcriptionsMutex)
+            bool failedOnceToUnsubscribe = false;
+            foreach (Subscription s in subs)
             {
-                topics = subscriptions.Select(s => s.name).ToArray();
+                if (!s.IsDisposed && !failedOnceToUnsubscribe)
+                {
+                    try
+                    {
+                        failedOnceToUnsubscribe = !await UnregisterSubscriber(s.Name);
+                    }
+                    catch
+                    {
+                        failedOnceToUnsubscribe = true;
+                    }
+                }
+                s.Dispose();
             }
         }
 
+        /// <summary>
+        ///  Gets the list of advertised topics.
+        /// </summary>
+        /// <returns>List of topics</returns>
+        public string[] GetAdvertisedTopics()
+        {
+            lock (gate)
+            {
+                return advertisedTopics.Select(a => a.Name).ToArray();
+            }
+        }
 
         /// <summary>
-        ///     Looks up all current publishers on a given topic
+        /// Gets the list of subscribed topics.
+        /// </summary>
+        public string[] GetSubscribedTopics()
+        {
+            lock (gate)
+            {
+                return subscriptions.Select(s => s.Name).ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Looks up all current publishers on a given topic
         /// </summary>
         /// <param name="topic">Topic name to look up</param>
         /// <returns></returns>
-        public Publication lookupPublication(string topic)
+        public Publication LookupPublication(string topic)
         {
-            lock (advertisedTopicsMutex)
+            lock (gate)
             {
-                return lookupPublicationWithoutLock(topic);
+                return LookupPublicationWithoutLock(topic);
             }
         }
-
 
         /// <summary>
         ///     Checks if the given topic is valid.
@@ -156,7 +161,7 @@ namespace Uml.Robotics.Ros
         /// <typeparam name="T">Advertise Options </typeparam>
         /// <param name="ops"></param>
         /// <returns></returns>
-        private bool isValid<T>(AdvertiseOptions<T> ops) where T : RosMessage, new()
+        private bool IsValid<T>(AdvertiseOptions<T> ops) where T : RosMessage, new()
         {
             if (ops.dataType == "*")
                 throw new Exception("Advertising with * as the datatype is not allowed.  Topic [" + ops.topic + "]");
@@ -168,7 +173,7 @@ namespace Uml.Robotics.Ros
                 throw new Exception("Advertising on topic [" + ops.topic + "] with an empty datatype");
             if (string.IsNullOrEmpty(ops.messageDefinition))
             {
-                this.Logger.LogWarning(
+                this.logger.LogWarning(
                     "Advertising on topic [" + ops.topic +
                      "] with an empty message definition. Some tools may not work correctly"
                 );
@@ -176,51 +181,63 @@ namespace Uml.Robotics.Ros
             return true;
         }
 
-
         /// <summary>
-        ///     Register as a publisher on a topic.
+        /// Register as a publisher on a topic.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="ops"></param>
         /// <param name="callbacks"></param>
         /// <returns></returns>
-        public bool advertise<T>(AdvertiseOptions<T> ops, SubscriberCallbacks callbacks) where T : RosMessage, new()
+        public async Task<bool> Advertise<T>(AdvertiseOptions<T> ops, SubscriberCallbacks callbacks) where T : RosMessage, new()
         {
-            if (!isValid(ops))
+            if (!IsValid(ops))
                 return false;
 
             Publication pub = null;
-            lock (advertisedTopicsMutex)
+            lock (gate)
             {
                 if (shuttingDown)
                     return false;
-                pub = lookupPublicationWithoutLock(ops.topic);
+
+                pub = LookupPublicationWithoutLock(ops.topic);
                 if (pub != null)
                 {
-                    if (pub.Md5sum != ops.md5Sum)
+                    if (pub.Md5Sum != ops.md5Sum)
                     {
-                        this.Logger.LogError(
+                        this.logger.LogError(
                             "Tried to advertise on topic [{0}] with md5sum [{1}] and datatype [{2}], but the topic is already advertised as md5sum [{3}] and datatype [{4}]",
-                            ops.topic, ops.md5Sum,
-                            ops.dataType, pub.Md5sum, pub.DataType
+                            ops.topic,
+                            ops.md5Sum,
+                            ops.dataType,
+                            pub.Md5Sum,
+                            pub.DataType
                         );
                         return false;
                     }
                 }
                 else
-                    pub = new Publication(ops.topic, ops.dataType, ops.md5Sum, ops.messageDefinition, ops.queueSize,
-                        ops.latch, ops.hasHeader);
-                pub.addCallbacks(callbacks);
+                {
+                    pub = new Publication(
+                        ops.topic,
+                        ops.dataType,
+                        ops.md5Sum,
+                        ops.messageDefinition,
+                        ops.queueSize,
+                        ops.Latch,
+                        ops.hasHeader
+                    );
+                }
+                pub.AddCallbacks(callbacks);
                 advertisedTopics.Add(pub);
             }
 
             bool found = false;
             Subscription sub = null;
-            lock (subcriptionsMutex)
+            lock (gate)
             {
                 foreach (Subscription s in subscriptions)
                 {
-                    if (s.name == ops.topic && md5sumsMatch(s.md5sum, ops.md5Sum) && !s.IsDropped)
+                    if (s.Name == ops.topic && Md5SumsMatch(s.Md5Sum, ops.md5Sum) && !s.IsDisposed)
                     {
                         found = true;
                         sub = s;
@@ -230,73 +247,69 @@ namespace Uml.Robotics.Ros
             }
 
             if (found)
-                sub.addLocalConnection(pub);
+            {
+                sub.AddLocalConnection(pub);
+            }
 
             var args = new XmlRpcValue(ThisNode.Name, ops.topic, ops.dataType, XmlRpcManager.Instance.Uri);
             var result = new XmlRpcValue();
             var payload = new XmlRpcValue();
 
-            if (!Master.execute("registerPublisher", args, result, payload, true))
+            if (!await Master.ExecuteAsync("registerPublisher", args, result, payload, true))
             {
-                this.Logger.LogError("RPC \"registerService\" for service " + ops.topic + " failed.");
+                this.logger.LogError($"RPC \"registerPublisher\" for topic '{ops.topic}' failed.");
                 return false;
             }
 
             return true;
         }
 
-
-        public void subscribe(SubscribeOptions ops)
+        public async Task Subscribe(SubscribeOptions ops)
         {
-            lock (subcriptionsMutex)
+            lock (gate)
             {
-                if (addSubCallback(ops))
+                if (AddSubCallback(ops))
                     return;
                 if (shuttingDown)
                     return;
             }
+
             if (string.IsNullOrEmpty(ops.md5sum))
-                throw subscribeFail(ops, "with an empty md5sum");
+                throw new SubscribeFailedException(ops, "with an empty md5sum");
             if (string.IsNullOrEmpty(ops.datatype))
-                throw subscribeFail(ops, "with an empty datatype");
+                throw new SubscribeFailedException(ops, "with an empty datatype");
             if (ops.helper == null)
-                throw subscribeFail(ops, "without a callback");
+                throw new SubscribeFailedException(ops, "without a callback");
 
             string md5sum = ops.md5sum;
             string datatype = ops.datatype;
             var s = new Subscription(ops.topic, md5sum, datatype);
-            s.addCallback(ops.helper, ops.md5sum, ops.callback_queue, ops.queue_size, ops.allow_concurrent_callbacks, ops.topic);
-            if (!registerSubscriber(s, ops.datatype))
+            s.AddCallback(ops.helper, ops.md5sum, ops.callback_queue, ops.queue_size, ops.allow_concurrent_callbacks, ops.topic);
+            if (!await RegisterSubscriber(s, ops.datatype))
             {
                 string error = $"Couldn't register subscriber on topic [{ops.topic}]";
-                s.shutdown();
-                this.Logger.LogError(error);
+                s.Dispose();
+                this.logger.LogError(error);
                 throw new RosException(error);
             }
 
-            lock (subcriptionsMutex)
+            lock (gate)
             {
                 subscriptions.Add(s);
             }
         }
 
-
-        public Exception subscribeFail(SubscribeOptions ops, string reason)
-        {
-            return new Exception("Subscribing to topic [" + ops.topic + "] " + reason);
-        }
-
-
-        public bool unsubscribe(string topic, ISubscriptionCallbackHelper sbch)
+        public async Task<bool> Unsubscribe(string topic, ISubscriptionCallbackHelper sbch)
         {
             Subscription sub = null;
-            lock (subcriptionsMutex)
+            lock (gate)
             {
                 if (shuttingDown)
                     return false;
+
                 foreach (Subscription s in subscriptions)
                 {
-                    if (s.name == topic)
+                    if (s.Name == topic)
                     {
                         sub = s;
                         break;
@@ -307,67 +320,79 @@ namespace Uml.Robotics.Ros
             if (sub == null)
                 return false;
 
-            sub.removeCallback(sbch);
+            sub.RemoveCallback(sbch);
             if (sub.NumCallbacks == 0)
             {
-                lock (subcriptionsMutex)
+                lock (gate)
                 {
                     subscriptions.Remove(sub);
                 }
 
-                if (!unregisterSubscriber(topic))
-                    this.Logger.LogWarning("Couldn't unregister subscriber for topic [" + topic + "]");
+                if (!await UnregisterSubscriber(topic))
+                    this.logger.LogWarning("Couldn't unregister subscriber for topic [" + topic + "]");
 
-                sub.shutdown();
+                sub.Dispose();
                 return true;
             }
             return true;
         }
 
-
-        internal Subscription getSubscription(string topic)
+        internal Subscription RetSubscription(string topic)
         {
-            lock (subcriptionsMutex)
+            lock (gate)
             {
-                if (shuttingDown)
-                    return null;
-
-                foreach (Subscription t in subscriptions)
+                if (!shuttingDown)
                 {
-                    if (!t.IsDropped && t.name == topic)
-                        return t;
+                    return subscriptions.FirstOrDefault(s => !s.IsDisposed && s.Name == topic);
                 }
             }
             return null;
         }
 
-
-        public int getNumSubscriptions()
+        public int NumSubscriptions
         {
-            lock (subcriptionsMutex)
+            get
             {
-                return subscriptions.Count;
+                lock (gate)
+                {
+                    return subscriptions.Count;
+                }
             }
         }
 
+        internal Subscription GetSubscription(string topic)
+        {
+            lock (gate)
+            {
+                if (shuttingDown)
+                    return null;
 
-        public void publish(Publication p, RosMessage msg, SerializeFunc serfunc = null)
+                return subscriptions.FirstOrDefault(t => !t.IsDisposed && t.Name == topic);
+            }
+        }
+
+        public void Publish(Publication p, RosMessage msg, SerializeFunc serfunc = null)
         {
             if (msg == null)
                 return;
+
             if (serfunc == null)
                 serfunc = msg.Serialize;
-            if (p.connection_header == null)
+
+            if (p.connectionHeader == null)
             {
-                p.connection_header = new Header {Values = new Dictionary<string, string>()};
-                p.connection_header.Values["type"] = p.DataType;
-                p.connection_header.Values["md5sum"] = p.Md5sum;
-                p.connection_header.Values["message_definition"] = p.MessageDefinition;
-                p.connection_header.Values["callerid"] = ThisNode.Name;
-                p.connection_header.Values["latching"] = Convert.ToString(p.Latch);
+                var fields = new Dictionary<string, string>()
+                {
+                    ["type"] = p.DataType,
+                    ["md5sum"] = p.Md5Sum,
+                    ["message_definition"] = p.MessageDefinition,
+                    ["callerid"] = ThisNode.Name,
+                    ["latching"] = p.Latch ? "1" : "0"
+                };
+                p.connectionHeader = new Header(fields);
             }
 
-            if (!ROS.ok || shuttingDown)
+            if (!ROS.OK || shuttingDown)
                 return;
 
             if (p.HasSubscribers || p.Latch)
@@ -376,52 +401,40 @@ namespace Uml.Robotics.Ros
                 bool serialize = false;
                 if (msg != null && msg.MessageType != "undefined/unknown")
                 {
-                    p.getPublishTypes(ref serialize, ref nocopy, msg.MessageType);
+                    p.GetPublishTypes(ref serialize, ref nocopy, msg.MessageType);
                 }
                 else
                 {
                     serialize = true;
                 }
 
-                p.publish(new MessageAndSerializerFunc(msg, serfunc, serialize, nocopy));
-
-                if (serialize)
-                    PollManager.Instance.poll_set.ContinueThreads();
+                p.Publish(new MessageAndSerializerFunc(msg, serfunc, serialize, nocopy));
             }
             else
             {
-                p.incrementSequence();
+                p.IncrementSequence();
             }
         }
 
-
-        public void incrementSequence(string topic)
+        public void IncrementSequence(string topic)
         {
-            Publication pub = lookupPublication(topic);
-            if (pub != null)
-                pub.incrementSequence();
+            Publication pub = LookupPublication(topic);
+            pub?.IncrementSequence();
         }
 
-
-        public bool isLatched(string topic)
+        public bool IsLatched(string topic)
         {
-            Publication pub = lookupPublication(topic);
-            if (pub != null)
-                return pub.Latch;
-            return false;
+            Publication pub = LookupPublication(topic);
+            return pub?.Latch ?? false;
         }
 
+        public bool Md5SumsMatch(string a, string b) =>
+            a == "*" || b == "*" || a == b;
 
-        public bool md5sumsMatch(string lhs, string rhs)
-        {
-            return (lhs == "*" || rhs == "*" || lhs == rhs);
-        }
-
-
-        public bool addSubCallback(SubscribeOptions ops)
+        public bool AddSubCallback(SubscribeOptions options)
         {
             bool found = false;
-            bool found_topic = false;
+            bool foundTopic = false;
             Subscription sub = null;
 
             if (shuttingDown)
@@ -430,25 +443,27 @@ namespace Uml.Robotics.Ros
             foreach (Subscription s in subscriptions)
             {
                 sub = s;
-                if (!sub.IsDropped && sub.name == ops.topic)
+                if (!sub.IsDisposed && sub.Name == options.topic)
                 {
-                    found_topic = true;
-                    if (md5sumsMatch(ops.md5sum, sub.md5sum))
+                    foundTopic = true;
+                    if (Md5SumsMatch(options.md5sum, sub.Md5Sum))
                         found = true;
                     break;
                 }
             }
-            if (found_topic && !found)
+
+            if (foundTopic && !found)
             {
                 throw new Exception
                     ("Tried to subscribe to a topic with the same name but different md5sum as a topic that was already subscribed [" +
-                     ops.datatype + "/" + ops.md5sum + " vs. " + sub.datatype + "/" +
-                     sub.md5sum + "]");
+                     options.datatype + "/" + options.md5sum + " vs. " + sub.DataType + "/" +
+                     sub.Md5Sum+ "]");
             }
+
             if (found)
             {
-                if (!sub.addCallback(ops.helper, ops.md5sum, ops.callback_queue, ops.queue_size,
-                        ops.allow_concurrent_callbacks, ops.topic))
+                if (!sub.AddCallback(options.helper, options.md5sum, options.callback_queue, options.queue_size,
+                        options.allow_concurrent_callbacks, options.topic))
                 {
                     return false;
                 }
@@ -456,20 +471,19 @@ namespace Uml.Robotics.Ros
             return found;
         }
 
-
-        public bool requestTopic(string topic, XmlRpcValue protos, ref XmlRpcValue ret)
+        public bool RequestTopic(string topic, XmlRpcValue protos, ref XmlRpcValue ret)
         {
-            for (int proto_idx = 0; proto_idx < protos.Count; proto_idx++)
+            foreach (var proto in protos)
             {
-                XmlRpcValue proto = protos[proto_idx];
                 if (proto.Type != XmlRpcType.Array)
                 {
-                    this.Logger.LogError("requestTopic protocol list was not a list of lists");
+                    this.logger.LogError("requestTopic protocol list was not a list of lists");
                     return false;
                 }
+
                 if (proto[0].Type != XmlRpcType.String)
                 {
-                    this.Logger.LogError(
+                    this.logger.LogError(
                         "requestTopic received a protocol list in which a sublist did not start with a string");
                     return false;
                 }
@@ -478,45 +492,46 @@ namespace Uml.Robotics.Ros
 
                 if (proto_name == "TCPROS")
                 {
-                    var tcpRosParams = new XmlRpcValue("TCPROS", Network.host, ConnectionManager.Instance.TCPPort);
+                    var tcpRosParams = new XmlRpcValue("TCPROS", Network.Host, ConnectionManager.Instance.TCPPort);
                     ret.Set(0, 1);
                     ret.Set(1, "");
                     ret.Set(2, tcpRosParams);
                     return true;
                 }
+
                 if (proto_name == "UDPROS")
                 {
-                    this.Logger.LogWarning("Ignoring topics with UdpRos as protocol");
+                    this.logger.LogWarning("Ignoring topics with 'UDPROS' as protocol");
                 }
                 else
                 {
-                    this.Logger.LogWarning("An unsupported protocol was offered: [{0}]", proto_name);
+                    this.logger.LogWarning("An unsupported protocol was offered: [{0}]", proto_name);
                 }
             }
 
-            this.Logger.LogError("No supported protocol was provided");
+            this.logger.LogError("No supported protocol was provided");
             return false;
         }
 
-
-        public bool isTopicAdvertised(string topic)
+        public bool IsTopicAdvertised(string topic)
         {
             return advertisedTopics.Count(o => o.Name == topic) > 0;
         }
 
-
-        public bool registerSubscriber(Subscription s, string datatype)
+        internal async Task<bool> RegisterSubscriber(Subscription s, string datatype)
         {
             string uri = XmlRpcManager.Instance.Uri;
 
-            var args = new XmlRpcValue(ThisNode.Name, s.name, datatype, uri);
+            var args = new XmlRpcValue(ThisNode.Name, s.Name, datatype, uri);
             var result = new XmlRpcValue();
             var payload = new XmlRpcValue();
-            if (!Master.execute("registerSubscriber", args, result, payload, true))
+
+            if (!await Master.ExecuteAsync("registerSubscriber", args, result, payload, true))
             {
-                Logger.LogError("RPC \"registerSubscriber\" for service " + s.name + " failed.");
+                logger.LogError("RPC \"registerSubscriber\" for service " + s.Name + " failed.");
                 return false;
             }
+
             var pub_uris = new List<string>();
             for (int i = 0; i < payload.Count; i++)
             {
@@ -527,16 +542,18 @@ namespace Uml.Robotics.Ros
                     pub_uris.Add(pubed);
                 }
             }
+
             bool self_subscribed = false;
             Publication pub = null;
-            string sub_md5sum = s.md5sum;
-            lock (advertisedTopicsMutex)
+            string sub_md5sum = s.Md5Sum;
+
+            lock (gate)
             {
                 foreach (Publication p in advertisedTopics)
                 {
                     pub = p;
-                    string pub_md5sum = pub.Md5sum;
-                    if (pub.Name == s.name && md5sumsMatch(pub_md5sum, sub_md5sum) && !pub.Dropped)
+                    string pub_md5sum = pub.Md5Sum;
+                    if (pub.Name == s.Name && Md5SumsMatch(pub_md5sum, sub_md5sum) && !pub.Dropped)
                     {
                         self_subscribed = true;
                         break;
@@ -544,251 +561,235 @@ namespace Uml.Robotics.Ros
                 }
             }
 
-            s.pubUpdate(pub_uris);
+            await s.PubUpdate(pub_uris);
             if (self_subscribed)
-                s.addLocalConnection(pub);
+            {
+                s.AddLocalConnection(pub);
+            }
+
             return true;
         }
 
-
-        public bool unregisterSubscriber(string topic)
+        public async Task<bool> UnregisterSubscriber(string topic)
         {
-            var args = new XmlRpcValue(ThisNode.Name, topic, XmlRpcManager.Instance.Uri);
-            var result = new XmlRpcValue();
-            var payload = new XmlRpcValue();
-
             bool unregisterSuccess = false;
             try
             {
-                unregisterSuccess = Master.execute("unregisterSubscriber", args, result, payload, false) && result.IsEmpty;
+                var args = new XmlRpcValue(ThisNode.Name, topic, XmlRpcManager.Instance.Uri);
+                var result = new XmlRpcValue();
+                var payload = new XmlRpcValue();
+                unregisterSuccess = await Master.ExecuteAsync("unregisterSubscriber", args, result, payload, false) && result.IsEmpty;
             }
-            // Ignore exception during unregister
-            catch (Exception e)
+            catch
             {
-                // Logger.LogError(e.Message);
+                // ignore exception during unregister
             }
             return unregisterSuccess;
         }
 
-
-        public bool unregisterPublisher(string topic)
+        public async Task<bool> UnregisterPublisher(string topic)
         {
-            var args = new XmlRpcValue(ThisNode.Name, topic, XmlRpcManager.Instance.Uri);
-            var result = new XmlRpcValue();
-            var payload = new XmlRpcValue();
-
             bool unregisterSuccess = false;
             try
             {
-                unregisterSuccess = Master.execute("unregisterPublisher", args, result, payload, false) && result.IsEmpty;
+                var args = new XmlRpcValue(ThisNode.Name, topic, XmlRpcManager.Instance.Uri);
+                var result = new XmlRpcValue();
+                var payload = new XmlRpcValue();
+                unregisterSuccess = await Master.ExecuteAsync("unregisterPublisher", args, result, payload, false) && result.IsEmpty;
             }
-            // Ignore exception during unregister
-            catch (Exception e)
+            catch
             {
-                // Logger.LogError(e.Message);
+                // ignore exception during unregister
             }
             return unregisterSuccess;
         }
 
-
-        public Publication lookupPublicationWithoutLock(string topic)
+        private Publication LookupPublicationWithoutLock(string topic)
         {
             return advertisedTopics.FirstOrDefault(p => p.Name == topic && !p.Dropped);
         }
 
-
-        public XmlRpcValue getBusStats()
+        public XmlRpcValue GetBusStats()
         {
-            var publish_stats = new XmlRpcValue();
-            var subscribe_stats = new XmlRpcValue();
-            var service_stats = new XmlRpcValue();
+            var publishStats = new XmlRpcValue();
+            var subscribeStats = new XmlRpcValue();
+            var serviceStats = new XmlRpcValue();
 
-            int pidx = 0;
-            lock (advertisedTopicsMutex)
+            lock (gate)
             {
-                publish_stats.SetArray(advertisedTopics.Count);
-                foreach (Publication t in advertisedTopics)
+                int pidx = 0;
+                publishStats.SetArray(advertisedTopics.Count);
+                foreach (Publication p in advertisedTopics)
                 {
-                    publish_stats.Set(pidx++, t.GetStats());
+                    publishStats.Set(pidx++, p.GetStats());
                 }
-            }
 
-            int sidx = 0;
-            lock (subcriptionsMutex)
-            {
-                subscribe_stats.SetArray(subscriptions.Count);
-                foreach (Subscription t in subscriptions)
+                int sidx = 0;
+                subscribeStats.SetArray(subscriptions.Count);
+                foreach (Subscription s in subscriptions)
                 {
-                    subscribe_stats.Set(sidx++, t.getStats());
+                    subscribeStats.Set(sidx++, s.GetStats());
                 }
             }
 
             // TODO: fix for services
-            service_stats.SetArray(0); //service_stats.Size = 0;
+            serviceStats.SetArray(0); //service_stats.Size = 0;
 
             var stats = new XmlRpcValue();
-            stats.Set(0, publish_stats);
-            stats.Set(1, subscribe_stats);
-            stats.Set(2, service_stats);
+            stats.Set(0, publishStats);
+            stats.Set(1, subscribeStats);
+            stats.Set(2, serviceStats);
             return stats;
         }
 
-
-        public XmlRpcValue getBusInfo()
+        public XmlRpcValue GetBusInfo()
         {
             var info = new XmlRpcValue();
             info.SetArray(0);
-            lock (advertisedTopicsMutex)
+            lock (gate)
             {
                 foreach (Publication t in advertisedTopics)
                 {
-                    t.getInfo(info);
+                    t.GetInfo(info);
                 }
-            }
-            lock (subcriptionsMutex)
-            {
+
                 foreach (Subscription t in subscriptions)
                 {
-                    t.getInfo(info);
+                    t.GetInfo(info);
                 }
             }
             return info;
         }
 
-
-        public void getSubscriptions(ref XmlRpcValue subs)
+        public void GetSubscriptions(XmlRpcValue subs)
         {
             subs.SetArray(0);
-            lock (subcriptionsMutex)
+            lock (gate)
             {
-                int sidx = 0;
+                int i = 0;
                 foreach (Subscription t in subscriptions)
                 {
-                    subs.Set(sidx++, new XmlRpcValue(t.name, t.datatype));
+                    subs.Set(i++, new XmlRpcValue(t.Name, t.DataType));
                 }
             }
         }
 
-
-        public void getPublications(ref XmlRpcValue pubs)
+        public void GetPublications(XmlRpcValue pubs)
         {
             pubs.SetArray(0);
-            lock (advertisedTopicsMutex)
+            lock (gate)
             {
-                int sidx = 0;
+                int i = 0;
                 foreach (Publication t in advertisedTopics)
                 {
                     XmlRpcValue pub = new XmlRpcValue();
                     pub.Set(0, t.Name);
                     pub.Set(1, t.DataType);
-                    pubs.Set(sidx++, pub);
+                    pubs.Set(i++, pub);
                 }
             }
         }
 
-
-        public bool pubUpdate(string topic, List<string> pubs)
+        public async Task<bool> PubUpdate(string topic, List<string> pubs)
         {
-            using (this.Logger.BeginScope(nameof(pubUpdate)))
+            using (this.logger.BeginScope(nameof(PubUpdate)))
             {
-                this.Logger.LogDebug("TopicManager is updating publishers for " + topic);
+                this.logger.LogDebug("TopicManager is updating publishers for " + topic);
 
                 Subscription sub = null;
-                lock (subcriptionsMutex)
+                lock (gate)
                 {
                     if (shuttingDown)
                         return false;
 
                     foreach (Subscription s in subscriptions)
                     {
-                        if (s.name != topic || s.IsDropped)
+                        if (s.Name != topic || s.IsDisposed)
                             continue;
                         sub = s;
                         break;
                     }
                 }
+
                 if (sub != null)
-                    return sub.pubUpdate(pubs);
-                this.Logger.LogInformation(
-                    "Request for updating publishers of topic " + topic + ", which has no subscribers."
-                );
+                {
+                    return await sub.PubUpdate(pubs);
+                }
+
+                this.logger.LogInformation($"Request for updating publishers of topic '{topic}', which has no subscribers.");
                 return false;
             }
         }
 
-
-        private void publisherUpdateCallback(XmlRpcValue parm, XmlRpcValue result)
+        private void PublisherUpdateCallback(XmlRpcValue parm, XmlRpcValue result)
         {
             var pubs = new List<string>();
             for (int idx = 0; idx < parm[2].Count; idx++)
                 pubs.Add(parm[2][idx].GetString());
-            if (pubUpdate(parm[1].GetString(), pubs))
+            var pubUpdateTask = PubUpdate(parm[1].GetString(), pubs);
+            pubUpdateTask.WhenCompleted().WhenCompleted().Wait();
+            if (pubUpdateTask.IsCompletedSuccessfully && pubUpdateTask.Result)
                 XmlRpcManager.ResponseInt(1, "", 0)(result);
             else
             {
                 const string error = "Unknown error while handling XmlRpc call to pubUpdate";
-                this.Logger.LogError(error);
+                this.logger.LogError(error);
                 XmlRpcManager.ResponseInt(0, error, 0)(result);
             }
         }
 
-
-        private void requestTopicCallback(XmlRpcValue parm, XmlRpcValue res)
+        private void RequestTopicCallback(XmlRpcValue parm, XmlRpcValue res)
         {
             //XmlRpcValue res = XmlRpcValue.Create(ref result)
             //	, parm = XmlRpcValue.Create(ref parms);
             //result = res.instance;
-            if (!requestTopic(parm[1].GetString(), parm[2], ref res))
+            if (!RequestTopic(parm[1].GetString(), parm[2], ref res))
             {
                 const string error = "Unknown error while handling XmlRpc call to requestTopic";
-                this.Logger.LogError(error);
+                this.logger.LogError(error);
                 XmlRpcManager.ResponseInt(0, error, 0)(res);
             }
         }
 
-
-        private void getBusStatsCallback(XmlRpcValue parm, XmlRpcValue res)
+        private void GetBusStatsCallback(XmlRpcValue parm, XmlRpcValue res)
         {
             res.Set(0, 1);
             res.Set(1, "");
-            var response = getBusStats();
+            var response = GetBusStats();
             res.Set(2, response);
         }
 
-
-        private void getBusInfoCallback(XmlRpcValue parm, XmlRpcValue res)
+        private void GetBusInfoCallback(XmlRpcValue parm, XmlRpcValue res)
         {
             res.Set(0, 1);
             res.Set(1, "");
-            var response = getBusInfo();
+            var response = GetBusInfo();
             res.Set(2, response);
         }
 
-
-        private void getSubscriptionsCallback(XmlRpcValue parm, XmlRpcValue res)
+        private void GetSubscriptionsCallback(XmlRpcValue parm, XmlRpcValue res)
         {
             res.Set(0, 1);
             res.Set(1, "subscriptions");
             var response = new XmlRpcValue();
-            getSubscriptions(ref response);
+            GetSubscriptions(response);
             res.Set(2, response);
         }
 
-
-        private void getPublicationsCallback(XmlRpcValue parm, XmlRpcValue res)
+        private void GetPublicationsCallback(XmlRpcValue parm, XmlRpcValue res)
         {
             res.Set(0, 1);
             res.Set(1, "publications");
             var response = new XmlRpcValue();
-            getPublications(ref response);
+            GetPublications(response);
             res.Set(2, response);
         }
 
-
-        public bool unadvertise(string topic, SubscriberCallbacks callbacks)
+        public async Task<bool> Unadvertise(string topic, SubscriberCallbacks callbacks)
         {
             Publication pub = null;
-            lock (advertisedTopicsMutex)
+
+            lock (gate)
             {
                 foreach (Publication p in advertisedTopics)
                 {
@@ -799,19 +800,22 @@ namespace Uml.Robotics.Ros
                     }
                 }
             }
+
             if (pub == null)
                 return false;
 
-            pub.removeCallbacks(callbacks);
-            lock (advertisedTopicsMutex)
+            pub.RemoveCallbacks(callbacks);
+
+            lock (gate)
             {
-                if (pub.NumCallbacks == 0)
-                {
-                    unregisterPublisher(pub.Name);
-                    pub.drop();
-                    advertisedTopics.Remove(pub);
-                }
+                if (pub.NumCallbacks > 0)
+                    return true;
+                pub.Dispose();
+                advertisedTopics.Remove(pub);
             }
+
+            await UnregisterPublisher(pub.Name);
+
             return true;
         }
     }

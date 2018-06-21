@@ -2,7 +2,7 @@
 
 namespace Uml.Robotics.Ros
 {
-    public class LocalSubscriberLink : SubscriberLink
+    internal class LocalSubscriberLink : SubscriberLink
     {
         private object gate = new object();
         private bool dropped;
@@ -14,26 +14,7 @@ namespace Uml.Robotics.Ros
             topic = parent.Name;
         }
 
-        public void SetSubscriber(LocalPublisherLink publisherLink)
-        {
-            subscriber = publisherLink;
-            connection_id = ConnectionManager.Instance.GetNewConnectionId();
-            destination_caller_id = ThisNode.Name;
-        }
-
-        internal override void EnqueueMessage(MessageAndSerializerFunc holder)
-        {
-            lock (gate)
-            {
-                if (dropped)
-                    return;
-            }
-
-            if (subscriber != null)
-                subscriber.handleMessage(holder.msg, holder.serialize, holder.nocopy);
-        }
-
-        public override void Drop()
+        public override void Dispose()
         {
             lock (gate)
             {
@@ -42,18 +23,34 @@ namespace Uml.Robotics.Ros
                 dropped = true;
             }
 
-            if (subscriber != null)
-            {
-                subscriber.drop();
-            }
+            subscriber?.Dispose();
 
             lock (parent)
             {
-                parent.removeSubscriberLink(this);
+                parent.RemoveSubscriberLink(this);
             }
         }
 
-        public override void getPublishTypes(ref bool ser, ref bool nocopy, string messageType)
+        public void SetSubscriber(LocalPublisherLink publisherLink)
+        {
+            subscriber = publisherLink;
+            connectionId = ConnectionManager.Instance.GetNewConnectionId();
+            DestinationCallerId = ThisNode.Name;
+        }
+
+        public override void EnqueueMessage(MessageAndSerializerFunc holder)
+        {
+            lock (gate)
+            {
+                if (dropped)
+                    return;
+            }
+
+            if (subscriber != null)
+                subscriber.HandleMessage(holder.msg, holder.serialize, holder.nocopy);
+        }
+
+        public override void GetPublishTypes(ref bool ser, ref bool nocopy, string messageType)
         {
             lock (gate)
             {
@@ -65,7 +62,7 @@ namespace Uml.Robotics.Ros
                 }
             }
 
-            subscriber.getPublishTypes(ref ser, ref nocopy, messageType);
+            subscriber.GetPublishTypes(ref ser, ref nocopy, messageType);
         }
     }
 }
