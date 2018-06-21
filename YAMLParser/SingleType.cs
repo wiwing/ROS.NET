@@ -12,8 +12,8 @@ namespace FauxMessages
     public class SingleType
     {
         // TODO extend check to other C# keywords
-        private static readonly string[] CSharpKeywords = { "object", "params" };
-
+        private static readonly string[] CSharpKeywords = { "object", "params", "namespace", "const", "static" };
+        
         private static bool IsCSharpKeyword(string name)
         {
             return CSharpKeywords.Contains(name);
