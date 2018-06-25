@@ -613,7 +613,7 @@ namespace FauxMessages
             }
             else
             {
-                if (!st.IsPrimitve || (st.Type == "string") || (st.Type == "bool") || (st.Type == "sbyte") || (st.Type == "uint") || (st.Type == "ulong") || (st.Type == "ushort"))
+                if (!st.IsPrimitve || (st.Type == "string") || (st.Type == "bool"))
                 {
                     ret += string.Format(@"
 {0}for (int i=0;i<{1}.Length; i++) {{{2}
@@ -680,7 +680,7 @@ namespace FauxMessages
             }
             else
             {
-                if (!st.IsPrimitve || (st.Type == "string") || (st.Type == "bool") || (st.Type == "sbyte") || (st.Type == "uint") || (st.Type == "ulong") || (st.Type == "ushort"))
+                if (!st.IsPrimitve || (st.Type == "string") || (st.Type == "bool"))
                 {
                     ret += string.Format(@"
 {0}for (int i=0;i<{1}.Length; i++) {{{2}
