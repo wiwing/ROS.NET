@@ -121,7 +121,7 @@ namespace Uml.Robotics.Ros.Transforms
                 transform.basis = new Quaternion();
                 transform.child_frame_id = mapped_src;
                 transform.frame_id = mapped_tgt;
-                transform.stamp = ROS.GetTime(DateTime.UtcNow);
+                transform.stamp = DateTime.UtcNow.ToTimeMessage();
                 return true;
             }
 
@@ -327,7 +327,7 @@ namespace Uml.Robotics.Ros.Transforms
             error_str = null;
             if (target_id == source_id)
             {
-                time = TimeCache.toLong(ROS.GetTime(DateTime.UtcNow).data);
+                time = TimeCache.toLong(ROS.GetTime().data);
                 return TF_STATUS.NO_ERROR;
             }
 
@@ -488,9 +488,9 @@ namespace Uml.Robotics.Ros.Transforms
         {
             TimeSpan? ts = null;
             if (pollingSleepDuration != null)
-                ts = ROS.GetTime(pollingSleepDuration);
+                ts = pollingSleepDuration.ToTimeSpan();
             return waitForTransform(target_frame, source_frame, time,
-                ROS.GetTime(timeout),
+                timeout.ToTimeSpan(),
                 out error_msg, ts);
         }
 

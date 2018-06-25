@@ -24,12 +24,12 @@ namespace Uml.Robotics.Ros.UnitTests
         public void Dispose()
         {
             Console.WriteLine("Shutting down ROS");
-            ROS.shutdown();
+            ROS.Shutdown();
         }
     }
 
     [CollectionDefinition(RosFixture.ROS_COLLECTION)]
-    public class RosCollection: ICollectionFixture<RosFixture>
+    public class RosCollection : ICollectionFixture<RosFixture>
     {
         // This class has no code, and is never created. Its purpose is simply
         // to be the place to apply [CollectionDefinition] and all the

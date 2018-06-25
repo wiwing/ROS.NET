@@ -26,7 +26,7 @@ namespace Uml.Robotics.Ros.IntegrationTests
         public void Dispose()
         {
             Console.WriteLine("Shutting down ROS");
-            ROS.shutdown();
+            ROS.Shutdown();
         }
     }
 

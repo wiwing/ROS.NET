@@ -29,13 +29,28 @@ namespace Uml.Robotics.Ros.UnitTests
                 var original = RosMessage.Generate(messageType);
                 Assert.NotNull(original);
                 original.Randomize();
-                var originalSerialized = original.Serialize();
+                byte[] originalSerialized = null;
+                try
+                {
+                    originalSerialized = original.Serialize();
+                }
+                catch (Exception e)
+                {
+                    int a = 1;
+                }
                 Assert.NotNull(originalSerialized);
 
                 RosMessage msg = RosMessage.Generate(messageType);
                 Assert.NotNull(msg);
 
-                msg.Deserialize(originalSerialized);
+                try
+                {
+                    msg.Deserialize(originalSerialized);
+                }
+                catch (Exception e)
+                {
+                    int a = 1;
+                }
                 Assert.Equal(original, msg);
             }
         }

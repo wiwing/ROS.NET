@@ -50,22 +50,22 @@ namespace Uml.Robotics.Ros.Samples
             switch (OP)
             {
                 case op.del:
-                    if (!Param.Del(Names.Resolve(args[1])))
-                            Console.WriteLine("Failed to delete "+args[1]);
+                    if (!Param.Del(Names.Resolve(args[1])).Result)
+                        Console.WriteLine("Failed to delete " + args[1]);
                     break;
                 case op.get:
-                {
-                    string s = null;
-                    Param.Get(args[1], out s);
-                    if (s != null)
-                        Console.WriteLine(s);
-                }
+                    {
+                        string s = null;
+                        Param.Get(args[1], out s);
+                        if (s != null)
+                            Console.WriteLine(s);
+                    }
                     break;
                 case op.list:
-                {
-                    foreach (string s in Param.List())
-                        Console.WriteLine(s);
-                }
+                    {
+                        foreach (string s in Param.List().Result)
+                            Console.WriteLine(s);
+                    }
                     break;
                 case op.set:
                     Param.Set(args[1], args[2]);
@@ -80,7 +80,7 @@ namespace Uml.Robotics.Ros.Samples
                 case 0:
                     Console.WriteLine("Valid operations:");
                     foreach (op o in (op[])Enum.GetValues(typeof(op)))
-                        Console.WriteLine("\t"+o.ToString());
+                        Console.WriteLine("\t" + o.ToString());
                     break;
                 case 1:
                     Console.WriteLine("You must specify a param name for this rosparam operation.");
@@ -93,8 +93,8 @@ namespace Uml.Robotics.Ros.Samples
             IDictionary<string, string> remappings;
             RemappingHelper.GetRemappings(ref args, out remappings);
             Network.Init(remappings);
-            Master.init(remappings);
-            ThisNode.Init("", remappings, (int) (InitOption.AnonymousName | InitOption.NoRousout));
+            Master.Init(remappings);
+            ThisNode.Init("", remappings, InitOptions.AnonymousName | InitOptions.NoRousout);
             Param.Init(remappings);
             //ROS.Init(args, "");
             new Program(args).result();
@@ -103,7 +103,7 @@ namespace Uml.Robotics.Ros.Samples
             Param.Set("/test/string", "Hello");
             Param.Set("/test/number", 42);
             string result;
-            if(Param.Get("/test/string", out result))
+            if (Param.Get("/test/string", out result))
             {
                 Console.WriteLine($"Got {result}");
             }

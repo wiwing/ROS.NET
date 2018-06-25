@@ -49,15 +49,14 @@ namespace Uml.Robotics.Ros.Samples
                 "frame pairs of an OpenNI2 node's transform tree with ones observed in linux with tf_echo"
             );
 
-            string[] nodes = null;
-            while (ROS.ok && !ROS.shutting_down && (!Master.getNodes(ref nodes) || !nodes.Contains("/camera/driver")))
+            while (ROS.OK && !ROS.ShuttingDown && (!Master.GetNodes().Result.Contains("/camera/driver")))
             {
                 ROS.Error()("For this to work, you need to \"roslaunch openni2_launch openni2.launch\" on a PC with" +
                     "an ASUS Xtion or PrimeSense Carmine sensor plugged into it, and connect to the same master"
                 );
                 Thread.Sleep(2000);
             }
-            if (ROS.ok && !ROS.shutting_down)
+            if (ROS.OK && !ROS.ShuttingDown)
             {
                 tfer = new tf.Transformer(false);
 
@@ -68,7 +67,8 @@ namespace Uml.Robotics.Ros.Samples
                  *      (0.0,-0.045,0.0)
                  *      (0,0,0,1)
                  */
-                tf.Transform result1 = new tf.Transform() {
+                tf.Transform result1 = new tf.Transform()
+                {
                     basis = new tf.Quaternion(0, 0, 0, 1),
                     origin = new tf.Vector3(0, -0.045, 0),
                     child_frame_id = "camera_rgb_frame",
@@ -80,7 +80,8 @@ namespace Uml.Robotics.Ros.Samples
                  *      (0.0,-0.045,0.0)
                  *      (-0.5,0.5,-0.5,0.5)
                 */
-                tf.Transform result2 = new tf.Transform() {
+                tf.Transform result2 = new tf.Transform()
+                {
                     basis = new tf.Quaternion(-0.5, 0.5, -0.5, 0.5),
                     origin = new tf.Vector3(0.0, 0.0, 0.0),
                     child_frame_id = "camera_rgb_optical_frame",
@@ -92,7 +93,8 @@ namespace Uml.Robotics.Ros.Samples
                  *      (0.0,0.25,0.0)
                  *      (0,0,0,1)
                  */
-                tf.Transform result3 = new tf.Transform() {
+                tf.Transform result3 = new tf.Transform()
+                {
                     basis = new tf.Quaternion(0, 0, 0, 1),
                     origin = new tf.Vector3(0.0, -0.02, 0.0),
                     child_frame_id = "camera_depth_frame",
@@ -104,7 +106,8 @@ namespace Uml.Robotics.Ros.Samples
                  *      (-0.25,0.0,0.0)
                  *      (0.5,-0.5,0.5,0.5)
                  */
-                tf.Transform result4 = new tf.Transform() {
+                tf.Transform result4 = new tf.Transform()
+                {
                     basis = new tf.Quaternion(-0.5, 0.5, -0.5, 0.5),
                     origin = new tf.Vector3(0.0, 0.0, 0.0),
                     child_frame_id = "camera_depth_optical_frame",
@@ -118,31 +121,31 @@ namespace Uml.Robotics.Ros.Samples
                 {
                     if (test1 == null || !string.Equals(result1.ToString(), test1.ToString()))
                         test1 = testLookup(result1);
-                    if (!ROS.ok || ROS.shutting_down)
+                    if (!ROS.OK || ROS.ShuttingDown)
                         break;
                     if (test2 == null || !string.Equals(result2.ToString(), test2.ToString()))
                         test2 = testLookup(result2);
-                    if (!ROS.ok || ROS.shutting_down)
+                    if (!ROS.OK || ROS.ShuttingDown)
                         break;
                     if (test3 == null || !string.Equals(result3.ToString(), test3.ToString()))
                         test3 = testLookup(result3);
-                    if (!ROS.ok || ROS.shutting_down)
+                    if (!ROS.OK || ROS.ShuttingDown)
                         break;
                     if (test4 == null || !string.Equals(result4.ToString(), test4.ToString()))
                         test4 = testLookup(result4);
                     Thread.Sleep(100);
-                } while (ROS.ok && !ROS.shutting_down && (
+                } while (ROS.OK && !ROS.ShuttingDown && (
                     test1 == null || !string.Equals(result1.ToString(), test1.ToString()) ||
                     test2 == null || !string.Equals(result2.ToString(), test2.ToString()) ||
                     test3 == null || !string.Equals(result3.ToString(), test3.ToString()) ||
                     test4 == null || !string.Equals(result4.ToString(), test4.ToString()))
                 );
             }
-            if (ROS.ok && !ROS.shutting_down)
+            if (ROS.OK && !ROS.ShuttingDown)
             {
                 Console.WriteLine("\n\n\nALL TFs MATCH!\n\nPress enter to quit");
                 Console.ReadLine();
-                ROS.shutdown();
+                ROS.Shutdown();
             }
         }
     }
