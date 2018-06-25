@@ -564,17 +564,10 @@ namespace FauxMessages
                 return string.Format(@"
 // Start Xamla
 {0}//{1}
-{0}x__size = Marshal.SizeOf(typeof(double)) * {1}.Length;
+{0}x__size = Marshal.SizeOf(typeof({2})) * {1}.Length;
 {0}scratch1 = new byte[x__size];
-{0}ptr = IntPtr.Zero;
-{0}ptr = Marshal.AllocHGlobal(x__size);
-{0}try {{
-{0}    Marshal.Copy({1}, 0, ptr, {1}.Length);
-{0}    Marshal.Copy(ptr, scratch1, 0, scratch1.Length);
-{0}}} finally {{
-{0}    Marshal.FreeHGlobal(ptr);
-{0}    pieces.Add(scratch1);
-{0}}}
+{0}Buffer.BlockCopy({1}, 0, scratch1, 0, x__size);
+{0}pieces.Add(scratch1);
 // End Xamla
 ", leadingWhitespace, name.Substring(0, name.Length - 3), type);
             }
@@ -768,20 +761,12 @@ namespace FauxMessages
                 string ret = string.Format(@"
 // Start Xamla
 {0}//{2}
-{0}if (currentIndex + {2}.Length > serializedMessage.Length) {{
+{0}piecesize = Marshal.SizeOf(typeof({1})) * {2}.Length;
+{0}if (currentIndex + piecesize > serializedMessage.Length) {{
 {0}    throw new Exception(""Memory allocation failed: Ran out of bytes to read."");
 {0}}}
-{0}
-{0}piecesize = Marshal.SizeOf(typeof({1})) * {2}.Length;
-{0}h = IntPtr.Zero;
-{0}h = Marshal.AllocHGlobal(piecesize);
-{0}try {{
-{0}    Marshal.Copy(serializedMessage, currentIndex, h, piecesize);
-{0}    Marshal.Copy(h, {2}, 0, {2}.Length);
-{0}}} finally {{
-{0}    Marshal.FreeHGlobal(h);
-{0}    currentIndex += piecesize;
-{0}}}
+{0}Buffer.BlockCopy(serializedMessage, currentIndex, {2}, 0, piecesize);
+{0}currentIndex += piecesize;
 // End Xamla
 ", leadingWhitespace, pt, name.Substring(0, name.Length - 3));
 
