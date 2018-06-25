@@ -63,7 +63,7 @@ namespace Testbed
         {
             Logger.LogInformation($"Stop ROS #{runNumber}");
             spinner.Stop();
-            var shutdownTask = ROS.shutdown();
+            var shutdownTask = ROS.Shutdown();
             shutdownTask.Wait();
             Logger.LogInformation("Stopped");
         }
@@ -72,14 +72,14 @@ namespace Testbed
         private void WaitForLatchedMessage(TimeSpan timeOut)
         {
             var receivedMessage = false;
-            var s = ROS.GlobalNodeHandle.subscribe<Messages.std_msgs.String>("/PubSubTestbed", 10, (message) =>
+            var s = ROS.GlobalNodeHandle.Subscribe<Messages.std_msgs.String>("/PubSubTestbed", 10, (message) =>
             {
                 Logger.LogInformation("--- Received message");
                 receivedMessage = true;
             });
 
             var startTime = DateTime.UtcNow;
-            while(!receivedMessage)
+            while (!receivedMessage)
             {
                 Thread.Sleep(1);
                 if (DateTime.UtcNow - startTime > timeOut)
@@ -90,52 +90,52 @@ namespace Testbed
         }
 
 
-       /* private void SubscribeFirstThenPublish(int numberOfMessages)
-        {
-            Console.WriteLine("Init ROS");
-            ROS.ROS_MASTER_URI = "http://192.168.0.134:11311";
-            ROS.Init(new string[] { }, "SubscribeFirst");
-            var spinner = new AsyncSpinner();
-            spinner.Start();
+        /* private void SubscribeFirstThenPublish(int numberOfMessages)
+         {
+             Console.WriteLine("Init ROS");
+             ROS.ROS_MASTER_URI = "http://192.168.0.134:11311";
+             ROS.Init(new string[] { }, "SubscribeFirst");
+             var spinner = new AsyncSpinner();
+             spinner.Start();
 
-            var nodeHandle = new NodeHandle();
-            Console.WriteLine("Subscribe");
-            //var subscriber = ROS.GlobalNodeHandle.subscribe<Messages.xamla_msgs.StressTest>("/StressTest", 10, (msg) =>
-            //{
-            //    Console.WriteLine($"Message #{msg.messageNumber} Took: {(DateTime.UtcNow - ROS.GetTime(msg.sentTime)).Ticks} ticks");
-            //});
+             var nodeHandle = new NodeHandle();
+             Console.WriteLine("Subscribe");
+             //var subscriber = ROS.GlobalNodeHandle.subscribe<Messages.xamla_msgs.StressTest>("/StressTest", 10, (msg) =>
+             //{
+             //    Console.WriteLine($"Message #{msg.messageNumber} Took: {(DateTime.UtcNow - ROS.GetTime(msg.sentTime)).Ticks} ticks");
+             //});
 
-            Thread.Sleep(1000);
+             Thread.Sleep(1000);
 
-            var clientConnected = true;
-            Console.WriteLine("Start Publisher");
-            var publisher = nodeHandle.advertise<Messages.xamla_msgs.StressTest>("/StressTest", 10, (singlePublisher) =>
-            {
-                Console.WriteLine("Client connected");
-                clientConnected = true;
-            }, null);
+             var clientConnected = true;
+             Console.WriteLine("Start Publisher");
+             var publisher = nodeHandle.advertise<Messages.xamla_msgs.StressTest>("/StressTest", 10, (singlePublisher) =>
+             {
+                 Console.WriteLine("Client connected");
+                 clientConnected = true;
+             }, null);
 
-            Task.Run(() =>
-            {
-                var messageNumber = 0;
-                while (!clientConnected)
-                {
-                    Thread.Sleep(1);
-                }
-                Console.WriteLine("Publishing");
-                while (messageNumber < numberOfMessages)
-                {
-                    var msg = new Messages.xamla_msgs.StressTest();
-                    msg.messageNumber = (uint)messageNumber;
-                    msg.sentTime = ROS.GetTime();
-                    publisher.publish(msg);
-                    Console.WriteLine($"Sent message #{messageNumber}");
-                    Thread.Sleep(1000);
-                    messageNumber += 1;
-                }
-            });
+             Task.Run(() =>
+             {
+                 var messageNumber = 0;
+                 while (!clientConnected)
+                 {
+                     Thread.Sleep(1);
+                 }
+                 Console.WriteLine("Publishing");
+                 while (messageNumber < numberOfMessages)
+                 {
+                     var msg = new Messages.xamla_msgs.StressTest();
+                     msg.messageNumber = (uint)messageNumber;
+                     msg.sentTime = ROS.GetTime();
+                     publisher.publish(msg);
+                     Console.WriteLine($"Sent message #{messageNumber}");
+                     Thread.Sleep(1000);
+                     messageNumber += 1;
+                 }
+             });
 
-            ROS.waitForShutdown();
-        }*/
+             ROS.waitForShutdown();
+         }*/
     }
 }

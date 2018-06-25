@@ -41,8 +41,8 @@ namespace ActionServerSample
                 Thread.Sleep(1);
             }
             actionServer.Shutdown();
-            serverNodeHandle.shutdown();
-            ROS.shutdown();
+            serverNodeHandle.Shutdown();
+            ROS.Shutdown();
         }
     }
 }

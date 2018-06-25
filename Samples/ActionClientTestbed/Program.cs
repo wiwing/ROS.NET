@@ -30,9 +30,11 @@ namespace ActionClientTestbed
             ROS.ROS_MASTER_URI = "http://rosvita:11311";
             ROS.Init(new string[0], "ActionClient");
 
-            //(new Program()).Start(1);
-            (new TestActionServerKill()).Start(5);
-            ROS.shutdown();
+            (new Program()).Start(1000);
+            //(new TestActionServerKill()).Start(5);
+            Thread.Sleep(10000);
+
+            ROS.Shutdown();
         }
 
 
@@ -40,6 +42,12 @@ namespace ActionClientTestbed
         {
             NodeHandle clientNodeHandle = new NodeHandle();
             spinner = new SingleThreadSpinner(ROS.GlobalCallbackQueue);
+
+            Console.WriteLine("Create client");
+            actionClient = new ActionClient<Messages.actionlib.TestGoal, Messages.actionlib.TestResult,
+                Messages.actionlib.TestFeedback>("test_action", clientNodeHandle, 120);
+            Console.WriteLine("Wait for client and server to negotiate connection");
+            bool started = actionClient.WaitForActionServerToStartSpinning(new TimeSpan(0, 0, 3), spinner);
 
             /*TestParams.Add(new TestParameters("Reject Goal", GoalStatus.REJECTED, 0, false, null));
             TestParams.Add(new TestParameters("Cancel not yet accepted goal", GoalStatus.RECALLED, 0, true, null));
@@ -49,13 +57,6 @@ namespace ActionClientTestbed
             var successfulTestCount = 0;
             var failedTestCount = 0;
 
-            Console.WriteLine("Create client");
-            actionClient = new ActionClient<Messages.actionlib.TestGoal, Messages.actionlib.TestResult,
-                Messages.actionlib.TestFeedback>("test_action", clientNodeHandle, 120);
-
-            Console.WriteLine("Wait for client and server to negotiate connection");
-            bool started = actionClient.WaitForActionServerToStartSpinning(new TimeSpan(0, 0, 3), spinner);
-
             var sw = Stopwatch.StartNew();
             DateTime? firstFail = null;
             var startTime = DateTime.Now;
@@ -64,7 +65,7 @@ namespace ActionClientTestbed
                 bool testError = false;
                 if (started)
                 {
-                    Console.WriteLine("Server connected, start tests");
+                    // Console.WriteLine("Server connected, start tests");
                     foreach (var parameter in TestParams)
                     {
                         if (!TestCase(parameter.Name, parameter.ExpectedState, parameter.ExpectedFeedback,
@@ -93,12 +94,14 @@ namespace ActionClientTestbed
                 else
                 {
                     successfulTestCount++;
-                    Logger.LogInformation("Testbed completed successfully");
+                    //Logger.LogInformation("Testbed completed successfully");
                 }
+                //actionClient?.Shutdown();
+                //actionClient = null;
             }
 
             Console.WriteLine("-----------");
-            Console.WriteLine($"Test took {sw.Elapsed} StartTime: {startTime} Goals/s {numberOfRuns/sw.Elapsed.TotalSeconds}");
+            Console.WriteLine($"Test took {sw.Elapsed} StartTime: {startTime} Goals/s {numberOfRuns / sw.Elapsed.TotalSeconds}");
             Console.WriteLine($"Successful: {successfulTestCount} Failed: {failedTestCount} FirstFail: {firstFail}");
             Console.WriteLine("All done, press any key to exit");
             Console.WriteLine("-----------");
@@ -109,8 +112,8 @@ namespace ActionClientTestbed
             }
 
             Console.WriteLine("Shutdown client");
-            actionClient.Shutdown();
-            clientNodeHandle.shutdown();
+            actionClient?.Shutdown();
+            clientNodeHandle.Shutdown();
         }
 
 
@@ -118,16 +121,17 @@ namespace ActionClientTestbed
         {
             testState = TestState.Unknown;
             receivedFeedback = 0;
-            Console.WriteLine("");
-            Console.WriteLine(testName);
+            // Console.WriteLine("");
+            //Console.WriteLine(testName);
 
             var goal = new Messages.actionlib.TestGoal();
             goal.goal = 42;
 
             var cts = new CancellationTokenSource();
             var clientHandle = actionClient.SendGoalAsync(goal,
-                (goalHandle) => {
-                    Console.WriteLine($"Transition: {goalHandle.State} {goalHandle.LatestGoalStatus.status} {goalHandle.Result?.result}");
+                (goalHandle) =>
+                {
+                    //Console.WriteLine($"Transition: {goalHandle.State} {goalHandle.LatestGoalStatus.status} {goalHandle.Result?.result}");
 
                     if (goalHandle.State == CommunicationState.DONE)
                     {
@@ -141,12 +145,12 @@ namespace ActionClientTestbed
                             {
                                 if (goalHandle.Result?.result == expectedGoal)
                                 {
-                                    Console.WriteLine($"Received expected Goal Result: {goalHandle.Result?.result}");
+                                    //Console.WriteLine($"Received expected Goal Result: {goalHandle.Result?.result}");
                                     testState = TestState.Succeeded;
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"Received unexpected Goal Result: {goalHandle.Result?.result}");
+                                    //Console.WriteLine($"Received unexpected Goal Result: {goalHandle.Result?.result}");
                                     testState = TestState.Failed;
                                 }
                             }
@@ -157,13 +161,14 @@ namespace ActionClientTestbed
                         }
                     }
                 },
-                (goalHandle, feedback) => {
+                (goalHandle, feedback) =>
+                {
                     //Console.WriteLine($"Feedback {feedback.Feedback.feedback} {feedback.GoalStatus.status}");
                     receivedFeedback += 1;
                 },
                 cts.Token
             );
-            Console.WriteLine($"Sent goal {clientHandle.Id}");
+            //Console.WriteLine($"Sent goal {clientHandle.Id}");
 
             if (cancelGoal)
             {
@@ -176,8 +181,10 @@ namespace ActionClientTestbed
             var testResult = (testState == TestState.Succeeded);
             var feedbackResult = (receivedFeedback == expectedNumberOfFeedback);
             var result = testResult;
-            Console.WriteLine(result ? "SUCCESS" : $"FAIL transistion: {testResult} feedback: {feedbackResult}: {receivedFeedback}/{expectedNumberOfFeedback}");
-            Console.WriteLine("");
+            //clientHandle.Dispose();
+            //clientHandle = null;
+            //Console.WriteLine(result ? "SUCCESS" : $"FAIL transistion: {testResult} feedback: {feedbackResult}: {receivedFeedback}/{expectedNumberOfFeedback}");
+            //Console.WriteLine("");
             return result;
         }
 
@@ -186,7 +193,7 @@ namespace ActionClientTestbed
         {
             var timeSpan = new TimeSpan(0, 0, timeOutInSeconds);
             var start = DateTime.UtcNow;
-            while ((DateTime.UtcNow - start < timeSpan) && ROS.ok)
+            while ((DateTime.UtcNow - start < timeSpan) && ROS.OK)
             {
                 if ((testState == TestState.Succeeded))
                 {
@@ -281,7 +288,7 @@ namespace ActionClientTestbed
                             {
                                 received = true;
                                 break;
-                            } 
+                            }
                         }
                         Thread.Sleep(0);
                         //spinner.SpinOnce();
@@ -290,7 +297,8 @@ namespace ActionClientTestbed
                     {
                         Console.WriteLine("Received");
                         numberReceived += 1;
-                    } else
+                    }
+                    else
                     {
                         Console.WriteLine("Timeout");
                         numberTimeout += 1;

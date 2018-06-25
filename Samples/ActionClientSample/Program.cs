@@ -120,7 +120,8 @@ namespace ActionClientSample
                 if (dict.Count == 0)
                 {
                     Console.WriteLine("All goals have been reached!");
-                } else
+                }
+                else
                 {
                     Console.WriteLine("TIMEOUT: There are still open goals");
                 }
@@ -132,8 +133,8 @@ namespace ActionClientSample
 
             Console.WriteLine("Shutdown ROS");
             actionClient.Shutdown();
-            clientNodeHandle.shutdown();
-            ROS.shutdown();
+            clientNodeHandle.Shutdown();
+            ROS.Shutdown();
         }
     }
 }

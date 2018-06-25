@@ -27,11 +27,11 @@ namespace Uml.Robotics.Ros.Transforms
         private void InitNodeHandle()
         {
             nh = new NodeHandle();
-            nh.subscribe<tfMessage>("/tf", 0, Update);
-            nh.subscribe<tfMessage>("/tf_static", 0, Update);
+            nh.Subscribe<tfMessage>("/tf", 0, Update);
+            nh.Subscribe<tfMessage>("/tf_static", 0, Update);
         }
 
-        public Transformer(bool interpolating = true, ulong ct = (ulong) DEFAULT_CACHE_TIME)
+        public Transformer(bool interpolating = true, ulong ct = (ulong)DEFAULT_CACHE_TIME)
         {
             frameIDs["NO_PARENT"] = 0;
             frameids_reverse[0] = "NO_PARENT";
@@ -506,10 +506,10 @@ namespace Uml.Robotics.Ros.Transforms
             {
                 if (canTransform(mapped_target, mapped_source, time, out error_msg))
                     return true;
-                if (!ROS.ok || !(DateTime.UtcNow.Subtract(start_time).TotalMilliseconds < timeout.TotalMilliseconds))
+                if (!ROS.OK || !(DateTime.UtcNow.Subtract(start_time).TotalMilliseconds < timeout.TotalMilliseconds))
                     break;
                 Thread.Sleep(pollingSleepDuration.Value);
-            } while (ROS.ok && (DateTime.UtcNow.Subtract(start_time).TotalMilliseconds < timeout.TotalMilliseconds));
+            } while (ROS.OK && (DateTime.UtcNow.Subtract(start_time).TotalMilliseconds < timeout.TotalMilliseconds));
             return false;
         }
 

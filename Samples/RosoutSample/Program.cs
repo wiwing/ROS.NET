@@ -30,7 +30,8 @@ namespace Uml.Robotics.Ros.Samples
                 try
                 {
                     level = int.Parse(levelOption.Value());
-                } catch (Exception e)
+                }
+                catch (Exception e)
                 {
                     level = 0;
                 }
@@ -90,21 +91,21 @@ namespace Uml.Robotics.Ros.Samples
         {
             if (subscriber != null)
             {
-                subscriber.shutdown();
+                subscriber.Shutdown();
                 subscriber = null;
             }
             if (nodeHandle != null)
             {
-                nodeHandle.shutdown();
+                nodeHandle.Shutdown();
                 nodeHandle = null;
             }
-            ROS.shutdown();
+            ROS.Shutdown();
         }
 
 
         private void Init()
         {
-            while (!ROS.isStarted())
+            while (!ROS.IsStarted())
             {
                 Thread.Sleep(100);
             }
@@ -114,7 +115,7 @@ namespace Uml.Robotics.Ros.Samples
             }
             if (subscriber == null)
             {
-                subscriber = nodeHandle.subscribe<Messages.rosgraph_msgs.Log>("/rosout_agg", 100, Callback);
+                subscriber = nodeHandle.Subscribe<Messages.rosgraph_msgs.Log>("/rosout_agg", 100, Callback);
             }
         }
 
@@ -180,7 +181,7 @@ namespace Uml.Robotics.Ros.Samples
         public string Filename { get; set; }
         public string Functionname { get; set; }
         public string Lineno { get; set; }
-        public double Stamp  { get; set; }
+        public double Stamp { get; set; }
         public int LevelNr = 0;
 
 

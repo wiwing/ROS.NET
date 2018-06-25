@@ -15,10 +15,10 @@ namespace Talker
             ROS.Init(args, "Talker");
             var spinner = new SingleThreadSpinner();
             NodeHandle node = new NodeHandle();
-            Publisher<std_msgs.String> Talker = node.advertise<std_msgs.String>("/chatter", 1);
+            Publisher<std_msgs.String> Talker = node.Advertise<std_msgs.String>("/chatter", 1);
             int count = 0;
 
-            while (ROS.ok && !Console.KeyAvailable)
+            while (ROS.OK && !Console.KeyAvailable)
             {
                 Console.WriteLine("publishing message");
                 ROS.Info()("Publishing a chatter message:    \"Blah blah blah " + count + "\"");
@@ -29,7 +29,7 @@ namespace Talker
                 Thread.Sleep(1000);
             }
 
-            ROS.shutdown();
+            ROS.Shutdown();
         }
     }
 }

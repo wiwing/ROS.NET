@@ -563,7 +563,7 @@ namespace Uml.Robotics.Ros.ActionLib
                 // Remove goal handles that are done from the tracking list
                 foreach (var goalHandleId in completedGoals)
                 {
-                    Logger.LogInformation($"Remove goal handle id {goalHandleId} from tracked goal handles");
+                    //Logger.LogInformation($"Remove goal handle id {goalHandleId} from tracked goal handles");
                     lock (lockGoalHandles)
                     {
                         goalHandles.Remove(goalHandleId);
