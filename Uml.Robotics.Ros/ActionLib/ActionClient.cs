@@ -21,7 +21,7 @@ namespace Uml.Robotics.Ros.ActionLib
         where TFeedback : InnerActionMessage, new()
     {
         private static int nextGoalId = 0; // Shared among all clients
-        private static object lockId = new object();
+        private static readonly object lockId = new object();
 
         public string Name { get; private set; }
         public int QueueSize { get; private set; }
@@ -70,6 +70,13 @@ namespace Uml.Robotics.Ros.ActionLib
                 OnCancelConnectCallback,
                 OnCancelDisconnectCallback
             );
+
+            ROS.RosShuttingDown += ROS_RosShuttingDown;
+        }
+
+        private void ROS_RosShuttingDown(object sender, EventArgs e)
+        {
+            HandleConnectionLost();
         }
 
 
@@ -150,6 +157,8 @@ namespace Uml.Robotics.Ros.ActionLib
 
         public void Shutdown()
         {
+            ROS.RosShuttingDown -= ROS_RosShuttingDown;
+
             statusSubscriber.Dispose();
             feedbackSubscriber.Dispose();
             resultSubscriber.Dispose();
@@ -357,7 +366,7 @@ namespace Uml.Robotics.Ros.ActionLib
             return result;
         }
 
-        private void handleConnectionLost()
+        private void HandleConnectionLost()
         {
             lock (goalHandles)
             {
@@ -533,7 +542,7 @@ namespace Uml.Robotics.Ros.ActionLib
                 if (LatestSequenceNumber != null && statusArray.header.seq <= LatestSequenceNumber)
                 {
                     ROS.Warn()("Status sequence number was decreased. This can only happen when the action server was restarted. Assume all active goals are lost.");
-                    handleConnectionLost();
+                    HandleConnectionLost();
                 }
                 LatestSequenceNumber = statusArray.header.seq;
 

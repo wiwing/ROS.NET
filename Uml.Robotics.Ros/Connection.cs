@@ -29,6 +29,7 @@ namespace Uml.Robotics.Ros
 
         private bool disposed;
         private string topic;
+        private int? closeTimeout;
 
         public NetworkStream Stream { get; }
         public Socket Socket => client.Client;
@@ -36,19 +37,28 @@ namespace Uml.Robotics.Ros
 
         public Connection(TcpClient client)
         {
-            this.client = client;
+            this.client = client ?? throw new ArgumentNullException(nameof(client));
             this.Stream = client.GetStream();
             this.logger = ApplicationLogging.CreateLogger<Connection>();
         }
 
         public void Dispose()
         {
-            if (disposed)
-                return;
+            lock (client)
+            {
+                if (disposed)
+                    return;
+                disposed = true;
+            }
 
-            disposed = true;
-            client?.Dispose();
+            if (closeTimeout.HasValue)
+            {
+                Stream.Close(closeTimeout.Value);
+            }
+
+            client.Dispose();
             client = null;
+
             Disposed?.Invoke(this);
         }
 
@@ -103,6 +113,12 @@ namespace Uml.Robotics.Ros
             }
 
             return Header.Values;
+        }
+
+        public void Close(int timeout)
+        {
+            closeTimeout = timeout;
+            Dispose();
         }
 
         public async Task SendHeaderError(string errorMessage, CancellationToken cancel)

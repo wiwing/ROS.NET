@@ -55,9 +55,17 @@ namespace Uml.Robotics.Ros
                 }
                 catch (Exception e)
                 {
-                    ROS.Error()(e.Message);
-                    await connection.SendHeaderError(e.Message, cancel);
-                    connection.Dispose();
+                    if (ROS.shuttingDown)
+                    {
+                        await connection.SendHeaderError("ROS node shutting down", cancel);
+                    }
+                    else
+                    {
+                        ROS.Error()(e.Message);
+                        await connection.SendHeaderError(e.Message, cancel);
+                    }
+                    connection.Close(50);
+
                     throw;
                 }
 

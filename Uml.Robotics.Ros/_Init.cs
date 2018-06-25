@@ -390,6 +390,55 @@ namespace Uml.Robotics.Ros
             }
         }
 
+        public static event EventHandler RosStarting;
+        public static event EventHandler RosStarted;
+        public static event EventHandler RosShuttingDown;
+        public static event EventHandler RosShutDown;
+
+        private static void RaiseRosStarting()
+        {
+            try
+            {
+                RosStarting?.Invoke(null, EventArgs.Empty);
+            }
+            catch
+            {
+            }
+        }
+
+        private static void RaiseRosStarted()
+        {
+            try
+            {
+                RosStarted?.Invoke(null, EventArgs.Empty);
+            }
+            catch
+            {
+            }
+        }
+
+        private static void RaiseRosShuttingDown()
+        {
+            try
+            {
+                RosShuttingDown?.Invoke(null, EventArgs.Empty);
+            }
+            catch
+            {
+            }
+        }
+
+        private static void RaiseRosShutDown()
+        {
+            try
+            {
+                RosShutDown?.Invoke(null, EventArgs.Empty);
+            }
+            catch
+            {
+            }
+        }
+
         /// <summary>
         ///     Finishes intialization This is called by the first NodeHandle when it initializes
         /// </summary>
@@ -399,6 +448,8 @@ namespace Uml.Robotics.Ros
             {
                 if (started)
                     return;
+
+                RaiseRosStarting();
 
                 ServiceManager.Reset();
                 XmlRpcManager.Reset();
@@ -414,6 +465,8 @@ namespace Uml.Robotics.Ros
                 shuttingDown = false;
                 started = true;
                 _ok = true;
+
+                RaiseRosStarted();
             }
         }
 
@@ -455,6 +508,7 @@ namespace Uml.Robotics.Ros
             if (started)
             {
                 logger.LogInformation("ROS is shutting down.");
+                RaiseRosShuttingDown();
 
                 SimTime.Terminate();
                 RosOutAppender.Terminate();
@@ -475,6 +529,8 @@ namespace Uml.Robotics.Ros
                     started = false;
                     ResetStaticMembers();
                 }
+
+                RaiseRosShutDown();
             }
         }
 
