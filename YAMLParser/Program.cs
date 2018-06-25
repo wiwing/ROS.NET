@@ -9,22 +9,58 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using System.Reflection;
 using Uml.Robotics.Ros;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.CommandLineUtils;
 
 namespace YAMLParser
 {
     internal class Program
     {
-        public static List<MsgFile> msgsFiles = new List<MsgFile>();
-        public static List<SrvFile> srvFiles = new List<SrvFile>();
-        public static List<ActionFile> actionFiles = new List<ActionFile>();
-        public static string backhalf;
-        public static string fronthalf;
-        public static string name = "Messages";
-        public static string outputdir = "Messages";
-        private static string configuration = "Debug"; //Debug, Release, etc.
+        static List<MsgFile> msgsFiles = new List<MsgFile>();
+        static List<SrvFile> srvFiles = new List<SrvFile>();
+        static List<ActionFile> actionFiles = new List<ActionFile>();
         private static ILogger Logger { get; set; }
+        const string DEFAULT_OUTPUT_FOLDERNAME = "Messages";
 
-        private static void Main(string[] args)
+        public static void Main(params string[] args)
+        {
+            var app = new CommandLineApplication(throwOnUnexpectedArg: true);
+
+            CommandOption messageDirectories = app.Option("-m|--message-dirs", "Directories where ROS message definitions are located, separated by comma. (required)", CommandOptionType.MultipleValue);
+            CommandOption assemblies = app.Option("-a|--assemblies", "Full filename of assemblies that contain additional generated RosMessages. (optional)", CommandOptionType.MultipleValue);
+            CommandOption interactive = app.Option("-i|--interactive", "Run in interactive mode. Default: false", CommandOptionType.NoValue);
+            // Change of output directory requires more work, since the reference to Uml.Robotics.Ros.MessageBase needs to be adjusted
+            CommandOption outputDirectory = app.Option("-o|--output", "Output directory for generated message. Default: ../Messages", CommandOptionType.SingleValue);
+            CommandOption runtime = app.Option("-r|--runtime", "Specify runtime, e.g. Debug or Release. Default: Debug", CommandOptionType.SingleValue);
+            CommandOption projectName = app.Option("-n|--name", "Name of the generated project file. Default: Messages", CommandOptionType.SingleValue);
+
+            app.HelpOption("-? | -h | --help");
+
+            app.OnExecute(() =>
+            {
+                if (!messageDirectories.HasValue())
+                {
+                    Console.WriteLine("At least one directory with ROS message definitions is required.");
+
+                    return 1;
+                }
+
+                Program.Run(
+                    messageDirectories.HasValue() ? messageDirectories.Values : null,
+                    assemblies.HasValue() ? assemblies.Values : null,
+                    outputDirectory.HasValue() ? outputDirectory.Value() : null,
+                    interactive.HasValue(),
+                    runtime.HasValue() ? runtime.Value() : "Debug",
+                    projectName.HasValue() ? projectName.Value() : "Messages"
+                );
+
+                return 0;
+            });
+
+            app.Execute(args);
+        }
+
+        private static void Run(List<string> messageDirs, List<string> assemblies = null, string outputdir = null, bool interactive = false, string configuration = "Debug", string projectName = "Messages")
         {
             var loggerFactory = new LoggerFactory();
             loggerFactory.AddProvider(
@@ -34,64 +70,60 @@ namespace YAMLParser
             ApplicationLogging.LoggerFactory = loggerFactory;
             Logger = ApplicationLogging.CreateLogger("Program");
 
-            MessageTypeRegistry.Default.ParseAssemblyAndRegisterRosMessages(MessageTypeRegistry.Default.GetType().GetTypeInfo().Assembly);
-
-            /*System.Console.WriteLine($"Process ID: {System.Diagnostics.Process.GetCurrentProcess().Id}");
-            while (!System.Diagnostics.Debugger.IsAttached)
+            string yamlparser_parent = "";
+            DirectoryInfo di = new DirectoryInfo(Directory.GetCurrentDirectory());
+            while (di != null && di.Name != "YAMLParser")
             {
-                System.Threading.Thread.Sleep(1);
-            }*/
+                di = Directory.GetParent(di.FullName);
+            }
+            if (di == null)
+                throw new InvalidOperationException("Not started from within YAMLParser directory.");
+            di = Directory.GetParent(di.FullName);
+            yamlparser_parent = di.FullName;
 
-            string solutiondir;
-            bool interactive = false; //wait for ENTER press when complete
-            int firstarg = 0;
-            if (args.Length >= 1)
+            if (outputdir == null)
             {
-                if (args[firstarg].Trim().Equals("-i"))
-                {
-                    interactive = true;
-                    firstarg++;
-                }
-                if (firstarg < args.Length - 1)
-                {
-                    configuration = args[firstarg++];
-                }
-                if (firstarg < args.Length-1 && args[firstarg].Trim().Equals("-i"))
-                {
-                    interactive = true;
-                    firstarg++;
-                }
+                outputdir = yamlparser_parent;
+                outputdir = Path.Combine(outputdir, DEFAULT_OUTPUT_FOLDERNAME);
             }
 
-            if (args.Length - firstarg >= 1)
+            Templates.LoadTemplateStrings(Path.Combine(yamlparser_parent, "YAMLParser", "TemplateProject"));
+
+            MessageTypeRegistry.Default.ParseAssemblyAndRegisterRosMessages(MessageTypeRegistry.Default.GetType().GetTypeInfo().Assembly);
+
+            if (assemblies != null)
             {
-                solutiondir = new DirectoryInfo(Path.GetFullPath(args[firstarg])).FullName;
+                string hints = "";
+                foreach (var assembly in assemblies)
+                {
+                    var rosNetMessages = Assembly.LoadFile(Path.GetFullPath(assembly));
+                    MessageTypeRegistry.Default.ParseAssemblyAndRegisterRosMessages(rosNetMessages);
+                    hints += $@"
+  <ItemGroup>
+    <Reference Include=""Messages"">
+      <HintPath>{assembly}</HintPath>
+  
+      </Reference>
+  
+    </ItemGroup>
+
+  ";
+                }
+
+                Templates.MessagesProj = Templates.MessagesProj.Replace("$$HINTS$$", hints);
             }
             else
             {
-                string yamlparser_parent = "";
-                DirectoryInfo di = new DirectoryInfo(Directory.GetCurrentDirectory());
-                while (di != null && di.Name != "YAMLParser")
-                {
-                    di = Directory.GetParent(di.FullName);
-                }
-                if (di == null)
-                    throw new InvalidOperationException("Not started from within YAMLParser directory.");
-                di = Directory.GetParent(di.FullName);
-                yamlparser_parent = di.FullName;
-                solutiondir = yamlparser_parent;
+                Templates.MessagesProj = Templates.MessagesProj.Replace("$$HINTS$$", "");
             }
 
-            Templates.LoadTemplateStrings(Path.Combine(solutiondir, "YAMLParser", "TemplateProject"));
-
-            outputdir = Path.Combine(solutiondir, outputdir);
             var paths = new List<MsgFileLocation>();
             var pathssrv = new List<MsgFileLocation>();
             var actionFileLocations = new List<MsgFileLocation>();
             Console.WriteLine("Generatinc C# classes for ROS Messages...\n");
-            for (int i = firstarg; i < args.Length; i++)
+            foreach (var messageDir in messageDirs)
             {
-                string d = new DirectoryInfo(Path.GetFullPath(args[i])).FullName;
+                string d = new DirectoryInfo(Path.GetFullPath(messageDir)).FullName;
                 Console.WriteLine("Looking in " + d);
                 MsgFileLocator.findMessages(paths, pathssrv, actionFileLocations, d);
             }
@@ -133,10 +165,10 @@ namespace YAMLParser
 
             if (paths.Count + pathssrv.Count > 0)
             {
-                MakeTempDir();
-                GenerateFiles(msgsFiles, srvFiles, actionFiles);
-                GenerateProject(msgsFiles, srvFiles);
-                BuildProject();
+                MakeTempDir(outputdir);
+                GenerateFiles(msgsFiles, srvFiles, actionFiles, outputdir);
+                GenerateProject(msgsFiles, srvFiles, projectName, outputdir);
+                BuildProject(configuration, projectName, outputdir);
             }
             else
             {
@@ -152,7 +184,7 @@ namespace YAMLParser
             }
         }
 
-        public static void MakeTempDir()
+        private static void MakeTempDir(string outputdir)
         {
             if (!Directory.Exists(outputdir))
                 Directory.CreateDirectory(outputdir);
@@ -216,7 +248,7 @@ namespace YAMLParser
             }
         }
 
-        public static void GenerateFiles(List<MsgFile> files, List<SrvFile> srvfiles, List<ActionFile> actionFiles)
+        private static void GenerateFiles(List<MsgFile> files, List<SrvFile> srvfiles, List<ActionFile> actionFiles, string outputdir)
         {
             List<MsgFile> mresolved = new List<MsgFile>();
             List<SrvFile> sresolved = new List<SrvFile>();
@@ -310,7 +342,7 @@ namespace YAMLParser
             File.WriteAllText(Path.Combine(outputdir, "MessageTypes.cs"), ToString().Replace("FauxMessages", "Messages"));
         }
 
-        public static void GenerateProject(List<MsgFile> files, List<SrvFile> srvfiles)
+        private static void GenerateProject(List<MsgFile> files, List<SrvFile> srvfiles, string projectName, string outputdir)
         {
             string[] lines = Templates.MessagesProj.Split('\n');
             string output = "";
@@ -332,13 +364,13 @@ namespace YAMLParser
                     output += "\t<Compile Include=\"MessageTypes.cs\" />\n";
                 }*/
             }
-            File.WriteAllText(Path.Combine(outputdir, name + ".csproj"), output);
+            File.WriteAllText(Path.Combine(outputdir, projectName + ".csproj"), output);
             File.WriteAllText(Path.Combine(outputdir, ".gitignore"), "*");
         }
 
-        public static void BuildProject()
+        private static void BuildProject(string configuration, string projectName, string outputdir)
         {
-            BuildProject("BUILDING GENERATED PROJECT WITH MSBUILD!");
+            BuildProject("BUILDING GENERATED PROJECT WITH MSBUILD!", configuration, projectName, outputdir);
         }
 
         static Process RunDotNet(string args)
@@ -355,14 +387,14 @@ namespace YAMLParser
             return proc;
         }
 
-        public static void BuildProject(string spam)
+        private static void BuildProject(string spam, string configuration, string projectName, string outputdir)
         {
             Console.WriteLine("\n\n" + spam);
 
             string output, error;
 
             Console.WriteLine("Running .NET dependency restorer...");
-            string restoreArgs = "restore \"" + Path.Combine(outputdir, name) + ".csproj\"";
+            string restoreArgs = "restore \"" + Path.Combine(outputdir, projectName) + ".csproj\"";
             var proc = RunDotNet(restoreArgs);
             output = proc.StandardOutput.ReadToEnd();
             error = proc.StandardError.ReadToEnd();
@@ -372,15 +404,15 @@ namespace YAMLParser
                 Console.WriteLine(error);
 
             Console.WriteLine("Running .NET Builder...");
-            string buildArgs = "build \"" + Path.Combine(outputdir, name) + ".csproj\" -c " + configuration;
+            string buildArgs = "build \"" + Path.Combine(outputdir, projectName) + ".csproj\" -c " + configuration;
             proc = RunDotNet(buildArgs);
 
             output = proc.StandardOutput.ReadToEnd();
             error = proc.StandardError.ReadToEnd();
-            if (File.Exists(Path.Combine(outputdir, "bin", configuration, name + ".dll")))
+            if (File.Exists(Path.Combine(outputdir, "bin", configuration, projectName + ".dll")))
             {
-                Console.WriteLine("\n\nGenerated DLL has been copied to:\n\t" + Path.Combine(outputdir, name + ".dll") + "\n\n");
-                File.Copy(Path.Combine(outputdir,  "bin", configuration, name + ".dll"), Path.Combine(outputdir, name + ".dll"), true);
+                Console.WriteLine("\n\nGenerated DLL has been copied to:\n\t" + Path.Combine(outputdir, projectName + ".dll") + "\n\n");
+                File.Copy(Path.Combine(outputdir, "bin", configuration, projectName + ".dll"), Path.Combine(outputdir, projectName + ".dll"), true);
                 Thread.Sleep(100);
             }
             else
@@ -393,59 +425,9 @@ namespace YAMLParser
             }
         }
 
-        private static string uberpwnage;
-
-        public new static string ToString()
+        private new static string ToString()
         {
             return "";
-            if (uberpwnage == null)
-            {
-                if (fronthalf == null)
-                {
-                    fronthalf = "using Messages;\n\nnamespace Messages\n{\n";
-                    backhalf = "\n}";
-                }
-
-                List<MsgFile> everything = new List<MsgFile>(msgsFiles);
-                foreach (SrvFile sf in srvFiles)
-                {
-                    everything.Add(sf.Request);
-                    everything.Add(sf.Response);
-                }
-                foreach (ActionFile actionFile in actionFiles)
-                {
-                    everything.Add(actionFile.GoalMessage);
-                    everything.Add(actionFile.GoalActionMessage);
-                    everything.Add(actionFile.ResultMessage);
-                    everything.Add(actionFile.ResultActionMessage);
-                    everything.Add(actionFile.FeedbackMessage);
-                    everything.Add(actionFile.FeedbackActionMessage);
-                }
-                fronthalf += "\n\tpublic enum MsgTypes\n\t{";
-                fronthalf += "\n\t\tUnknown,";
-                string srvs = "\n\t\tUnknown,";
-                for (int i = 0; i < everything.Count; i++)
-                {
-                    fronthalf += "\n\t\t";
-                    if (everything[i].classname == "Request" || everything[i].classname == "Response")
-                    {
-                        if (everything[i].classname == "Request")
-                        {
-                            srvs += "\n\t\t" + everything[i].Name.Replace(".", "__") + ",";
-                        }
-                        everything[i].Name += "." + everything[i].classname;
-                    }
-                    fronthalf += everything[i].Name.Replace(".", "__");
-                    if (i < everything.Count - 1)
-                        fronthalf += ",";
-                }
-                fronthalf += "\n\t}\n";
-                srvs = srvs.TrimEnd(',');
-                fronthalf += "\n\tpublic enum SrvTypes\n\t{";
-                fronthalf += srvs + "\n\t}\n";
-                uberpwnage = fronthalf + backhalf;
-            }
-            return uberpwnage;
         }
     }
 }
