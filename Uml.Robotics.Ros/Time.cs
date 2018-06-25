@@ -34,12 +34,12 @@ namespace Uml.Robotics.Ros
             {
                 try
                 {
-                    while (!ROS.IsStarted() && !ROS.shutting_down)
+                    while (!ROS.IsStarted() && !ROS.ShuttingDown)
                     {
                         Thread.Sleep(100);
                     }
 
-                    if (!ROS.shutting_down)
+                    if (!ROS.ShuttingDown)
                     {
                         nodeHandle = new NodeHandle();
                         simTimeSubscriber = nodeHandle.Subscribe<Clock>("/clock", 1, SimTimeCallback);

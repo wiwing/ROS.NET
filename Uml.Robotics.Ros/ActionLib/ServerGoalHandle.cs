@@ -33,7 +33,7 @@ namespace Uml.Robotics.Ros.ActionLib
             GoalId = goalId;
             GoalStatus.goal_id = goalId;
 
-            if ((goalId.stamp == null) || (ROS.GetTime(goalId.stamp) == new DateTime(1970, 1, 1, 0, 0, 0)))
+            if ((goalId.stamp == null) || (ROS.ToDateTime(goalId.stamp) == new DateTime(1970, 1, 1, 0, 0, 0)))
             {
                 // If stamp is not initialized
                 GoalStatus.goal_id.stamp = ROS.GetTime();

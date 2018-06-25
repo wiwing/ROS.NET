@@ -549,7 +549,7 @@ namespace Uml.Robotics.Ros.ActionLib
                 var completedGoals = new List<string>();
                 foreach (var pair in goalHandlesReferenceCopy)
                 {
-                    if ((pair.Value.LatestResultAction == null) || (ROS.GetTime(pair.Value.LatestResultAction.Header.stamp) < ROS.GetTime(timestamp)))
+                    if ((pair.Value.LatestResultAction == null) || (ROS.ToDateTime(pair.Value.LatestResultAction.Header.stamp) < ROS.ToDateTime(timestamp)))
                     {
                         var goalStatus = FindGoalInStatusList(statusArray, pair.Key);
                         UpdateStatus(pair.Value, goalStatus);

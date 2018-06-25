@@ -34,7 +34,6 @@ namespace Uml.Robotics.Ros
         private static bool atExitRegistered;
         private static volatile bool _ok;
         internal static bool shuttingDown;
-        private static volatile bool shutdownRequested;
         private static InitOptions initOptions;
 
         public static ICallbackQueue GlobalCallbackQueue =>
@@ -86,7 +85,7 @@ namespace Uml.Robotics.Ros
                 { RosOutAppender.ROSOUT_LEVEL.FATAL, ROSOUT_FATAL_PREFIX }
             };
 
-        public static bool shutting_down
+        public static bool ShuttingDown
         {
             get { return shuttingDown; }
         }
@@ -100,31 +99,31 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        ///     Turns a DateTime into a Time struct
+        /// Convert a DateTime struct into a std_msgs/Time message
         /// </summary>
         /// <param name="time"> DateTime to convert </param>
         /// <returns> containing secs, nanosecs since 1/1/1970 </returns>
-        public static std_msgs.Time GetTime(DateTime time)
+        public static std_msgs.Time ToTimeMessage(this DateTime time)
         {
             return GetTime<std_msgs.Time>(time.Subtract(new DateTime(1970, 1, 1, 0, 0, 0)));
         }
 
         /// <summary>
-        ///     Turns a std_msgs.Time into a DateTime
+        /// Convert a std_msgs/Time mesage into a DateTime struct
         /// </summary>
         /// <param name="time"> std_msgs.Time to convert </param>
         /// <returns> a DateTime </returns>
-        public static DateTime GetTime(std_msgs.Time time)
+        public static DateTime ToDateTime(this std_msgs.Time time)
         {
             return new DateTime(1970, 1, 1, 0, 0, 0).Add(new TimeSpan(time.data.Ticks));
         }
 
         /// <summary>
-        ///     Turns a std_msgs.Duration into a TimeSpan
+        /// Convert std_msgs/Duration into TimeSpan struct
         /// </summary>
         /// <param name="time"> std_msgs.Duration to convert </param>
         /// <returns> a TimeSpan </returns>
-        public static TimeSpan GetTime(std_msgs.Duration duration)
+        public static TimeSpan ToTimeSpan(this std_msgs.Duration duration)
         {
             return new TimeSpan(duration.data.Ticks);
         }
@@ -136,7 +135,7 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        ///     Turns a TimeSpan into a Time (not a Duration, although it sorta is)
+        /// Convert TimeSpan to TimeData
         /// </summary>
         /// <param name="timestamp"> The timespan to convert to seconds/nanoseconds </param>
         /// <returns> a time struct </returns>
@@ -150,12 +149,12 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        ///     Gets the current time as secs/nsecs
+        /// Gets the current time as std_msgs/Time
         /// </summary>
         /// <returns> </returns>
         public static std_msgs.Time GetTime()
         {
-            return GetTime(DateTime.UtcNow);
+            return ToTimeMessage(DateTime.UtcNow);
         }
 
         private static void SimTimeCallback(TimeSpan ts)
@@ -229,7 +228,7 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        ///     Set the logging factory for ROS.NET
+        /// Set the logging factory for ROS.NET
         /// </summary>
         /// <param name="factory"> The logging factory to use for logging </param>
         public static void SetLoggerFactory(ILoggerFactory factory)
@@ -245,7 +244,7 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        ///     Initializes ROS so nodehandles and nodes can exist
+        ///  Initializes ROS
         /// </summary>
         /// <param name="args"> argv - parsed for remapping args (AND PARAMS??) </param>
         /// <param name="name"> the node's name </param>
@@ -255,7 +254,7 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        ///     Initializes ROS so nodehandles and nodes can exist
+        /// Initializes ROS
         /// </summary>
         /// <param name="args"> argv - parsed for remapping args (AND PARAMS??) </param>
         /// <param name="name"> the node's name </param>
@@ -274,7 +273,7 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        ///     Initializes ROS so nodehandles and nodes can exist
+        /// Initializes ROS
         /// </summary>
         /// <param name="remappingArgs"> dictionary of remapping args </param>
         /// <param name="name"> node name </param>
@@ -361,19 +360,6 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        ///     shutdowns are async with the call to shutdown. This delays shutting down ROS feels like it.
-        /// </summary>
-        internal static void CheckForShutdown()
-        {
-            lock (shuttingDownMutex)
-            {
-                if (!shutdownRequested || shutdownTask == null || shutdownTask.Status != TaskStatus.Created)
-                    return;
-                shutdownTask.Start();
-            }
-        }
-
-        /// <summary>
         ///     This is called when rosnode kill is invoked
         /// </summary>
         /// <param name="p"> pointer to unmanaged XmlRpcValue containing params </param>
@@ -404,7 +390,6 @@ namespace Uml.Robotics.Ros
             }
         }
 
-
         /// <summary>
         ///     Finishes intialization This is called by the first NodeHandle when it initializes
         /// </summary>
@@ -426,7 +411,6 @@ namespace Uml.Robotics.Ros
                 ConnectionManager.Instance.Start();
                 XmlRpcManager.Instance.Start();
 
-                shutdownRequested = false;
                 shuttingDown = false;
                 started = true;
                 _ok = true;
@@ -446,36 +430,28 @@ namespace Uml.Robotics.Ros
         }
 
         /// <summary>
-        ///     Tells ROS that it should shutdown the next time it feels like doing so.
+        /// Initiate a ROS shutdown
         /// </summary>
         public static Task Shutdown()
         {
             lock (shuttingDownMutex)
             {
-                if (shutdownTask == null || shutdownTask.Status == TaskStatus.Created)
+                if (shutdownTask != null && shutdownTask.Status == TaskStatus.Created)
                 {
-                    shutdownRequested = true;
+                    shuttingDown = true;
+                    _ok = false;
+                    shutdownTask.Start();
                 }
             }
 
             return shutdownTask;
         }
 
-
         /// <summary>
         /// Internal ROS deinitialization method. Called by checkForShutdown.
         /// </summary>
         private static void _shutdown()
         {
-            lock (shuttingDownMutex)
-            {
-                if (shuttingDown)
-                    return;
-
-                shuttingDown = true;
-                _ok = false;
-            }
-
             if (started)
             {
                 logger.LogInformation("ROS is shutting down.");
@@ -493,7 +469,6 @@ namespace Uml.Robotics.Ros
                 ServiceManager.Terminate();
                 XmlRpcManager.Terminate();
                 ConnectionManager.Terminate();
-                //PollManager.Terminate();      // ## remove
 
                 lock (startMutex)
                 {
@@ -502,7 +477,6 @@ namespace Uml.Robotics.Ros
                 }
             }
         }
-
 
         private static void ResetStaticMembers()
         {
@@ -513,7 +487,6 @@ namespace Uml.Robotics.Ros
             started = false;
             _ok = false;
             shuttingDown = false;
-            shutdownRequested = false;
         }
 
     }

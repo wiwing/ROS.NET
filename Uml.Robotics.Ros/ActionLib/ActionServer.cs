@@ -142,7 +142,7 @@ namespace Uml.Robotics.Ros.ActionLib
             newFeedback.GoalStatus = goalStatus;
             newFeedback.Feedback = feedback;
             ROS.Debug()("actionlib", $"Publishing feedback for goal with id: {goalStatus.goal_id.id} and stamp: " +
-                $"{new DateTimeOffset(ROS.GetTime(goalStatus.goal_id.stamp)).ToUnixTimeSeconds()}"
+                $"{new DateTimeOffset(ROS.ToDateTime(goalStatus.goal_id.stamp)).ToUnixTimeSeconds()}"
             );
             feedbackPublisher.publish(newFeedback);
         }
@@ -159,7 +159,7 @@ namespace Uml.Robotics.Ros.ActionLib
                 newResult.Result = result;
             }
             ROS.Debug()("actionlib", $"Publishing result for goal with id: {goalStatus.goal_id.id} and stamp: " +
-                $"{new DateTimeOffset(ROS.GetTime(goalStatus.goal_id.stamp)).ToUnixTimeSeconds()}"
+                $"{new DateTimeOffset(ROS.ToDateTime(goalStatus.goal_id.stamp)).ToUnixTimeSeconds()}"
             );
             resultPublisher.publish(newResult);
             PublishStatus();
@@ -171,7 +171,7 @@ namespace Uml.Robotics.Ros.ActionLib
             var now = DateTime.UtcNow;
             var statusArray = new GoalStatusArray();
             statusArray.header = new Messages.std_msgs.Header();
-            statusArray.header.stamp = ROS.GetTime(now);
+            statusArray.header.stamp = ROS.ToTimeMessage(now);
             var goalStatuses = new List<GoalStatus>();
 
             var idsToBeRemoved = new List<string>();
@@ -209,7 +209,7 @@ namespace Uml.Robotics.Ros.ActionLib
                 foreach(var valuePair in goalHandles)
                 {
                     var goalHandle = valuePair.Value;
-                    if ((ROS.GetTime(goalId.stamp) == timeZero) || (ROS.GetTime(goalHandle.GoalId.stamp) < ROS.GetTime(goalId.stamp)))
+                    if ((ROS.ToDateTime(goalId.stamp) == timeZero) || (ROS.ToDateTime(goalHandle.GoalId.stamp) < ROS.ToDateTime(goalId.stamp)))
                     {
                         if (goalHandle.SetCancelRequested() && (cancelCallback != null))
                         {
@@ -233,16 +233,16 @@ namespace Uml.Robotics.Ros.ActionLib
                     var goalStatus = new GoalStatus();
                     goalStatus.status = GoalStatus.RECALLING;
                     goalHandle = new ServerGoalHandle<TGoal, TResult, TFeedback>(this, goalId, goalStatus, null);
-                    goalHandle.DestructionTime = ROS.GetTime(goalId.stamp);
+                    goalHandle.DestructionTime = ROS.ToDateTime(goalId.stamp);
                     goalHandles[goalId.id] = goalHandle;
                 }
 
             }
 
             // Make sure to set lastCancel based on the stamp associated with this cancel request
-            if (ROS.GetTime(goalId.stamp) > lastCancel)
+            if (ROS.ToDateTime(goalId.stamp) > lastCancel)
             {
-                lastCancel = ROS.GetTime(goalId.stamp);
+                lastCancel = ROS.ToDateTime(goalId.stamp);
             }
         }
 
