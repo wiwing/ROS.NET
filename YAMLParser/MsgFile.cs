@@ -504,7 +504,7 @@ namespace FauxMessages
         /// </summary>
         private const int LEADING_WHITESPACE = 3;
 
-        private string GenerateSerializationForOne(string type, string name, SingleType st, int extraTabs = 0)
+        private string GenerateSerializationForOne(string type, string name, SingleType st, int extraTabs = 0, bool special = false)
         {
             string leadingWhitespace = "";
             for (int i = 0; i < LEADING_WHITESPACE + extraTabs; i++)
@@ -549,7 +549,7 @@ namespace FauxMessages
 {0}thischunk[0] = (byte) ((bool){1} ? 1 : 0 );
 {0}pieces.Add(thischunk);", leadingWhitespace, name);
             }
-            else if (st.IsLiteral)
+            else if (st.IsLiteral && !special)
             {
                 return string.Format(@"
 {0}//{1}
@@ -558,6 +558,22 @@ namespace FauxMessages
 {0}Marshal.StructureToPtr({1}, h.AddrOfPinnedObject(), false);
 {0}h.Free();
 {0}pieces.Add(scratch1);", leadingWhitespace, name, type);
+            }
+            else if (st.IsLiteral && special)
+            {
+                return string.Format(@"
+{0}//{1}
+{0}x__size = Marshal.SizeOf(typeof(double)) * {1}.Length;
+{0}scratch1 = new byte[x__size];
+{0}ptr = IntPtr.Zero;
+{0}ptr = Marshal.AllocHGlobal(x__size);
+{0}try {{
+{0}    Marshal.Copy({1}, 0, ptr, {1}.Length);
+{0}    Marshal.Copy(ptr, scratch1, 0, scratch1.Length);
+{0}}} finally {{
+{0}    Marshal.FreeHGlobal(ptr);
+{0}    pieces.Add(scratch1);
+{0}}}", leadingWhitespace, name.Substring(0, name.Length - 3), type);
             }
             else
             {
@@ -601,9 +617,13 @@ namespace FauxMessages
             }
             else
             {
-                ret += string.Format(@"
+                if (!st.IsPrimitve || (st.Type == "string") || (st.Type == "bool") || (st.Type == "sbyte") || (st.Type == "uint") || (st.Type == "ulong") || (st.Type == "ushort")) {
+                    ret += string.Format(@"
 {0}for (int i=0;i<{1}.Length; i++) {{{2}
 {0}}}", leadingWhitespace, st.Name, GenerateSerializationForOne(st.Type, st.Name + "[i]", st, extraTabs + 1));
+                } else {
+                    ret += GenerateSerializationForOne(st.Type, st.Name + "[i]", st, extraTabs + 1, true);
+                }
             }
             return ret;
         }
@@ -661,14 +681,18 @@ namespace FauxMessages
             }
             else
             {
-                ret += string.Format(@"
+                if (!st.IsPrimitve || (st.Type == "string") || (st.Type == "bool") || (st.Type == "sbyte") || (st.Type == "uint") || (st.Type == "ulong") || (st.Type == "ushort")) {
+                    ret += string.Format(@"
 {0}for (int i=0;i<{1}.Length; i++) {{{2}
 {0}}}", leadingWhitespace, st.Name, GenerateDeserializationForOne(pt, st.Name + "[i]", st, extraTabs + 1));
+                } else {
+                    ret += GenerateDeserializationForOne(pt, st.Name + "[i]", st, extraTabs + 1, true);
+                }
             }
             return ret;
         }
 
-        private string GenerateDeserializationForOne(string type, string name, SingleType st, int extraTabs = 0)
+        private string GenerateDeserializationForOne(string type, string name, SingleType st, int extraTabs = 0, bool special = false)
         {
             string leadingWhitespace = "";
             for (int i = 0; i < LEADING_WHITESPACE + extraTabs; i++)
@@ -712,7 +736,7 @@ namespace FauxMessages
 {0}//{1}
 {0}{1} = serializedMessage[currentIndex++]==1;", leadingWhitespace, name);
             }
-            else if (st.IsLiteral)
+            else if (st.IsLiteral && !special)
             {
                 string ret = string.Format(@"
 {0}//{2}
@@ -727,6 +751,27 @@ namespace FauxMessages
 {0}{2} = ({1})Marshal.PtrToStructure(h, typeof({1}));
 {0}Marshal.FreeHGlobal(h);
 {0}currentIndex+= piecesize;", leadingWhitespace, pt, name);
+
+                return ret;
+            }
+            else if (st.IsLiteral && special)
+            {
+                string ret = string.Format(@"
+{0}//{2}
+{0}if (currentIndex + {2}.Length > serializedMessage.Length) {{
+{0}    throw new Exception(""Memory allocation failed: Ran out of bytes to read."");
+{0}}}
+{0}
+{0}piecesize = Marshal.SizeOf(typeof({1})) * {2}.Length;
+{0}h = IntPtr.Zero;
+{0}h = Marshal.AllocHGlobal(piecesize);
+{0}try {{
+{0}    Marshal.Copy(serializedMessage, currentIndex, h, piecesize);
+{0}    Marshal.Copy(h, {2}, 0, {2}.Length);
+{0}}} finally {{
+{0}    Marshal.FreeHGlobal(h);
+{0}    currentIndex += piecesize;
+{0}}}", leadingWhitespace, pt, name.Substring(0, name.Length - 3));
 
                 return ret;
             }
