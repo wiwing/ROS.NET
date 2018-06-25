@@ -50,6 +50,8 @@
             byte[] thischunk, scratch1, scratch2;
             List<byte[]> pieces = new List<byte[]>();
             GCHandle h;
+            IntPtr ptr;
+            int x__size;
 
             $SERIALIZATIONCODE
 
