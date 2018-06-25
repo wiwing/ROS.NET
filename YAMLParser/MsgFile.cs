@@ -132,7 +132,7 @@ namespace FauxMessages
         /// <summary>
         /// Create a non SRV MsgsFile from a list of strings. Use suffix to prepend a string to the classname.
         /// </summary>
-        public MsgFile (MsgFileLocation filename, List<string> lines, string suffix)
+        public MsgFile(MsgFileLocation filename, List<string> lines, string suffix)
         {
             if (filename == null)
             {
@@ -562,6 +562,7 @@ namespace FauxMessages
             else if (st.IsLiteral && special)
             {
                 return string.Format(@"
+// Start Xamla
 {0}//{1}
 {0}x__size = Marshal.SizeOf(typeof(double)) * {1}.Length;
 {0}scratch1 = new byte[x__size];
@@ -573,7 +574,9 @@ namespace FauxMessages
 {0}}} finally {{
 {0}    Marshal.FreeHGlobal(ptr);
 {0}    pieces.Add(scratch1);
-{0}}}", leadingWhitespace, name.Substring(0, name.Length - 3), type);
+{0}}}
+// End Xamla
+", leadingWhitespace, name.Substring(0, name.Length - 3), type);
             }
             else
             {
@@ -617,11 +620,14 @@ namespace FauxMessages
             }
             else
             {
-                if (!st.IsPrimitve || (st.Type == "string") || (st.Type == "bool") || (st.Type == "sbyte") || (st.Type == "uint") || (st.Type == "ulong") || (st.Type == "ushort")) {
+                if (!st.IsPrimitve || (st.Type == "string") || (st.Type == "bool") || (st.Type == "sbyte") || (st.Type == "uint") || (st.Type == "ulong") || (st.Type == "ushort"))
+                {
                     ret += string.Format(@"
 {0}for (int i=0;i<{1}.Length; i++) {{{2}
 {0}}}", leadingWhitespace, st.Name, GenerateSerializationForOne(st.Type, st.Name + "[i]", st, extraTabs + 1));
-                } else {
+                }
+                else
+                {
                     ret += GenerateSerializationForOne(st.Type, st.Name + "[i]", st, extraTabs + 1, true);
                 }
             }
@@ -681,11 +687,14 @@ namespace FauxMessages
             }
             else
             {
-                if (!st.IsPrimitve || (st.Type == "string") || (st.Type == "bool") || (st.Type == "sbyte") || (st.Type == "uint") || (st.Type == "ulong") || (st.Type == "ushort")) {
+                if (!st.IsPrimitve || (st.Type == "string") || (st.Type == "bool") || (st.Type == "sbyte") || (st.Type == "uint") || (st.Type == "ulong") || (st.Type == "ushort"))
+                {
                     ret += string.Format(@"
 {0}for (int i=0;i<{1}.Length; i++) {{{2}
 {0}}}", leadingWhitespace, st.Name, GenerateDeserializationForOne(pt, st.Name + "[i]", st, extraTabs + 1));
-                } else {
+                }
+                else
+                {
                     ret += GenerateDeserializationForOne(pt, st.Name + "[i]", st, extraTabs + 1, true);
                 }
             }
@@ -757,6 +766,7 @@ namespace FauxMessages
             else if (st.IsLiteral && special)
             {
                 string ret = string.Format(@"
+// Start Xamla
 {0}//{2}
 {0}if (currentIndex + {2}.Length > serializedMessage.Length) {{
 {0}    throw new Exception(""Memory allocation failed: Ran out of bytes to read."");
@@ -771,7 +781,9 @@ namespace FauxMessages
 {0}}} finally {{
 {0}    Marshal.FreeHGlobal(h);
 {0}    currentIndex += piecesize;
-{0}}}", leadingWhitespace, pt, name.Substring(0, name.Length - 3));
+{0}}}
+// End Xamla
+", leadingWhitespace, pt, name.Substring(0, name.Length - 3));
 
                 return ret;
             }
