@@ -93,7 +93,7 @@ namespace Uml.Robotics.Ros
         {
             using (var publisher = await ROS.GlobalNodeHandle.AdvertiseAsync<Log>("/rosout", 0))
             {
-                while (!await queue.MoveNext(default(CancellationToken)))
+                while (await queue.MoveNext(default(CancellationToken)))
                 {
                     Log entry = queue.Current;
                     publisher.publish(entry);
