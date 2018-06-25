@@ -51,14 +51,10 @@ namespace Uml.Robotics.Ros
                 throw new HeaderErrorException("Field 'md5sum' missing in connection header.");
             }
 
-            if (!header.Values.ContainsKey("latching"))
-            {
-                throw new HeaderErrorException("Field 'latching' missing in connection header.");
-            }
-
+            this.Latched = header.Values.ContainsKey("latching") && header.Values["latching"] == "1";
             this.CallerId = header.Values["callerid"];
             this.Md5Sum = header.Values["md5sum"];
-            this.Latched = header.Values["latching"] == "1";
+
             this.ConnectionId = ConnectionManager.Instance.GetNewConnectionId();
             this.header = header;
 
